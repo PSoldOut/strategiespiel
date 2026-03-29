@@ -1,8 +1,10 @@
 Nativ Start Backing Runtime Backing
 
-Grid für kleine path Way Points und path checking?
+Optimierung? Grid für kleine path Way Points und path checking?
 
 
 Swarming
 
 Path Caching Arbeiter
+
+
