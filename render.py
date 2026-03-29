@@ -1,5 +1,6 @@
 import zlib, re, sys, pathlib, requests, subprocess
 from pathlib import Path
+from server import server
 def encode6bit(b):
     if b < 10: return chr(48 + b)
     b -= 10
@@ -60,7 +61,7 @@ def md_to_png(md_file: str):
     print(uml_text)
 
     encoded = encode_plantuml(uml_text)
-    server = ""
+
     url = f"{server}{encoded}"
     print("=== URL ===")
     print(url)

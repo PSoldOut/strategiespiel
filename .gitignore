@@ -1,1 +1,2 @@
-render.py
+server.py
+__pycache__/*
