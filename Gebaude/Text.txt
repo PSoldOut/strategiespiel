@@ -1,3 +1,7 @@
 Grid Snap System zum Platzieren?
 
 Wie Fein?
+
+AOE2 Mauer Bauverhalten
+
+Besseres Builder verhalten nicht selbst einbauen
