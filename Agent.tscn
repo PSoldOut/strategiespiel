@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://cup08pke0mlve"]
+
+[ext_resource type="Texture2D" uid="uid://cnp4bv53ka1en" path="res://purple/texture_02.png" id="1_h5bnm"]
+[ext_resource type="Texture2D" uid="uid://ecwnox5tfwam" path="res://texture_02_normal.png" id="2_c810y"]
+
+[sub_resource type="GDScript" id="GDScript_fvag4"]
+script/source = "extends CharacterBody3D
+
+@onready var navigation_agent_3d: NavigationAgent3D = $NavigationAgent3D
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(\"ui_accept\"):
+		var random_position := Vector3.ZERO
+		random_position.x = randf_range(-50.0, 50.0)
+		random_position.z = randf_range(-50.0, 50.0)
+		navigation_agent_3d.set_target_position(random_position)
+		
+func _physics_process(delta: float) -> void:
+	var destination = navigation_agent_3d.get_next_path_position()
+	var local_destination = destination - global_position
+	var direction = local_destination.normalized()
+	
+	velocity = direction * 5.0
+	move_and_slide()
+"
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_kva58"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f5c0m"]
+albedo_texture = ExtResource("1_h5bnm")
+normal_enabled = true
+normal_texture = ExtResource("2_c810y")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_b2ar6"]
+material = SubResource("StandardMaterial3D_f5c0m")
+
+[node name="Agent" type="CharacterBody3D" unique_id=901319167]
+script = SubResource("GDScript_fvag4")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1403128487]
+shape = SubResource("CapsuleShape3D_kva58")
+disabled = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=568868584]
+mesh = SubResource("CapsuleMesh_b2ar6")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=222574760]
+avoidance_enabled = true
