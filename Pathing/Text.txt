@@ -1,3 +1,3 @@
 Nativ Start Backing
 
-Grid für kleine path und path checking?
+Grid für kleine path Way Points und path checking?
