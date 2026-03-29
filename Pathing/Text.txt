@@ -8,3 +8,6 @@ Swarming
 Path Caching Arbeiter
 
 
+Wenn Runtime Backing zu viel wird.
+Gebaude Grid für Way Points benutzen.
+Way Points so setzen das Units nicht durch Gebaude laufen.
