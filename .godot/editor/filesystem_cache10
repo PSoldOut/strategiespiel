@@ -1,3 +1,12 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1774195947
-icon.svg::CompressedTexture2D::4169077956137597000::1774195944::1774195947::1::::<><><>0<>0<>34b49a429f985e1548c37d112171a7f9<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+::res://::1775314338
+icon.svg::CompressedTexture2D::4169077956137597000::1775313116::1775313197::1::::<><><>0<>0<>34b49a429f985e1548c37d112171a7f9<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+main.tscn::PackedScene::1152371257522817041::1775314338::0::1::::<><><>0<>0<><>::
+::res://Units/::0
+::res://Units/gd/::0
+unit.gd::GDScript::880852060996632623::1775314658::0::1::::<>Node3D<><>0<>0<><>::
+::res://Units/tscn/::0
+lancer.tscn::PackedScene::799831748508113137::1775314557::0::1::::<><><>0<>0<><>::
+lance.tscn::PackedScene::3738901846088914601::1775314650::0::1::::<><><>0<>0<><>::
+ritter.tscn::PackedScene::8654240905403989571::1775314476::0::1::::<><><>0<>0<><>::
+schwert&schild.tscn::PackedScene::1652503118297205771::1775314450::0::1::::<><><>0<>0<><>::

@@ -1,0 +1,78 @@
+[gd_scene format=3 uid="uid://qohnerc578uf"]
+
+[ext_resource type="Script" uid="uid://c6mf2uf40u2sc" path="res://camera_3d.gd" id="1_5vw27"]
+[ext_resource type="Script" uid="uid://hpwynfmqmcb1" path="res://spawn_tester.gd" id="1_272bh"]
+[ext_resource type="PackedScene" uid="uid://bixgt8tpbdxvh" path="res://Units/tscn/unit.tscn" id="2_5vw27"]
+[ext_resource type="PackedScene" uid="uid://lnpd2rwqri7j" path="res://Units/tscn/lancer.tscn" id="3_kek77"]
+[ext_resource type="PackedScene" uid="uid://dvkgc3kqjeaxf" path="res://Units/tscn/ritter.tscn" id="4_4c57u"]
+[ext_resource type="PackedScene" uid="uid://btjffxhpp1sd2" path="res://Units/tscn/lance.tscn" id="5_efxa6"]
+[ext_resource type="PackedScene" uid="uid://xsqqqtqicsdn" path="res://Units/tscn/schwert&schild.tscn" id="6_dg77c"]
+
+[sub_resource type="Environment" id="Environment_7dm0k"]
+ambient_light_source = 3
+ambient_light_color = Color(0.98234254, 0.9823423, 0.9823424, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_272bh"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5vw27"]
+
+[node name="main" type="Node3D" unique_id=1497122719]
+
+[node name="Pivot" type="Node3D" parent="." unique_id=775453112 node_paths=PackedStringArray("target")]
+script = ExtResource("1_5vw27")
+target = NodePath(".")
+
+[node name="Camera3D" type="Camera3D" parent="Pivot" unique_id=820772809]
+transform = Transform3D(1, 0, 0, 0, 0.9926162, 0.12129766, 0, -0.12129766, 0.9926162, 0, 1.2076938, 4.474905)
+
+[node name="SpawnTester" type="Control" parent="Pivot/Camera3D" unique_id=876545644 node_paths=PackedStringArray("spawn_parent", "camera")]
+layout_mode = 3
+anchors_preset = 0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_272bh")
+unit_scene = ExtResource("2_5vw27")
+body_scenes = Array[PackedScene]([ExtResource("3_kek77"), ExtResource("4_4c57u")])
+weapon_scenes = Array[PackedScene]([ExtResource("5_efxa6"), ExtResource("6_dg77c")])
+spawn_parent = NodePath("../../..")
+camera = NodePath("..")
+
+[node name="BodySelect" type="OptionButton" parent="Pivot/Camera3D/SpawnTester" unique_id=1455076525]
+layout_mode = 0
+offset_right = 32.0
+offset_bottom = 20.0
+
+[node name="WeaponSelect" type="OptionButton" parent="Pivot/Camera3D/SpawnTester" unique_id=1825227706]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 32.0
+offset_right = 33.0
+offset_bottom = 52.0
+
+[node name="SpawnButton" type="Button" parent="Pivot/Camera3D/SpawnTester" unique_id=71403288]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 69.0
+offset_right = 45.0
+offset_bottom = 97.0
+text = "Spawn"
+
+[node name="World" type="Node3D" parent="." unique_id=280994350]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="World" unique_id=1033416437]
+environment = SubResource("Environment_7dm0k")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="World" unique_id=1085598165]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 3, 10)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="World" unique_id=1203391094]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="World/Ground" unique_id=1548197798]
+shape = SubResource("BoxShape3D_272bh")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="World/Ground" unique_id=1403301906]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
+mesh = SubResource("BoxMesh_5vw27")

@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bixgt8tpbdxvh"]
+
+[ext_resource type="Script" uid="uid://msxrfqyj1536" path="res://Units/gd/unit.gd" id="1_xivwj"]
+
+[node name="Unit" type="Node3D" unique_id=1872439523]
+script = ExtResource("1_xivwj")
+body_socket_path = NodePath("body_socket")
+weapon_socket_path = NodePath("weapon_socket")
+
+[node name="body_socket" type="Node3D" parent="." unique_id=1596862037]
+
+[node name="weapon_socket" type="Node3D" parent="." unique_id=190554313]
