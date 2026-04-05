@@ -24,9 +24,10 @@ func _ready() -> void:
 		if weapon != null:
 			weapon_select.add_item(weapon.resource_path.get_file().get_basename(), i)
 	
-	spawn_button.pressed.connect(_on_spawn_button_pressed)
+	spawn_button.pressed.connect(on_spawn_button_pressed)
 
-func _on_spawn_button_pressed() -> void:
+func on_spawn_button_pressed() -> void:
+	print("SPAWN BUTTON PRESSED")
 	if unit_scene == null or spawn_parent == null:
 		return
 	
@@ -57,3 +58,4 @@ func _on_spawn_button_pressed() -> void:
 	
 	if camera != null and camera.has_method("focus_on"):
 		camera.focus_on(unit)
+	get_viewport().gui_release_focus()

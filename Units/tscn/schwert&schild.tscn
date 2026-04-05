@@ -8,11 +8,13 @@
 
 [node name="Schwert&Schild" type="Node3D" unique_id=1612307905]
 script = ExtResource("1_r23q1")
+shield_path = NodePath("Shield")
+sword_path = NodePath("Sword")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1857188164]
+[node name="Shield" type="MeshInstance3D" parent="." unique_id=1857188164]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 0)
 mesh = SubResource("BoxMesh_ig7tw")
 
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=1128805320]
+[node name="Sword" type="MeshInstance3D" parent="." unique_id=1128805320]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
 mesh = SubResource("BoxMesh_0xm2m")

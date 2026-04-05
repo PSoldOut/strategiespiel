@@ -9,6 +9,7 @@ class_name Unit
 
 var body_instance: Node3D
 var weapon_instance: Node3D
+var _is_moving: bool = false
 
 func setup(body_scene: PackedScene, weapon_scene: PackedScene) -> void:
 	var body_socket := get_node_or_null(body_socket_path) as Node3D
@@ -41,7 +42,7 @@ func setup(body_scene: PackedScene, weapon_scene: PackedScene) -> void:
 
 func _process(delta: float) -> void:
 	_handle_movement(delta)
-	_update_idle(delta)
+	_update_animation(delta)
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("attack"):
@@ -59,24 +60,27 @@ func _handle_movement(delta: float) -> void:
 	if Input.is_action_pressed("down"):
 		input.z += 1.0
 	
-	if input != Vector3.ZERO:
+	_is_moving = input != Vector3.ZERO
+	
+	if _is_moving:
 		input = input.normalized()
 		global_position += input * move_speed * delta
-		
-		if body_instance != null and body_instance.has_method("play_move"):
-			body_instance.play_move(delta)
-	else:
-		if body_instance != null and body_instance.has_method("play_idle"):
-			body_instance.play_idle(delta)
 
-func _update_idle(delta: float) -> void:
+func _update_animation(delta: float) -> void:
+	if body_instance != null and body_instance.has_method("set_moving"):
+		body_instance.set_moving(_is_moving)
+	
 	if body_instance != null and body_instance.has_method("update_animation"):
 		body_instance.update_animation(delta)
+	
+	if weapon_instance != null and weapon_instance.has_method("set_moving"):
+		weapon_instance.set_moving(_is_moving)
 	
 	if weapon_instance != null and weapon_instance.has_method("update_animation"):
 		weapon_instance.update_animation(delta)
 
 func attack() -> void:
+	
 	if body_instance != null and body_instance.has_method("play_attack"):
 		body_instance.play_attack()
 	

@@ -2,8 +2,8 @@ extends Node3D
 class_name UnitWeapon
 
 @export var attack_duration: float = 0.25
-@export var attack_angle_deg: float = 45.0
 @export var return_speed: float = 12.0
+@export var attack_angle: float = deg_to_rad(55.0)
 
 var _base_rotation: Vector3
 var _attacking: bool = false
@@ -17,15 +17,14 @@ func update_animation(delta: float) -> void:
 		_attack_timer += delta
 		
 		var half_duration := attack_duration * 0.5
-		var target_angle := deg_to_rad(attack_angle_deg)
 		var rot := _base_rotation
 		
 		if _attack_timer <= half_duration:
 			var t := _attack_timer / half_duration
-			rot.x = lerp(_base_rotation.x, _base_rotation.x - target_angle, t)
+			rot.x = lerp(_base_rotation.x, _base_rotation.x - attack_angle, t)
 		elif _attack_timer <= attack_duration:
 			var t := (_attack_timer - half_duration) / half_duration
-			rot.x = lerp(_base_rotation.x - target_angle, _base_rotation.x, t)
+			rot.x = lerp(_base_rotation.x - attack_angle, _base_rotation.x, t)
 		else:
 			rot = _base_rotation
 			_attacking = false
