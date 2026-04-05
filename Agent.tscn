@@ -16,10 +16,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		navigation_agent_3d.set_target_position(random_position)
 		
 func _physics_process(delta: float) -> void:
+	#var speed = 8
+	#var next_pos = navigation_agent_3d.get_next_path_position()
+	#var dir = (next_pos - global_position).normalized()
+	#global_position += dir * speed * delta
+	
 	var destination = navigation_agent_3d.get_next_path_position()
 	var local_destination = destination - global_position
 	var direction = local_destination.normalized()
-	
 	velocity = direction * 5.0
 	move_and_slide()
 "
@@ -46,3 +50,4 @@ mesh = SubResource("CapsuleMesh_b2ar6")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=222574760]
 avoidance_enabled = true
+debug_enabled = true
