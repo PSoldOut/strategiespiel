@@ -2,11 +2,37 @@
 
 [ext_resource type="Script" uid="uid://msxrfqyj1536" path="res://Units/gd/unit.gd" id="1_xivwj"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xivwj"]
+albedo_color = Color(1, 0.019607844, 0.019607844, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_001pk"]
+material = SubResource("StandardMaterial3D_xivwj")
+radius = 0.1
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v7enw"]
+albedo_color = Color(0, 1, 0, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_b1do3"]
+material = SubResource("StandardMaterial3D_v7enw")
+radius = 0.1
+height = 1.0
+
 [node name="Unit" type="Node3D" unique_id=1872439523]
 script = ExtResource("1_xivwj")
 body_socket_path = NodePath("body_socket")
 weapon_socket_path = NodePath("weapon_socket")
+target_path = NodePath("Target")
+move_path = NodePath("Move")
 
 [node name="body_socket" type="Node3D" parent="." unique_id=1596862037]
 
 [node name="weapon_socket" type="Node3D" parent="." unique_id=190554313]
+
+[node name="Target" type="MeshInstance3D" parent="." unique_id=1695142083]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 1.5, 0)
+mesh = SubResource("CapsuleMesh_001pk")
+
+[node name="Move" type="MeshInstance3D" parent="." unique_id=1044653915]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 1.5, 0)
+mesh = SubResource("CapsuleMesh_b1do3")

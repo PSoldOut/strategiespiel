@@ -17,6 +17,8 @@ size = Vector3(20, 1, 20)
 
 [sub_resource type="BoxMesh" id="BoxMesh_5vw27"]
 
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_272bh"]
+
 [node name="main" type="Node3D" unique_id=1497122719]
 
 [node name="Pivot" type="Node3D" parent="." unique_id=775453112 node_paths=PackedStringArray("target")]
@@ -26,7 +28,7 @@ target = NodePath(".")
 [node name="Camera3D" type="Camera3D" parent="Pivot" unique_id=820772809]
 transform = Transform3D(1, 0, 0, 0, 0.9926162, 0.12129766, 0, -0.12129766, 0.9926162, 0, 1.2076938, 4.474905)
 
-[node name="SpawnTester" type="Control" parent="Pivot/Camera3D" unique_id=876545644 node_paths=PackedStringArray("spawn_parent", "camera")]
+[node name="SpawnTester" type="Control" parent="Pivot/Camera3D" unique_id=876545644 node_paths=PackedStringArray("spawn_parent", "camera", "target_node")]
 layout_mode = 3
 anchors_preset = 0
 size_flags_horizontal = 3
@@ -37,6 +39,7 @@ body_scenes = Array[PackedScene]([ExtResource("3_kek77"), ExtResource("4_4c57u")
 weapon_scenes = Array[PackedScene]([ExtResource("5_efxa6"), ExtResource("6_dg77c")])
 spawn_parent = NodePath("../../..")
 camera = NodePath("..")
+target_node = NodePath("../../../World/Enemy")
 
 [node name="BodySelect" type="OptionButton" parent="Pivot/Camera3D/SpawnTester" unique_id=1455076525]
 layout_mode = 0
@@ -76,3 +79,8 @@ shape = SubResource("BoxShape3D_272bh")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="World/Ground" unique_id=1403301906]
 transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
 mesh = SubResource("BoxMesh_5vw27")
+
+[node name="Enemy" type="Node3D" parent="World" unique_id=1632828372]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="World/Enemy" unique_id=1394663274]
+mesh = SubResource("CapsuleMesh_272bh")

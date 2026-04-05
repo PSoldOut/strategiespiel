@@ -6,6 +6,7 @@ class_name SpawnTester
 @export var weapon_scenes: Array[PackedScene] = []
 @export var spawn_parent: Node3D
 @export var camera: Camera3D
+@export var target_node: Node3D
 
 @onready var body_select: OptionButton = $BodySelect
 @onready var weapon_select: OptionButton = $WeaponSelect
@@ -28,6 +29,7 @@ func _ready() -> void:
 
 func on_spawn_button_pressed() -> void:
 	print("SPAWN BUTTON PRESSED")
+	
 	if unit_scene == null or spawn_parent == null:
 		return
 	
@@ -37,12 +39,10 @@ func on_spawn_button_pressed() -> void:
 	if weapon_select.selected < 0 or weapon_select.selected >= weapon_scenes.size():
 		return
 	
-	# Alte Unit entfernen
 	if current_unit != null and is_instance_valid(current_unit):
 		current_unit.queue_free()
 		current_unit = null
 	
-	# Neue Unit erzeugen
 	var unit := unit_scene.instantiate() as Unit
 	if unit == null:
 		return
@@ -51,11 +51,13 @@ func on_spawn_button_pressed() -> void:
 	unit.global_position = Vector3.ZERO
 	unit.setup(
 		body_scenes[body_select.selected],
-		weapon_scenes[weapon_select.selected]
+		weapon_scenes[weapon_select.selected],
+		target_node
 	)
 	
 	current_unit = unit
 	
 	if camera != null and camera.has_method("focus_on"):
 		camera.focus_on(unit)
+	
 	get_viewport().gui_release_focus()
