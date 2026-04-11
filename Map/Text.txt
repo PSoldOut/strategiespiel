@@ -1,0 +1,33 @@
+Per Hand (Handcrafted Maps)
+→ höchste Qualität, aber zeitaufwendig
+Per Generator (Procedural Generation)
+→ skalierbar, benötigt gute Regeln
+Fertige Map-Tiles (Modularsystem)
+→ Kombination aus Qualität und Effizienz
+Automatisierter Generator mit Regeln
+→ nutzt Tiles + Constraints für faire Maps
+
+Map-Aufteilung
+Die Map ist in Tiles unterteilt
+Tile-Anzahl abhängig vom Spielmodus:
+1v1 → 2 × 2 Tiles
+2v2 → 3 × 3 Tiles
+(skalierbar für größere Modi)
+
+Subtiles (Feinraster)
+Jedes Tile besteht aus Subtiles
+Beispiel:
+64 × 64 Subtiles pro Tile
+Subtiles definieren:
+Gebäudeplatzierung
+Laufwege
+Terrain-Details
+Wenn ein Gebäude 2 × 2 Subtiles groß ist
+Dann passen bei 64×64:
+32 Gebäude nebeneinander
+
+Fairness & Symmetrie
+Es wird nur ein Tile aktiv generiert
+Die restlichen Tiles entstehen durch:
+Spiegeln
+Rotieren
