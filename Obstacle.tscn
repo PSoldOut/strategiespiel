@@ -1,15 +1,15 @@
 [gd_scene format=3 uid="uid://dduq3ctm1qwv0"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_js7pq"]
+size = Vector3(4, 4, 4)
 
 [sub_resource type="BoxMesh" id="BoxMesh_eu7l1"]
+size = Vector3(4, 4, 4)
 
 [node name="obstacle" type="StaticBody3D" unique_id=434767217]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2001168844]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
 shape = SubResource("BoxShape3D_js7pq")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1525475962]
-transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0)
 mesh = SubResource("BoxMesh_eu7l1")
