@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://dhqolqfuect4g"]
+
+[ext_resource type="Script" uid="uid://dy5tejtxfjrqr" path="res://map.gd" id="1_c7s6e"]
+[ext_resource type="Script" uid="uid://de6avpuca83iu" path="res://camera_2d.gd" id="2_wijl4"]
+
+[node name="Main" type="Node2D" unique_id=723482838]
+
+[node name="RTSMapPreview" type="Node2D" parent="." unique_id=1620362810]
+script = ExtResource("1_c7s6e")
+metadata/_custom_type_script = "uid://dy5tejtxfjrqr"
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1998249979]
+script = ExtResource("2_wijl4")
