@@ -31,3 +31,12 @@ Es wird nur ein Tile aktiv generiert
 Die restlichen Tiles entstehen durch:
 Spiegeln
 Rotieren
+
+Player Tile
+Friendly Tile
+Neutral Tile
+
+P F N | N F P
+F F N | N F F
+N N N | N N N
+-------------
