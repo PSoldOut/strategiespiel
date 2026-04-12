@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://dvadknl0jmcdd"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_ibe1a"]
+size = Vector3(2, 2, 4)
+
+[node name="RampTile" type="Node3D" unique_id=1887325062]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=943883986]
+mesh = SubResource("BoxMesh_ibe1a")

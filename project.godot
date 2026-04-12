@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="strategiespiel"
-run/main_scene="uid://dhqolqfuect4g"
+run/main_scene="uid://qohnerc578uf"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
