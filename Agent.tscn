@@ -7,6 +7,8 @@
 script/source = "extends CharacterBody3D
 
 @onready var navigation_agent_3d: NavigationAgent3D = $NavigationAgent3D
+@onready var mesh: MeshInstance3D = $MeshInstance3D
+var selected
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(\"ui_accept\"):
@@ -26,6 +28,26 @@ func _physics_process(delta: float) -> void:
 	var direction = local_destination.normalized()
 	velocity = direction * 5.0
 	move_and_slide()
+	
+	
+func select():
+	selected = true
+	var mat = mesh.get_active_material(0)
+	if mat:
+		mat = mat.duplicate()
+		mat.albedo_color = Color(0.514, 0.753, 0.276, 1.0) # grün
+		mesh.set_surface_override_material(0, mat)
+		
+		
+func deselect():
+	selected = false
+	var mat = mesh.get_active_material(0)
+	if mat:
+		mat = mat.duplicate()
+		mat.albedo_color = Color(0.783, 0.0, 1.0, 1.0) # grün
+		mesh.set_surface_override_material(0, mat)
+	
+	
 "
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_kva58"]
@@ -38,7 +60,7 @@ normal_texture = ExtResource("2_c810y")
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_b2ar6"]
 material = SubResource("StandardMaterial3D_f5c0m")
 
-[node name="Agent" type="CharacterBody3D" unique_id=901319167]
+[node name="Agent" type="CharacterBody3D" unique_id=901319167 groups=["units"]]
 script = SubResource("GDScript_fvag4")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1403128487]

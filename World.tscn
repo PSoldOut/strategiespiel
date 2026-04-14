@@ -17,13 +17,8 @@ var state = \"place\"
 func _ready() -> void:
 	navRegion.bake_navigation_mesh()
 	
-	preview_obj = obstacle.instantiate()
-	add_child(preview_obj)
-
-	# Transparent machen
-	set_transparent(preview_obj)
 	
-	for i in range(1000):  
+	for i in range(500):  
 		var file = get_node(\"Agents\")
 		var agent = AgentScene.instantiate()
 		agent.position = Vector3( randf_range(-50.0, 50.0), 1,  randf_range(-50.0, 50.0))
@@ -33,86 +28,10 @@ func _ready() -> void:
 	pass # Replace with function body.
 
 
-func set_transparent(obj):
-	for child in obj.get_children():
-		if child is MeshInstance3D:
-			
-			var mat = child.get_active_material(0)
-			
-			# Falls kein Material vorhanden → neues erstellen
-			if mat == null:
-				mat = StandardMaterial3D.new()
-			
-			# WICHTIG: duplizieren!
-			mat = mat.duplicate()
-			
-			# Transparenz aktivieren
-			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			mat.albedo_color = Color(1, 1, 1, 0.3)
-			
-			# Optional: weniger Glanz / besser sichtbar
-			mat.metallic = 0
-			mat.roughness = 1
-			
-			child.set_surface_override_material(0, mat)
 
-
-
-func _input(event):
-	if event is InputEventMouseButton and event.pressed and state == \"place\":
-		if event.button_index == MOUSE_BUTTON_LEFT:
-
-			var obj = obstacle.instantiate()
-			obj.global_position = preview_obj.global_position
-			
-			navRegion.add_child(obj)
-			navRegion.bake_navigation_mesh()
 	
 	
 				
-
-
-
-
-
-
-
-
-
-
-func _process(delta):
-	
-	if state == \"place\":
-		var camera = get_viewport().get_camera_3d()
-		var mouse_pos = get_viewport().get_mouse_position()
-
-		var from = camera.project_ray_origin(mouse_pos)
-		var to = from + camera.project_ray_normal(mouse_pos) * 10000
-
-		var space_state = get_world_3d().direct_space_state
-		var query = PhysicsRayQueryParameters3D.create(from, to)
-		var result = space_state.intersect_ray(query)
-
-		if result:
-			var pos = result.position
-			
-			var grid_size = 2.0
-			pos = pos.snapped(Vector3(grid_size, 0, grid_size))
-			
-			pos.y = 2
-			preview_obj.global_position = pos
-
-
-func _on_button_pressed() -> void:
-	state = \"place\"
-	print(state)
-	pass # Replace with function body.
-
-
-func _on_button_2_pressed() -> void:
-	state = \"choose\"
-	print(state)
-	pass # Replace with function body.
 "
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_bah7m"]
@@ -200,6 +119,72 @@ uv1_triplanar = true
 material = SubResource("StandardMaterial3D_bcbcq")
 size = Vector2(100, 100)
 
+[sub_resource type="GDScript" id="GDScript_cmany"]
+script/source = "extends Control
+
+var is_selecting = false
+var select_start = Vector2.ZERO
+var select_end = Vector2.ZERO
+@onready var camera : Camera3D = $\"../Camera3D\"
+
+func _process(delta):
+	if is_selecting:
+		queue_redraw()
+
+func _draw():
+	if is_selecting:
+		var rect = Rect2(select_start, select_end - select_start).abs()
+		
+		draw_rect(rect, Color(0, 1, 0, 0.2), true)
+		draw_rect(rect, Color(0, 1, 0, 1), false)
+		
+		
+		
+func _input(event):
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			
+			if event.pressed:
+				is_selecting = true
+				select_start = event.position
+				select_end = event.position
+			else:
+				is_selecting = false
+				queue_redraw()
+				select_units()
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			var pos = camera.project_position(event.position, 10000)
+			#pos.y = 0
+			print(pos)
+			for unit in get_tree().get_nodes_in_group(\"units\"):
+				if unit.selected:
+					unit.navigation_agent_3d.set_target_position(pos)
+			draw_circle(Vector2(event.position), 5, Color(0, 1, 0, 0.2), true)
+	elif event is InputEventMouseMotion and is_selecting:
+		select_end = event.position
+		select_units()
+		
+		
+		
+		
+		
+		
+		
+	
+func select_units():
+	var rect = Rect2(select_start, select_end - select_start).abs()
+	var camera = get_viewport().get_camera_3d()
+
+	for unit in get_tree().get_nodes_in_group(\"units\"):
+		var screen_pos = camera.unproject_position(unit.global_transform.origin)
+		
+		if rect.has_point(screen_pos):
+			print(\"select()\")
+			unit.select()
+		else:
+			unit.deselect()
+"
+
 [node name="World" type="Node3D" unique_id=983696813]
 script = SubResource("GDScript_eu7l1")
 
@@ -231,23 +216,15 @@ distance_fade_length = 618.31
 spot_range = 4096.0
 spot_angle = 50.35
 
-[node name="Agents" type="Node3D" parent="." unique_id=2033754415]
-
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1017127216]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
 mesh = SubResource("PlaneMesh_js7pq")
 
-[node name="Button2" type="Button" parent="." unique_id=1415311359]
-offset_left = 10.0
-offset_top = 37.0
-offset_right = 145.0
-offset_bottom = 75.0
-text = "auswählen"
+[node name="Agents" type="Node3D" parent="." unique_id=260396588]
 
-[node name="Button" type="Button" parent="." unique_id=1843940482]
-offset_right = 150.0
-offset_bottom = 35.0
-text = "platzieren"
-
-[connection signal="pressed" from="Button2" to="." method="_on_button_2_pressed"]
-[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
+[node name="Control" type="Control" parent="." unique_id=1702670883]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = SubResource("GDScript_cmany")

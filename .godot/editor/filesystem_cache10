@@ -1,12 +1,12 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1775816057
-Agent.tscn::PackedScene::6209161565989701098::1774888076::0::1::::<><><>0<>0<><>::uid://cnp4bv53ka1en::::res://purple/texture_02.png<>uid://ecwnox5tfwam::::res://texture_02_normal.png
+::res://::1776190717
+Agent.tscn::PackedScene::6209161565989701098::1776009573::0::1::::<><><>0<>0<><>::uid://cnp4bv53ka1en::::res://purple/texture_02.png<>uid://ecwnox5tfwam::::res://texture_02_normal.png
 icon.png::CompressedTexture2D::557325075131260776::1775408824::1775408824::1::::<><><>0<>0<>0e1a00cf23d949a71514519660827b87<>res://.godot/imported/icon.png-487276ed1e3a0c39cad0279d744ee560.bptc.ctex::
 icon.svg::CompressedTexture2D::4169077956137597000::1774805594::1774805594::1::::<><><>0<>0<>34b49a429f985e1548c37d112171a7f9<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
-Obstacle.tscn::PackedScene::7412137746166805403::1774806199::0::1::::<><><>0<>0<><>::
+Obstacle.tscn::PackedScene::7412137746166805403::1776004488::0::1::::<><><>0<>0<><>::
 texture_01_normal.png::CompressedTexture2D::5503239358561514670::1774805594::1774805594::1::::<><><>0<>0<>8f21aa43a37af8c4a711660a8a32ff82<>res://.godot/imported/texture_01_normal.png-230a86f3cb6e504eaab874d13f1b1c68.s3tc.ctex::
 texture_02_normal.png::CompressedTexture2D::286243891467953596::1774805594::1774805594::1::::<><><>0<>0<>e152ce7e6f4f9047bdbb50517fcffc62<>res://.godot/imported/texture_02_normal.png-b97bff8d5ca7e036003a9c23fe377abd.s3tc.ctex::
-World.tscn::PackedScene::8614523027983812056::1774891534::0::1::::<><><>0<>0<><>::uid://beixf4evuwg4::::res://black/texture_01.png<>uid://ckn2svyskjngg::::res://texture_01_normal.png
+World.tscn::PackedScene::8614523027983812056::1776009525::0::1::::<><><>0<>0<><>::
 ::res://addons/::1775408821
 ::res://addons/terrain_3d/::1775408823
 LICENSE.txt::TextFile::-1::1775408821::0::1::::<><><>0<>0<><>::
@@ -82,7 +82,7 @@ region_mover.gd::GDScript::3312089740165276770::1775408823::0::1::::<>Terrain3D<
 ::res://addons/terrain_3d/utils/::1775408823
 terrain_3d_objects.gd::GDScript::7256511001583860152::1775408823::0::1::::Terrain3DObjects<>Node3D<><>0<>1<><>::
 transform_changed_notifier.gd::GDScript::5546349407322732584::1775408823::0::1::::<>Node3D<><>0<>1<><>::
-::res://black/::1774805594
+::res://black/::1775819360
 texture_01.png::CompressedTexture2D::78973471482911089::1774805594::1774805594::1::::<><><>0<>0<>11f5641518e4ebfa36e54b1645e283e9<>res://.godot/imported/texture_01.png-70edf4d20e0ed092dfced0c81be02ae7.s3tc.ctex::
 texture_02.png::CompressedTexture2D::5713617241871490179::1774805594::1775819360::1::::<><><>0<>0<>9013558b41e4e160a899e0e91bd87f12<>res://.godot/imported/texture_02.png-5b286183c1087a59359c3fd237adf52e.s3tc.ctex::
 ::res://demo/::1775408824
@@ -143,7 +143,7 @@ texture_02.png::CompressedTexture2D::6854218828608673512::1774805594::1774805594
 ::res://light/::1774805594
 texture_01.png::CompressedTexture2D::4096404817160514392::1774805594::1774805594::1::::<><><>0<>0<>de441ae1d3fe0d87ae2eedf68673591c<>res://.godot/imported/texture_01.png-16d9f0ea36590d46ffee623a4f803d45.ctex::
 texture_02.png::CompressedTexture2D::9080660525420813334::1774805594::1774805594::1::::<><><>0<>0<>54dc75eacd161d2b4419a38d999cf648<>res://.godot/imported/texture_02.png-1e4b2300b078352bc4347705cdb0c163.ctex::
-::res://orange/::1774805594
+::res://orange/::1775819486
 texture_01.png::CompressedTexture2D::4177196718822157199::1774805594::1774805594::1::::<><><>0<>0<>3de50b6553e3cf29bc7630bd8e2046af<>res://.godot/imported/texture_01.png-a7ca0658eb18bae3740dd2d99acf2fc5.ctex::
 texture_02.png::CompressedTexture2D::8543118454763813509::1774805594::1775819486::1::::<><><>0<>0<>a8e9226ca28a596c10b5d1488eed2252<>res://.godot/imported/texture_02.png-320c7604c5d2214f138862aec1541dd9.s3tc.ctex::
 ::res://purple/::1774805594

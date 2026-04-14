@@ -1,9 +1,9 @@
+Node3D
 Control
 Button
 MeshInstance3D
 CollisionShape3D
 Area3D
-Node3D
 StaticBody3D
 SpotLight3D
 Camera3D
