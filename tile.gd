@@ -3,7 +3,8 @@ class_name RTSMapTile
 
 
 @export var base_color: Color
-var cell_value = null
+var tile_value = null
+var height_value = null
 var grid_x: int = 0
 var grid_y: int = 0
 
@@ -40,8 +41,9 @@ func _create_material_variation() -> void:
 
 	mesh_instance.material_override = mat
 
-func set_tile_data(value, x: int, y: int) -> void:
-	cell_value = value
+func set_tile_data(tvalue,hvalue, x: int, y: int) -> void:
+	tile_value = tvalue
+	height_value = hvalue
 	grid_x = x
 	grid_y = y
 

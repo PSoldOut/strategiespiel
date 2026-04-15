@@ -11,7 +11,8 @@ class_name RTSCamera
 
 @onready var pivot: Node3D = $CameraPivot
 @onready var camera: Camera3D = $CameraPivot/Camera3D
-
+@onready var tile_palette: Control
+@onready var map_spawner: Node
 var rotating: bool = false
 var hovered_tile: RTSMapTile = null
 
@@ -19,6 +20,8 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	pivot.rotation_degrees.x = fixed_pitch
 	camera.current = true
+	tile_palette = get_node("../CanvasLayer/TilePalette")
+	map_spawner = get_node("../MapSpawner")
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -136,7 +139,10 @@ func _on_left_click() -> void:
 	if hovered_tile == null:
 		return
 
-	print("Clicked tile: ", hovered_tile.grid_x, ", ", hovered_tile.grid_y)
-	# später:
-	# menu öffnen
-	# tiletyp ändern
+	var selected_tile = tile_palette.selected_tile_type
+	var selected_height = tile_palette.selected_height
+	
+	print("CLICKED TILE:", hovered_tile.grid_x, hovered_tile.grid_y)
+	print("SET TYPE:", selected_tile)
+	print("SET HEIGHT:", selected_height)
+	map_spawner.change_tile(hovered_tile.grid_x, hovered_tile.grid_y,selected_tile,selected_height)

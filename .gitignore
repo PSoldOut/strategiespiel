@@ -1,2 +1,4 @@
 .godot/*
 .editorconfig
+*.tmp
+*.uid

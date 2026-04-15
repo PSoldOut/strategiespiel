@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://qohnerc578uf"]
 
 [ext_resource type="Script" uid="uid://d136ewifpasie" path="res://MapSpawner.gd" id="1_glv2v"]
-[ext_resource type="PackedScene" uid="uid://cmqdulnmdopv3" path="res://StandardTile.tscn" id="2_uu6xs"]
 [ext_resource type="Script" uid="uid://cn38j4lnl77ud" path="res://Camera3d.gd" id="3_r0du0"]
+[ext_resource type="Script" uid="uid://b1nqrux4bgxl" path="res://tile_palette.gd" id="4_cm0pq"]
 
 [sub_resource type="Sky" id="Sky_r0du0"]
 
@@ -13,7 +13,6 @@ sky = SubResource("Sky_r0du0")
 
 [node name="MapSpawner" type="Node" parent="." unique_id=240773457]
 script = ExtResource("1_glv2v")
-tile_scene = ExtResource("2_uu6xs")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=391484330]
 environment = SubResource("Environment_uu6xs")
@@ -28,3 +27,37 @@ max_height = 400.0
 [node name="CameraPivot" type="Node3D" parent="CameraRig" unique_id=1346926082]
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig/CameraPivot" unique_id=1802260107]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2110217429]
+
+[node name="TilePalette" type="Control" parent="CanvasLayer" unique_id=680693362]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("4_cm0pq")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/TilePalette" unique_id=255865906]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="InfoLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=992015370]
+layout_mode = 2
+text = "Tile"
+
+[node name="OptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1677351984]
+layout_mode = 2
+
+[node name="HeightLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=759716586]
+layout_mode = 2
+text = "Height:"
+
+[node name="OptionButton2" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=157174930]
+layout_mode = 2
+
+[node name="SaveButton" type="Button" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1932528074]
+layout_mode = 2
+text = "Save"
+
+[connection signal="pressed" from="CanvasLayer/TilePalette/VBoxContainer/SaveButton" to="MapSpawner" method="_on_save_pressed"]
