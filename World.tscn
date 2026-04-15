@@ -52,52 +52,80 @@ size = Vector2(100, 100)
 resource_name = "Camera"
 script/source = "extends Camera3D
 
-
-@export var speed := 25.0
-@export var fast_speed := 50.0
-@export var mouse_sensitivity := 0.002
+@export var speed := 50.0
+@export var edge_speed := 40.0
+@export var zoom_speed := 5.0
+@export var mouse_sensitivity := 0.003
 
 var yaw := 0.0
-var pitch := 0.0
+var pitch := -0.7
 
 func _ready():
-	pass
+	_update_rotation()
 
 func _input(event):
+	# 🖱️ Rotation mit mittlerer Maustaste
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_MIDDLE):
 		yaw -= event.relative.x * mouse_sensitivity
 		pitch -= event.relative.y * mouse_sensitivity
-		pitch = clamp(pitch, -1.5, 1.5)
+		pitch = clamp(pitch, -1.2, -0.2)
+		_update_rotation()
+
+	# 🔍 Zoom entlang Blickrichtung
+	if event is InputEventMouseButton and event.pressed:
+		var forward = -transform.basis.z.normalized()
 		
-		# Matrix-basierte Rotation
-		var rot = Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch)
-		transform.basis = rot
-		
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			global_translate(forward * zoom_speed)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			global_translate(-forward * zoom_speed)
 
 func _process(delta):
-	var current_speed = speed
-	if Input.is_key_pressed(KEY_SHIFT):
-		current_speed = fast_speed
-	
-	var move_x := 0.0
-	var move_y := 0.0
-	var move_z := 0.0
-	
-	if Input.is_key_pressed(KEY_W): move_z += 1
-	if Input.is_key_pressed(KEY_S): move_z -= 1
-	if Input.is_key_pressed(KEY_A): move_x -= 1
-	if Input.is_key_pressed(KEY_D): move_x += 1
-	if Input.is_key_pressed(KEY_SPACE): move_y += 1
-	if Input.is_key_pressed(KEY_CTRL): move_y -= 1
-	
-	if move_x != 0 or move_y != 0 or move_z != 0:
-		# Lokale Achsen aus Transform
-		var fwd = transform.basis.z.normalized()
-		var right = transform.basis.x.normalized()
-		var up = transform.basis.y.normalized()
-		
-		var movement = (-fwd * move_z + right * move_x + up * move_y).normalized() * current_speed * delta
+	var move_dir = Vector3.ZERO
+
+	# 🎮 WASD
+	if Input.is_key_pressed(KEY_W): move_dir.z += 1
+	if Input.is_key_pressed(KEY_S): move_dir.z -= 1
+	if Input.is_key_pressed(KEY_A): move_dir.x -= 1
+	if Input.is_key_pressed(KEY_D): move_dir.x += 1
+
+	# 🖱️ Edge Scrolling
+	var mouse_pos = get_viewport().get_mouse_position()
+	var screen_size = get_viewport().get_visible_rect().size
+	var edge := 20
+
+	if mouse_pos.x < edge:
+		move_dir.x -= 1
+	elif mouse_pos.x > screen_size.x - edge:
+		move_dir.x += 1
+
+	if mouse_pos.y < edge:
+		move_dir.z += 1
+	elif mouse_pos.y > screen_size.y - edge:
+		move_dir.z -= 1
+
+	if move_dir != Vector3.ZERO:
+		move_dir = move_dir.normalized()
+
+		# 🔥 LOKALE Richtungen aus Matrix (FIX!)
+		var basis = transform.basis.orthonormalized()
+
+		var forward = -basis.z
+		var right = basis.x
+
+		# Nur XZ Bewegung (RTS typisch)
+		forward.y = 0
+		right.y = 0
+
+		forward = forward.normalized()
+		right = right.normalized()
+
+		var movement = (forward * move_dir.z + right * move_dir.x) * speed * delta
 		global_translate(movement)
+
+func _update_rotation():
+	var rot = Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch)
+	transform.basis = rot
 "
 
 [sub_resource type="Gradient" id="Gradient_c6gwx"]
@@ -153,20 +181,93 @@ func _input(event):
 				queue_redraw()
 				select_units()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			var pos = camera.project_position(event.position, 10000)
-			#pos.y = 0
-			print(pos)
+			var camera = get_viewport().get_camera_3d()
+			var mouse_pos = get_viewport().get_mouse_position()
+			var from = camera.project_ray_origin(mouse_pos)
+			var to = from + camera.project_ray_normal(mouse_pos) * 10000
+			var space_state = camera.get_world_3d().direct_space_state
+			var query = PhysicsRayQueryParameters3D.create(from, to)
+			var result = space_state.intersect_ray(query)
+			var pos
+			if result:
+				pos = result.position
+			
+			var units : Array
 			for unit in get_tree().get_nodes_in_group(\"units\"):
 				if unit.selected:
-					unit.navigation_agent_3d.set_target_position(pos)
-			draw_circle(Vector2(event.position), 5, Color(0, 1, 0, 0.2), true)
+					units.append(unit)
+			#var positions = get_formation_positions(pos,units[0].position, units.size(), 1.4)
+			var positions = get_formation_positions_simple(pos, units.size(), 1.4)
+			
+			for i in range(units.size()):
+				var unit = units[i]
+				unit.navigation_agent_3d.set_target_position(positions[i])
+			
 	elif event is InputEventMouseMotion and is_selecting:
 		select_end = event.position
 		select_units()
 		
 		
 		
+
+func get_formation_positions_simple(center: Vector3, unit_count: int, spacing: float) -> Array:
+	var positions = []
+	
+	var cols = ceil(sqrt(unit_count))
+	var rows = ceil(float(unit_count) / cols)
+	
+	var start_x = - (cols - 1) * spacing / 2.0
+	var start_z = - (rows - 1) * spacing / 2.0
+	
+	var i = 0
+	for row in range(rows):
+		for col in range(cols):
+			if i >= unit_count:
+				break
+			
+			var offset = Vector3(
+				start_x + col * spacing,
+				0,
+				start_z + row * spacing
+			)
+			
+			positions.append(center + offset)
+			i += 1
+	
+	return positions
 		
+		
+		
+		
+		
+func get_formation_positions(center: Vector3, target: Vector3, unit_count: int, spacing: float) -> Array:
+	var positions = []
+	
+	var direction = (target - center).normalized()
+	var right = direction.cross(Vector3.UP).normalized()
+	
+	var cols = ceil(sqrt(unit_count))
+	var rows = ceil(float(unit_count) / cols)
+	
+	var i = 0
+	for row in range(rows):
+		for col in range(cols):
+			if i >= unit_count:
+				break
+			
+			var x_offset = (col - (cols - 1) / 2.0) * spacing
+			var z_offset = (row - (rows - 1) / 2.0) * spacing
+			
+			var offset = right * x_offset + direction * z_offset
+			
+			positions.append(center + offset)
+			i += 1
+	
+	return positions
+
+
+
+
 		
 		
 		

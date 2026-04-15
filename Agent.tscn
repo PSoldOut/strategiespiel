@@ -35,7 +35,7 @@ func select():
 	var mat = mesh.get_active_material(0)
 	if mat:
 		mat = mat.duplicate()
-		mat.albedo_color = Color(0.514, 0.753, 0.276, 1.0) # grün
+		mat.albedo_color = Color(0.917, 0.0, 0.66, 1.0) # grün
 		mesh.set_surface_override_material(0, mat)
 		
 		
@@ -44,7 +44,7 @@ func deselect():
 	var mat = mesh.get_active_material(0)
 	if mat:
 		mat = mat.duplicate()
-		mat.albedo_color = Color(0.783, 0.0, 1.0, 1.0) # grün
+		mat.albedo_color = Color(0.0, 0.323, 0.899, 1.0) # grün
 		mesh.set_surface_override_material(0, mat)
 	
 	
@@ -72,4 +72,3 @@ mesh = SubResource("CapsuleMesh_b2ar6")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=222574760]
 avoidance_enabled = true
-debug_enabled = true
