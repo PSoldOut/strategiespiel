@@ -17,7 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-EnumMappings="*uid://boe8udme6oyo3"
+EnumMappings="*uid://ch671e5wgdxbl"
 
 [physics]
 

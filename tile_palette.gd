@@ -6,24 +6,37 @@ signal save_requested
 
 @onready var option_button: OptionButton = $VBoxContainer/OptionButton
 @onready var height_button: OptionButton = $VBoxContainer/OptionButton2
+@onready var direction_button: OptionButton = $VBoxContainer/OptionButton3
 @onready var info_label: Label = $VBoxContainer/InfoLabel
 @onready var save_button: Button = $VBoxContainer/SaveButton
 
 var selected_tile_type: int = EnumMappings.TileEnums.STANDAD_TILE
 var selected_height: float = 0.0
+var selected_direction: int = 0
 
 func _ready() -> void:
 	option_button.clear()
 	option_button.add_item(tile_type_to_string(EnumMappings.TileEnums.STANDAD_TILE), EnumMappings.TileEnums.STANDAD_TILE)
 	option_button.add_item(tile_type_to_string(EnumMappings.TileEnums.GOLD_TILE), EnumMappings.TileEnums.GOLD_TILE)
-
+	option_button.add_item(tile_type_to_string(EnumMappings.TileEnums.RAMP_TILE), EnumMappings.TileEnums.RAMP_TILE)
 	_update_label()
 	setup_height_options()
+	setup_Direction_options()
 
 	option_button.item_selected.connect(_on_item_selected)
 	save_button.pressed.connect(_on_save_pressed)
 
 
+func setup_Direction_options():
+	direction_button.clear()
+
+	direction_button.add_item("North", 0)
+	direction_button.add_item("East", 1)
+	direction_button.add_item("South", 2)
+	direction_button.add_item("West", 3)
+
+	direction_button.item_selected.connect(_on_direction_selected)
+	
 func setup_height_options():
 	height_button.clear()
 
@@ -39,6 +52,18 @@ func setup_height_options():
 	height_button.add_item("-2", 8)
 
 	height_button.item_selected.connect(_on_height_selected)
+
+
+func _on_direction_selected(index: int):
+	match index:
+		0: selected_direction = 0
+		1: selected_direction = 1
+		2: selected_direction = 2
+		3: selected_direction = 3
+		4: selected_direction = 4
+		
+	print("DIRECTION SELECTED:", selected_direction)
+	
 
 
 func _on_height_selected(index: int):
@@ -75,5 +100,7 @@ func tile_type_to_string(tile_type: int) -> String:
 			return "StandardTile"
 		EnumMappings.TileEnums.GOLD_TILE:
 			return "GoldTile"
+		EnumMappings.TileEnums.RAMP_TILE:
+			return "RampTile"
 		_:
 			return "Unknown"

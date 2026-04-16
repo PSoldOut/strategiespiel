@@ -3,8 +3,9 @@ class_name RTSMapTile
 
 
 @export var base_color: Color
-var tile_value = null
-var height_value = null
+var tile_value = 0
+var height_value = 0
+var news_value = 0
 var grid_x: int = 0
 var grid_y: int = 0
 
@@ -41,11 +42,13 @@ func _create_material_variation() -> void:
 
 	mesh_instance.material_override = mat
 
-func set_tile_data(tvalue,hvalue, x: int, y: int) -> void:
+func set_tile_data(tvalue,hvalue,newsvalue, x: int, y: int) -> void:
 	tile_value = tvalue
 	height_value = hvalue
+	news_value = newsvalue
 	grid_x = x
 	grid_y = y
+	update_ramp_visual()
 
 func set_selected(selected: bool) -> void:
 	if selector != null:
@@ -54,6 +57,25 @@ func set_selected(selected: bool) -> void:
 func set_hovered(hovered: bool) -> void:
 	if selector != null:
 		selector.visible = hovered
+
+func update_ramp_visual():
+	match news_value:
+		EnumMappings.NEWSEnums.NONE:
+			# normales Tile
+			pass
+		
+		EnumMappings.NEWSEnums.NORTH:
+			rotation.y = deg_to_rad(90)
+		
+		EnumMappings.NEWSEnums.EAST:
+			rotation.y = deg_to_rad(180)
+		
+		EnumMappings.NEWSEnums.SOUTH:
+			rotation.y = 0
+		
+		EnumMappings.NEWSEnums.WEST:
+			rotation.y = deg_to_rad(-180)
+
 
 
 func _setup_selector() -> void:

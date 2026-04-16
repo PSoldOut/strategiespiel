@@ -141,8 +141,9 @@ func _on_left_click() -> void:
 
 	var selected_tile = tile_palette.selected_tile_type
 	var selected_height = tile_palette.selected_height
+	var selected_news = tile_palette.selected_direction
 	
 	print("CLICKED TILE:", hovered_tile.grid_x, hovered_tile.grid_y)
 	print("SET TYPE:", selected_tile)
 	print("SET HEIGHT:", selected_height)
-	map_spawner.change_tile(hovered_tile.grid_x, hovered_tile.grid_y,selected_tile,selected_height)
+	map_spawner.change_tile(hovered_tile.grid_x, hovered_tile.grid_y,selected_tile,selected_height,selected_news)

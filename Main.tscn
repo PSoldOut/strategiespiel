@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://d136ewifpasie" path="res://MapSpawner.gd" id="1_glv2v"]
 [ext_resource type="Script" uid="uid://cn38j4lnl77ud" path="res://Camera3d.gd" id="3_r0du0"]
-[ext_resource type="Script" uid="uid://b1nqrux4bgxl" path="res://tile_palette.gd" id="4_cm0pq"]
+[ext_resource type="Script" uid="uid://o2bu1ousvjyw" path="res://tile_palette.gd" id="4_cm0pq"]
 
 [sub_resource type="Sky" id="Sky_r0du0"]
 
@@ -54,6 +54,9 @@ layout_mode = 2
 text = "Height:"
 
 [node name="OptionButton2" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=157174930]
+layout_mode = 2
+
+[node name="OptionButton3" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1283421965]
 layout_mode = 2
 
 [node name="SaveButton" type="Button" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1932528074]
