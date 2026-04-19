@@ -7,9 +7,8 @@ enum TileEnums {
 	RAMP_TILE,
 }
 enum NEWSEnums {
-	NONE,
 	NORTH,
 	EAST,
-	SOUTH,
 	WEST,
+	SOUTH,
 }

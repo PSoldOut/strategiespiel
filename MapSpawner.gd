@@ -9,8 +9,8 @@ var tile_scenes: Dictionary[int, PackedScene] = {
 
 @export var map_file_path: String = "res://map_save.json"
 
-const MAP_WIDTH: int = 64
-const MAP_HEIGHT: int = 64
+const MAP_WIDTH: int = 16
+const MAP_HEIGHT: int = 16
 const TILE_SIZE: float = 2.0
 
 var map_data: Array = []
@@ -24,7 +24,7 @@ func _ready() -> void:
 func make_cell(
 	tile_type: int = EnumMappings.TileEnums.STANDAD_TILE,
 	height: float = 0.0,
-	ramp: int = EnumMappings.NEWSEnums.NONE
+	ramp: int = EnumMappings.NEWSEnums.NORTH
 ) -> Dictionary:
 	return {
 		"type": tile_type,
@@ -62,11 +62,11 @@ func ensure_map_size(input_map: Array, width: int, height: int) -> Array:
 						row.append({
 							"type": value.get("type", EnumMappings.TileEnums.STANDAD_TILE),
 							"height": float(value.get("height", 0.0)),
-							"ramp": value.get("ramp", EnumMappings.NEWSEnums.NONE)
+							"ramp": value.get("ramp", EnumMappings.NEWSEnums.NORTH)
 						})
 					else:
 						# Fallback für alte Maps mit nur int TileType
-						row.append(make_cell(value, 0.0, EnumMappings.NEWSEnums.NONE))
+						row.append(make_cell(value, 0.0, EnumMappings.NEWSEnums.NORTH))
 				else:
 					row.append(make_cell())
 		else:
@@ -153,7 +153,7 @@ func spawn_single_tile(x: int, y: int) -> void:
 
 	var tile_type: int = cell.get("type", EnumMappings.TileEnums.STANDAD_TILE)
 	var height_value: float = float(cell.get("height", 0.0))
-	var ramp_value: int = cell.get("ramp", EnumMappings.NEWSEnums.NONE)
+	var ramp_value: int = cell.get("ramp", EnumMappings.NEWSEnums.NORTH)
 
 	var scene: PackedScene = get_scene_for_cell(tile_type)
 	if scene == null:

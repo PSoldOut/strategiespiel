@@ -32,8 +32,8 @@ func setup_Direction_options():
 
 	direction_button.add_item("North", 0)
 	direction_button.add_item("East", 1)
-	direction_button.add_item("South", 2)
-	direction_button.add_item("West", 3)
+	direction_button.add_item("West", 2)
+	direction_button.add_item("South", 3)
 
 	direction_button.item_selected.connect(_on_direction_selected)
 	
@@ -60,7 +60,6 @@ func _on_direction_selected(index: int):
 		1: selected_direction = 1
 		2: selected_direction = 2
 		3: selected_direction = 3
-		4: selected_direction = 4
 		
 	print("DIRECTION SELECTED:", selected_direction)
 	

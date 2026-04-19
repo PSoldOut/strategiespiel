@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://hai7ynhiwwj"]
+
+[ext_resource type="PackedScene" uid="uid://mescuh1qhtas" path="res://camera_rig.tscn" id="1_xlsqw"]
+[ext_resource type="Script" uid="uid://bujkgvhi3etof" path="res://map_spawner.gd" id="2_5jqo3"]
+
+[sub_resource type="Environment" id="Environment_r5ywq"]
+
+[node name="Chunktester" type="Node3D" unique_id=847253469]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1408009270]
+environment = SubResource("Environment_r5ywq")
+
+[node name="CameraRig" parent="." unique_id=289443321 instance=ExtResource("1_xlsqw")]
+
+[node name="MapSpawner" type="Node" parent="." unique_id=856339379]
+script = ExtResource("2_5jqo3")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=2146380385]

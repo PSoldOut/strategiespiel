@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://qohnerc578uf"]
 
 [ext_resource type="Script" uid="uid://d136ewifpasie" path="res://MapSpawner.gd" id="1_glv2v"]
-[ext_resource type="Script" uid="uid://cn38j4lnl77ud" path="res://Camera3d.gd" id="3_r0du0"]
+[ext_resource type="PackedScene" uid="uid://mescuh1qhtas" path="res://camera_rig.tscn" id="2_r0du0"]
 [ext_resource type="Script" uid="uid://o2bu1ousvjyw" path="res://tile_palette.gd" id="4_cm0pq"]
 
 [sub_resource type="Sky" id="Sky_r0du0"]
@@ -20,13 +20,7 @@ environment = SubResource("Environment_uu6xs")
 [node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=1213681869]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 339.19098, 0)
 
-[node name="CameraRig" type="Node3D" parent="." unique_id=1215891353]
-script = ExtResource("3_r0du0")
-max_height = 400.0
-
-[node name="CameraPivot" type="Node3D" parent="CameraRig" unique_id=1346926082]
-
-[node name="Camera3D" type="Camera3D" parent="CameraRig/CameraPivot" unique_id=1802260107]
+[node name="CameraRig" parent="." unique_id=289443321 instance=ExtResource("2_r0du0")]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2110217429]
 

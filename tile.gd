@@ -60,21 +60,21 @@ func set_hovered(hovered: bool) -> void:
 
 func update_ramp_visual():
 	match news_value:
-		EnumMappings.NEWSEnums.NONE:
-			# normales Tile
-			pass
-		
 		EnumMappings.NEWSEnums.NORTH:
-			rotation.y = deg_to_rad(90)
-		
-		EnumMappings.NEWSEnums.EAST:
+			print("NORTH")
 			rotation.y = deg_to_rad(180)
 		
+		EnumMappings.NEWSEnums.EAST:
+			print("EAST")
+			rotation.y = deg_to_rad(90)
+		
 		EnumMappings.NEWSEnums.SOUTH:
+			print("SOUTH")
 			rotation.y = 0
 		
 		EnumMappings.NEWSEnums.WEST:
-			rotation.y = deg_to_rad(-180)
+			print("WEST")
+			rotation.y = deg_to_rad(270)
 
 
 
