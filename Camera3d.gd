@@ -57,6 +57,11 @@ func _handle_movement(delta: float) -> void:
 		move_input.y += 1.0
 	if Input.is_key_pressed(KEY_E):
 		move_input.y -= 1.0
+		
+	if Input.is_key_pressed(KEY_Y):
+		pivot.rotation.y += 1*delta
+	if Input.is_key_pressed(KEY_X):
+		pivot.rotation.y -= 1*delta
 
 	if move_input != Vector3.ZERO:
 		move_input = move_input.normalized()

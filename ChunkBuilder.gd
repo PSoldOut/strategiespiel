@@ -2,7 +2,7 @@ extends Node3D
 class_name ChunkBuilder
 
 @export var tile_size: float = 2.0
-@export var tile_height_step: float = 1.0
+@export var tile_height_step: float = 0.5
 @export var build_collision: bool = true
 
 var mesh_instance: MeshInstance3D
@@ -126,38 +126,42 @@ func get_tile_color(tile_type: int) -> Color:
 
 func get_cell_corner_heights(cell: Dictionary) -> Dictionary:
 	var tile_type: int = cell.get("type", EnumMappings.TileEnums.STANDAD_TILE)
-	var center_height: float = float(cell.get("height", 0.0))
+	var base_height: float = float(cell.get("height", 0.0))
 	var ramp_dir: int = cell.get("ramp", EnumMappings.NEWSEnums.NORTH)
 
-	var h_sw := center_height
-	var h_se := center_height
-	var h_nw := center_height
-	var h_ne := center_height
+	var h_sw := base_height
+	var h_se := base_height
+	var h_nw := base_height
+	var h_ne := base_height
 
-	if tile_type == EnumMappings.TileEnums.RAMP_TILE and ramp_dir != EnumMappings.NEWSEnums.NORTH:
-		var low := center_height - tile_height_step * 0.5
-		var high := center_height + tile_height_step * 0.5
+	if tile_type == EnumMappings.TileEnums.RAMP_TILE:
+		var low := base_height - tile_height_step
+		var high := base_height 
 
 		match ramp_dir:
 			EnumMappings.NEWSEnums.NORTH:
+				# south low -> north high
 				h_sw = low
 				h_se = low
 				h_nw = high
 				h_ne = high
 
 			EnumMappings.NEWSEnums.SOUTH:
+				# north low -> south high
 				h_sw = high
 				h_se = high
 				h_nw = low
 				h_ne = low
 
 			EnumMappings.NEWSEnums.EAST:
+				# west low -> east high
 				h_sw = low
 				h_nw = low
 				h_se = high
 				h_ne = high
 
 			EnumMappings.NEWSEnums.WEST:
+				# east low -> west high
 				h_sw = high
 				h_nw = high
 				h_se = low
