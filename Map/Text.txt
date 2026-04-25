@@ -32,6 +32,8 @@ Die restlichen Tiles entstehen durch:
 Spiegeln
 Rotieren
 
+Tile 2mx2m
+
 Player Tile
 Friendly Tile
 Neutral Tile
