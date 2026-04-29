@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://qohnerc578uf"]
 
-[ext_resource type="Script" uid="uid://d136ewifpasie" path="res://MapSpawner.gd" id="1_glv2v"]
+[ext_resource type="Script" uid="uid://4bhr8psh2phb" path="res://main.gd" id="1_cm0pq"]
+[ext_resource type="Script" uid="uid://y2q0223sp5xk" path="res://map_spawner.gd" id="1_glv2v"]
 [ext_resource type="PackedScene" uid="uid://mescuh1qhtas" path="res://camera_rig.tscn" id="2_r0du0"]
-[ext_resource type="Script" uid="uid://o2bu1ousvjyw" path="res://tile_palette.gd" id="4_cm0pq"]
+[ext_resource type="Script" uid="uid://b4ink7a4mlehu" path="res://tile_palette.gd" id="4_cm0pq"]
 
 [sub_resource type="Sky" id="Sky_r0du0"]
 
@@ -10,17 +11,7 @@
 sky = SubResource("Sky_r0du0")
 
 [node name="Main" type="Node3D" unique_id=1233364208]
-
-[node name="MapSpawner" type="Node" parent="." unique_id=240773457]
-script = ExtResource("1_glv2v")
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=391484330]
-environment = SubResource("Environment_uu6xs")
-
-[node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=1213681869]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 339.19098, 0)
-
-[node name="CameraRig" parent="." unique_id=289443321 instance=ExtResource("2_r0du0")]
+script = ExtResource("1_cm0pq")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2110217429]
 
@@ -57,4 +48,20 @@ layout_mode = 2
 layout_mode = 2
 text = "Save"
 
+[node name="ResetButton" type="Button" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=2126646576]
+layout_mode = 2
+text = "Reset"
+
+[node name="MapSpawner" type="Node3D" parent="." unique_id=1022773838]
+script = ExtResource("1_glv2v")
+
+[node name="CameraRig" parent="." unique_id=289443321 instance=ExtResource("2_r0du0")]
+
+[node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=1213681869]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 339.19098, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=391484330]
+environment = SubResource("Environment_uu6xs")
+
 [connection signal="pressed" from="CanvasLayer/TilePalette/VBoxContainer/SaveButton" to="MapSpawner" method="_on_save_pressed"]
+[connection signal="pressed" from="CanvasLayer/TilePalette/VBoxContainer/ResetButton" to="MapSpawner" method="_on_reset_button_pressed"]

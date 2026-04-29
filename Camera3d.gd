@@ -1,5 +1,4 @@
 extends Node3D
-class_name RTSCamera
 
 @export var move_speed: float = 12.0
 @export var fast_speed: float = 28.0
@@ -148,7 +147,7 @@ func _on_left_click() -> void:
 	var selected_height = tile_palette.selected_height
 	var selected_news = tile_palette.selected_direction
 	
-	print("CLICKED TILE:", hovered_tile.grid_x, hovered_tile.grid_y)
-	print("SET TYPE:", selected_tile)
-	print("SET HEIGHT:", selected_height)
-	map_spawner.change_tile(hovered_tile.grid_x, hovered_tile.grid_y,selected_tile,selected_height,selected_news)
+	#print("CLICKED TILE:", hovered_tile.grid_x, hovered_tile.grid_y)
+	#print("SET TYPE:", selected_tile)
+	#print("SET HEIGHT:", selected_height)
+	#map_spawner.change_tile(hovered_tile.grid_x, hovered_tile.grid_y,selected_tile,selected_height,selected_news)

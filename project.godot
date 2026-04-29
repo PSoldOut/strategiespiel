@@ -11,13 +11,13 @@ config_version=5
 [application]
 
 config/name="strategiespiel"
-run/main_scene="uid://hai7ynhiwwj"
+run/main_scene="uid://qohnerc578uf"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
-EnumMappings="*uid://ch671e5wgdxbl"
+EnumMappings="*uid://cbca0nllrp72a"
 
 [physics]
 

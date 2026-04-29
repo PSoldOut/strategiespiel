@@ -10,15 +10,15 @@ signal save_requested
 @onready var info_label: Label = $VBoxContainer/InfoLabel
 @onready var save_button: Button = $VBoxContainer/SaveButton
 
-var selected_tile_type: int = EnumMappings.TileEnums.STANDAD_TILE
+var selected_tile_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE
 var selected_height: float = 0.0
 var selected_direction: int = 0
 
 func _ready() -> void:
 	option_button.clear()
-	option_button.add_item(tile_type_to_string(EnumMappings.TileEnums.STANDAD_TILE), EnumMappings.TileEnums.STANDAD_TILE)
-	option_button.add_item(tile_type_to_string(EnumMappings.TileEnums.GOLD_TILE), EnumMappings.TileEnums.GOLD_TILE)
-	option_button.add_item(tile_type_to_string(EnumMappings.TileEnums.RAMP_TILE), EnumMappings.TileEnums.RAMP_TILE)
+	option_button.add_item(tile_type_to_string(EnumMappings.TileTypeEnums.STANDAD_TILE), EnumMappings.TileTypeEnums.STANDAD_TILE)
+	option_button.add_item(tile_type_to_string(EnumMappings.TileTypeEnums.GOLD_TILE), EnumMappings.TileTypeEnums.GOLD_TILE)
+	option_button.add_item(tile_type_to_string(EnumMappings.TileTypeEnums.RAMP_TILE), EnumMappings.TileTypeEnums.RAMP_TILE)
 	_update_label()
 	setup_height_options()
 	setup_Direction_options()
@@ -30,10 +30,15 @@ func _ready() -> void:
 func setup_Direction_options():
 	direction_button.clear()
 
-	direction_button.add_item("North", 0)
-	direction_button.add_item("East", 1)
-	direction_button.add_item("West", 2)
-	direction_button.add_item("South", 3)
+	direction_button.add_item("Flat", EnumMappings.RampTypeEnums.FLAT)
+	direction_button.add_item("North", EnumMappings.RampTypeEnums.RAMP_N)
+	direction_button.add_item("East", EnumMappings.RampTypeEnums.RAMP_E)
+	direction_button.add_item("South", EnumMappings.RampTypeEnums.RAMP_S)
+	direction_button.add_item("West", EnumMappings.RampTypeEnums.RAMP_W)
+	direction_button.add_item("NE", EnumMappings.RampTypeEnums.RAMP_NE)
+	direction_button.add_item("NW", EnumMappings.RampTypeEnums.RAMP_NW)
+	direction_button.add_item("SE", EnumMappings.RampTypeEnums.RAMP_SE)
+	direction_button.add_item("SW", EnumMappings.RampTypeEnums.RAMP_SW)
 
 	direction_button.item_selected.connect(_on_direction_selected)
 	
@@ -55,13 +60,7 @@ func setup_height_options():
 
 
 func _on_direction_selected(index: int):
-	match index:
-		0: selected_direction = 0
-		1: selected_direction = 1
-		2: selected_direction = 2
-		3: selected_direction = 3
-		
-	print("DIRECTION SELECTED:", selected_direction)
+	selected_direction = direction_button.get_item_id(index)
 	
 
 
@@ -95,11 +94,11 @@ func _update_label() -> void:
 
 func tile_type_to_string(tile_type: int) -> String:
 	match tile_type:
-		EnumMappings.TileEnums.STANDAD_TILE:
+		EnumMappings.TileTypeEnums.STANDAD_TILE:
 			return "StandardTile"
-		EnumMappings.TileEnums.GOLD_TILE:
+		EnumMappings.TileTypeEnums.GOLD_TILE:
 			return "GoldTile"
-		EnumMappings.TileEnums.RAMP_TILE:
+		EnumMappings.TileTypeEnums.RAMP_TILE:
 			return "RampTile"
 		_:
 			return "Unknown"
