@@ -3,6 +3,7 @@ class_name MapSpawner
 
 @export var map_file_path: String = "res://MapSaveData.json"
 @export var map_tile_scene: PackedScene = preload("res://MapTile.tscn")
+@export var auto_ramp_enabled: bool = true
 
 const MAP_WIDTH: int = 16
 const MAP_HEIGHT: int = 16
@@ -172,11 +173,7 @@ func ensure_map_size(input_map: Array, width: int, height: int) -> Array:
 				var value = input_map[y][x]
 
 				if typeof(value) == TYPE_DICTIONARY:
-					row.append(make_cell(
-						int(value.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE)),
-						float(value.get("height", 0.0)),
-						int(value.get("ramp", EnumMappings.RampTypeEnums.FLAT))
-					))
+					row.append(normalize_cell(value))
 				else:
 					row.append(make_cell(int(value)))
 			else:
@@ -198,6 +195,28 @@ func make_cell(
 		"ramp": int(ramp),
 		"corners": make_corners(float(height), int(ramp), int(tile_type))
 	}
+
+func normalize_cell(value: Dictionary) -> Dictionary:
+	var tile_type := int(value.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var height := float(value.get("height", 0.0))
+	var ramp := int(value.get("ramp", EnumMappings.RampTypeEnums.FLAT))
+
+	var cell := make_cell(tile_type, height, ramp)
+
+	# Keep already saved corner data. Without this, auto-ramp corner changes
+	# would be overwritten every time the map is loaded from JSON.
+	if value.has("corners") and typeof(value["corners"]) == TYPE_DICTIONARY:
+		var saved_corners: Dictionary = value["corners"]
+		var corners: Dictionary = cell["corners"]
+
+		for key in ["sw", "se", "nw", "ne"]:
+			if saved_corners.has(key):
+				corners[key] = float(saved_corners[key])
+
+		cell["corners"] = corners
+
+	return cell
+
 
 func make_corners(height: float, ramp: int, tile_type: int) -> Dictionary:
 	var h_sw := height
@@ -297,9 +316,7 @@ func reset_map(
 	
 	
 func change_tile(grid_x: int, grid_y: int) -> void:
-	if grid_y < 0 or grid_y >= map_data.size():
-		return
-	if grid_x < 0 or grid_x >= map_data[grid_y].size():
+	if not is_valid_grid_pos(grid_x, grid_y):
 		return
 
 	map_data[grid_y][grid_x] = make_cell(
@@ -308,8 +325,67 @@ func change_tile(grid_x: int, grid_y: int) -> void:
 		selected_ramp
 	)
 
+	if auto_ramp_enabled:
+		apply_auto_ramp_to_neighbours(grid_x, grid_y)
+
 	save_map_to_json()
 	rebuild_map()
+
+
+func is_valid_grid_pos(grid_x: int, grid_y: int) -> bool:
+	return (
+		grid_y >= 0
+		and grid_y < map_data.size()
+		and grid_x >= 0
+		and grid_x < map_data[grid_y].size()
+	)
+
+
+func apply_auto_ramp_to_neighbours(grid_x: int, grid_y: int) -> void:
+	var tile_height := float(map_data[grid_y][grid_x].get("height", 0.0))
+
+	# Direct neighbours share an edge with the changed tile.
+	_apply_auto_ramp_corner_patch(grid_x, grid_y - 1, tile_height, ["sw", "se"]) # north tile, south edge
+	_apply_auto_ramp_corner_patch(grid_x, grid_y + 1, tile_height, ["nw", "ne"]) # south tile, north edge
+	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y, tile_height, ["se", "ne"]) # west tile, east edge
+	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y, tile_height, ["sw", "nw"]) # east tile, west edge
+
+	# Diagonal neighbours only touch at one corner, but that corner still borders
+	# the changed tile and must be pulled to the same height for clean joins.
+	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y - 1, tile_height, ["se"]) # north-west tile
+	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y - 1, tile_height, ["sw"]) # north-east tile
+	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y + 1, tile_height, ["ne"]) # south-west tile
+	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y + 1, tile_height, ["nw"]) # south-east tile
+
+
+func _apply_auto_ramp_corner_patch(grid_x: int, grid_y: int, target_height: float, corner_names: Array[String]) -> void:
+	if not is_valid_grid_pos(grid_x, grid_y):
+		return
+
+	var cell: Dictionary = map_data[grid_y][grid_x]
+	var neighbour_height := float(cell.get("height", 0.0))
+	var neighbour_ramp := int(cell.get("ramp", EnumMappings.RampTypeEnums.FLAT))
+	var neighbour_type := int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+
+	# This is the important part for removing ramps again:
+	# first restore the affected border/corner positions to the neighbour tile's
+	# own base corner values. Otherwise old auto-ramp values stay in the JSON
+	# when the height difference goes back from 0.5 to 0.0.
+	var base_corners := make_corners(neighbour_height, neighbour_ramp, neighbour_type)
+	var corners: Dictionary = cell.get("corners", base_corners.duplicate())
+
+	for corner_name in corner_names:
+		if base_corners.has(corner_name):
+			corners[corner_name] = base_corners[corner_name]
+
+	# Auto ramp only applies to one height step. Bigger cliffs and equal-height
+	# neighbours stay with their restored base corners.
+	if is_equal_approx(abs(neighbour_height - target_height), 0.5):
+		for corner_name in corner_names:
+			corners[corner_name] = target_height
+
+	cell["corners"] = corners
+	map_data[grid_y][grid_x] = cell
 
 func clear_children(node: Node) -> void:
 	for child in node.get_children():

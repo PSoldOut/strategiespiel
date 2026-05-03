@@ -4,16 +4,22 @@ class_name ChunkBuilder
 @export var tile_size: float = 2.0
 @export var tile_height_step: float = 0.5
 @export var build_collision: bool = true
+@export var show_tile_lines: bool = true
+@export var tile_line_color: Color = Color(0.0, 0.0, 0.0, 1.0)
+@export var tile_line_height_offset: float = 0.01
 
 var mesh_instance: MeshInstance3D
+var line_mesh_instance: MeshInstance3D
 var static_body: StaticBody3D
 var collision_shape: CollisionShape3D
 var debug_material: StandardMaterial3D
+var line_material: StandardMaterial3D
 
 
 func _ready() -> void:
 	ensure_nodes()
 	debug_material = create_debug_material()
+	line_material = create_line_material()
 
 
 func ensure_nodes() -> void:
@@ -22,6 +28,12 @@ func ensure_nodes() -> void:
 		mesh_instance = MeshInstance3D.new()
 		mesh_instance.name = "MeshInstance3D"
 		add_child(mesh_instance)
+
+	line_mesh_instance = get_node_or_null("TileLines")
+	if line_mesh_instance == null:
+		line_mesh_instance = MeshInstance3D.new()
+		line_mesh_instance.name = "TileLines"
+		add_child(line_mesh_instance)
 
 	if build_collision:
 		static_body = get_node_or_null("StaticBody3D")
@@ -46,6 +58,15 @@ func create_debug_material() -> StandardMaterial3D:
 	return mat
 
 
+func create_line_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = tile_line_color
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.no_depth_test = false
+	return mat
+
+
 func build_from_map(
 	map_data: Array,
 	start_x: int,
@@ -57,6 +78,10 @@ func build_from_map(
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var line_st := SurfaceTool.new()
+	if show_tile_lines:
+		line_st.begin(Mesh.PRIMITIVE_LINES)
 
 	for local_y in range(chunk_height):
 		for local_x in range(chunk_width):
@@ -71,6 +96,9 @@ func build_from_map(
 			var cell: Dictionary = map_data[map_y][map_x]
 
 			add_cell_top(st, local_x, local_y, cell, map_x, map_y)
+
+			if show_tile_lines:
+				add_cell_tile_lines(line_st, local_x, local_y, cell)
 
 			var north_cell := get_cell_safe(map_data, map_x, map_y - 1)
 			var south_cell := get_cell_safe(map_data, map_x, map_y + 1)
@@ -87,6 +115,17 @@ func build_from_map(
 
 	if mesh != null:
 		mesh.surface_set_material(0, debug_material)
+
+	if show_tile_lines:
+		var line_mesh := line_st.commit()
+		line_mesh_instance.mesh = line_mesh
+		line_mesh_instance.visible = true
+		if line_mesh != null:
+			line_material = create_line_material()
+			line_mesh.surface_set_material(0, line_material)
+	else:
+		line_mesh_instance.mesh = null
+		line_mesh_instance.visible = false
 
 	if build_collision and mesh != null:
 		var shape := mesh.create_trimesh_shape()
@@ -188,6 +227,33 @@ func add_quad(
 	st.set_uv(uv3)
 	st.set_color(color)
 	st.add_vertex(v3)
+
+
+func add_cell_tile_lines(line_st: SurfaceTool, local_x: int, local_y: int, cell: Dictionary) -> void:
+	var heights := get_cell_corner_heights(cell)
+
+	var x0 := local_x * tile_size
+	var x1 := (local_x + 1) * tile_size
+	var z0 := local_y * tile_size
+	var z1 := (local_y + 1) * tile_size
+	var o := tile_line_height_offset
+
+	var v_sw := Vector3(x0, heights["h_sw"] + o, z1)
+	var v_se := Vector3(x1, heights["h_se"] + o, z1)
+	var v_ne := Vector3(x1, heights["h_ne"] + o, z0)
+	var v_nw := Vector3(x0, heights["h_nw"] + o, z0)
+
+	add_debug_line(line_st, v_sw, v_se)
+	add_debug_line(line_st, v_se, v_ne)
+	add_debug_line(line_st, v_ne, v_nw)
+	add_debug_line(line_st, v_nw, v_sw)
+
+
+func add_debug_line(line_st: SurfaceTool, a: Vector3, b: Vector3) -> void:
+	line_st.set_color(tile_line_color)
+	line_st.add_vertex(a)
+	line_st.set_color(tile_line_color)
+	line_st.add_vertex(b)
 
 
 func add_cell_top(st: SurfaceTool, local_x: int, local_y: int, cell: Dictionary, map_x: int, map_y: int) -> void:
@@ -402,6 +468,16 @@ func save_as_scene(path: String) -> void:
 	mesh_copy.material_override = mesh_instance.material_override
 	root.add_child(mesh_copy)
 	mesh_copy.owner = root
+
+	# Optional tile line overlay
+	if show_tile_lines and line_mesh_instance != null and line_mesh_instance.mesh != null:
+		var line_copy := MeshInstance3D.new()
+		line_copy.name = "TileLines"
+		line_copy.mesh = line_mesh_instance.mesh
+		if line_material != null:
+			line_copy.material_override = line_material
+		root.add_child(line_copy)
+		line_copy.owner = root
 
 	# Collision
 	if build_collision and collision_shape != null and collision_shape.shape != null:
