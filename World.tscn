@@ -154,6 +154,13 @@ var is_selecting = false
 var select_start = Vector2.ZERO
 var select_end = Vector2.ZERO
 @onready var camera : Camera3D = $\"../Camera3D\"
+var units : Array = []
+var half : bool = false
+@onready var timer : Timer = $\"../Timer\"
+
+
+func _ready() -> void:
+	timer.start()
 
 func _process(delta):
 	if is_selecting:
@@ -180,6 +187,7 @@ func _input(event):
 				is_selecting = false
 				queue_redraw()
 				select_units()
+				
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			var camera = get_viewport().get_camera_3d()
 			var mouse_pos = get_viewport().get_mouse_position()
@@ -205,7 +213,11 @@ func _input(event):
 			
 	elif event is InputEventMouseMotion and is_selecting:
 		select_end = event.position
-		select_units()
+		if timer.is_stopped():
+			timer.start()
+			select_units_half()
+			
+		
 		
 		
 		
@@ -272,18 +284,63 @@ func get_formation_positions(center: Vector3, target: Vector3, unit_count: int, 
 		
 		
 	
+func select_units_half():
+	var rect = Rect2(select_start, select_end - select_start).abs()
+	var camera = get_viewport().get_camera_3d()
+	
+	if units.is_empty():
+		units = get_tree().get_nodes_in_group(\"units\")
+	if half:
+		for i in range(units.size()/2):
+			var unit = units[i]
+			var screen_pos = camera.unproject_position(unit.global_transform.origin)
+			
+			if rect.has_point(screen_pos):
+				unit.select()
+			else:
+				unit.deselect()
+		half=!half
+				
+	else:
+		for i in range(units.size()/2, units.size()):
+			var unit = units[i]
+			var screen_pos = camera.unproject_position(unit.global_transform.origin)
+			
+			if rect.has_point(screen_pos):
+				unit.select()
+			else:
+				unit.deselect()
+		half = !half
+		
+
+
+
 func select_units():
 	var rect = Rect2(select_start, select_end - select_start).abs()
 	var camera = get_viewport().get_camera_3d()
 
-	for unit in get_tree().get_nodes_in_group(\"units\"):
+	# Mindestgröße prüfen
+	var is_click = rect.size.length() < 5.0
+
+	if units.is_empty():
+		units = get_tree().get_nodes_in_group(\"units\")
+
+	for unit in units:
 		var screen_pos = camera.unproject_position(unit.global_transform.origin)
-		
-		if rect.has_point(screen_pos):
-			print(\"select()\")
-			unit.select()
+
+		if is_click:
+			# Abstand Maus -> Einheit prüfen
+			if screen_pos.distance_to(select_start) < 15.0:
+				unit.select()
+			else:
+				unit.deselect()
 		else:
-			unit.deselect()
+			# Normale Box-Auswahl
+			if rect.has_point(screen_pos):
+				unit.select()
+			else:
+				unit.deselect()
+		
 "
 
 [node name="World" type="Node3D" unique_id=983696813]
@@ -329,3 +386,8 @@ anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = SubResource("GDScript_cmany")
+
+[node name="Timer" type="Timer" parent="." unique_id=423444065]
+wait_time = 0.05
+one_shot = true
+autostart = true
