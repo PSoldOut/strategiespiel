@@ -19,14 +19,16 @@ var state = \"place\"
 func _ready() -> void:
 	navRegion.bake_navigation_mesh()
 	
-	
-	for i in range(1000):  
+	var arr : Array = []
+	for i in range(500):  
 		var file = get_node(\"Agents\")
 		var agent = AgentScene.instantiate()
 		agent.position = Vector3( randf_range(-50.0, 50.0), 1,  randf_range(-50.0, 50.0))
 		file.add_child(agent)
+		arr.append(agent)
 		
-	$DragSelection.units = get_tree().get_nodes_in_group(\"units\")
+	$DragSelection.set_units(arr)
+	#get_tree().get_nodes_in_group(\"units\")
 	pass # Replace with function body.
 
 

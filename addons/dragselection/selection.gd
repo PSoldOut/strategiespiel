@@ -1,10 +1,11 @@
 extends Control
-
+class_name DragSelection
 var is_selecting = false
 var select_start = Vector2.ZERO
 var select_end = Vector2.ZERO
 @onready var camera : Camera3D = $"../Camera3D"
 @export var units : Array = []
+var selection_units : Array = []
 var half : bool = false
 @onready var timer : Timer = Timer.new()
 
@@ -24,6 +25,10 @@ func _draw():
 		draw_rect(rect, Color(0, 1, 0, 0.2), true)
 		draw_rect(rect, Color(0, 1, 0, 1), false)
 		
+func set_units(arr : Array):
+	units = arr
+	for unit in units:
+		selection_units.append(unit.find_children("", "SelectionUnit", true, false)[0])
 		
 		
 func _input(event):
@@ -137,14 +142,13 @@ func get_formation_positions(center: Vector3, target: Vector3, unit_count: int, 
 		
 	
 func select_units_half():
+	if selection_units.is_empty():
+		return
 	var rect = Rect2(select_start, select_end - select_start).abs()
 	var camera = get_viewport().get_camera_3d()
-	
-	if units.is_empty():
-		return
 	if half:
-		for i in range(units.size()/2):
-			var unit = units[i]
+		for i in range(selection_units.size()/2):
+			var unit = selection_units[i]
 			var screen_pos = camera.unproject_position(unit.global_transform.origin)
 			
 			if rect.has_point(screen_pos):
@@ -154,8 +158,8 @@ func select_units_half():
 		half=!half
 				
 	else:
-		for i in range(units.size()/2, units.size()):
-			var unit = units[i]
+		for i in range(selection_units.size()/2, selection_units.size()):
+			var unit = selection_units[i]
 			var screen_pos = camera.unproject_position(unit.global_transform.origin)
 			
 			if rect.has_point(screen_pos):
@@ -174,15 +178,15 @@ func select_units():
 	# Mindestgröße prüfen
 	var is_click = rect.size.length() < 5.0
 
-	if units.is_empty():
+	if selection_units.is_empty():
 		return
 
-	for unit in units:
+	for unit in selection_units:
 		var screen_pos = camera.unproject_position(unit.global_transform.origin)
-
 		if is_click:
 			# Abstand Maus -> Einheit prüfen
 			if screen_pos.distance_to(select_start) < 15.0:
+				
 				unit.select()
 			else:
 				unit.deselect()

@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://cnp4bv53ka1en" path="res://purple/texture_02.png" id="1_h5bnm"]
 [ext_resource type="Texture2D" uid="uid://ecwnox5tfwam" path="res://texture_02_normal.png" id="2_c810y"]
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="3_c810y"]
 
 [sub_resource type="GDScript" id="GDScript_fvag4"]
 script/source = "extends CharacterBody3D
@@ -48,6 +49,16 @@ func deselect():
 		mesh.set_surface_override_material(0, mat)
 	
 	
+
+
+func _on_drag_selection_unit_selected() -> void:
+	select()
+	pass # Replace with function body.
+
+
+func _on_drag_selection_unit_deselected() -> void:
+	deselect()
+	pass # Replace with function body.
 "
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_kva58"]
@@ -72,3 +83,10 @@ mesh = SubResource("CapsuleMesh_b2ar6")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=222574760]
 avoidance_enabled = true
+
+[node name="DragSelectionUnit" type="Node3D" parent="." unique_id=426395741]
+script = ExtResource("3_c810y")
+metadata/_custom_type_script = "uid://bnpexxmljtv8g"
+
+[connection signal="deselected" from="DragSelectionUnit" to="." method="_on_drag_selection_unit_deselected"]
+[connection signal="selected" from="DragSelectionUnit" to="." method="_on_drag_selection_unit_selected"]
