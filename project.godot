@@ -13,7 +13,11 @@ config_version=5
 config/name="strategiespiel"
 run/main_scene="uid://duy662vx7mqeq"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="res://addons/dragselection/icon.svg"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/dragselection/plugin.cfg")
 
 [physics]
 
