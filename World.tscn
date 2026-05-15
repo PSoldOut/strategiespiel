@@ -183,6 +183,7 @@ func _input(event):
 				is_selecting = true
 				select_start = event.position
 				select_end = event.position
+				select_units()
 			else:
 				is_selecting = false
 				queue_redraw()
@@ -388,6 +389,6 @@ offset_bottom = 40.0
 script = SubResource("GDScript_cmany")
 
 [node name="Timer" type="Timer" parent="." unique_id=423444065]
-wait_time = 0.05
+wait_time = 0.25
 one_shot = true
 autostart = true
