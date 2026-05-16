@@ -143,9 +143,9 @@ func _on_left_click() -> void:
 	if hovered_tile == null:
 		return
 
-	var selected_tile = tile_palette.selected_tile_type
-	var selected_height = tile_palette.selected_height
-	var selected_news = tile_palette.selected_direction
+	#var selected_tile = tile_palette.selected_tile_type
+	#var selected_height = tile_palette.selected_height
+	#var selected_news = tile_palette.selected_direction
 	
 	#print("CLICKED TILE:", hovered_tile.grid_x, hovered_tile.grid_y)
 	#print("SET TYPE:", selected_tile)

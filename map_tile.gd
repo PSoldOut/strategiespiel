@@ -5,7 +5,6 @@ signal tile_clicked(tile: RTSMapTile)
 
 var tile_value: int = 0
 var height_value: float = 0.0
-var ramp_value: int = 0
 var grid_x: int = 0
 var grid_y: int = 0
 
@@ -25,10 +24,9 @@ func _ready() -> void:
 	click_body.set_meta("tile_ref", self)
 
 
-func set_tile_data(tvalue: int, hvalue: float, rvalue: int, x: int, y: int) -> void:
+func set_tile_data(tvalue: int, hvalue: float, x: int, y: int) -> void:
 	tile_value = tvalue
 	height_value = hvalue
-	ramp_value = rvalue
 	grid_x = x
 	grid_y = y
 

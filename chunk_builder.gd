@@ -137,15 +137,13 @@ func get_cell_safe(map_data: Array, x: int, y: int) -> Dictionary:
 	if y < 0 or y >= map_data.size():
 		return {
 			"type": EnumMappings.TileTypeEnums.STANDAD_TILE,
-			"height": 0.0,
-			"ramp": EnumMappings.RampTypeEnums.FLAT
+			"height": 0.0
 		}
 
 	if x < 0 or x >= map_data[y].size():
 		return {
 			"type": EnumMappings.TileTypeEnums.STANDAD_TILE,
-			"height": 0.0,
-			"ramp": EnumMappings.RampTypeEnums.FLAT
+			"height": 0.0
 		}
 
 	return map_data[y][x]
@@ -157,8 +155,6 @@ func get_tile_color(tile_type: int) -> Color:
 			return Color(0.2, 0.8, 0.2)
 		EnumMappings.TileTypeEnums.GOLD_TILE:
 			return Color(1.0, 0.85, 0.2)
-		EnumMappings.TileTypeEnums.RAMP_TILE:
-			return Color(0.7, 0.7, 0.75)
 		_:
 			return Color(0.5, 0.5, 0.5)
 
@@ -257,7 +253,7 @@ func add_debug_line(line_st: SurfaceTool, a: Vector3, b: Vector3) -> void:
 
 
 func add_cell_top(st: SurfaceTool, local_x: int, local_y: int, cell: Dictionary, map_x: int, map_y: int) -> void:
-	var tile_type: int = cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE)
+	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
 	var heights := get_cell_corner_heights(cell)
 	var color := get_tile_color(tile_type)
 
@@ -302,7 +298,7 @@ func add_south_side(
 	if top_left <= bottom_left and top_right <= bottom_right:
 		return
 
-	var tile_type: int = cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE)
+	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
 	var color := get_tile_color(tile_type)
 
 	var x0 := local_x * tile_size
@@ -345,7 +341,7 @@ func add_north_side(
 	if top_left <= bottom_left and top_right <= bottom_right:
 		return
 
-	var tile_type: int = cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE)
+	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
 	var color := get_tile_color(tile_type)
 
 	var x0 := local_x * tile_size
@@ -388,7 +384,7 @@ func add_east_side(
 	if top_left <= bottom_left and top_right <= bottom_right:
 		return
 
-	var tile_type: int = cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE)
+	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
 	var color := get_tile_color(tile_type)
 
 	var x := (local_x + 1) * tile_size
@@ -431,7 +427,7 @@ func add_west_side(
 	if top_left <= bottom_left and top_right <= bottom_right:
 		return
 
-	var tile_type: int = cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE)
+	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
 	var color := get_tile_color(tile_type)
 
 	var x := local_x * tile_size

@@ -13,11 +13,17 @@ const CHUNK_SIZE: int = 16
 var map_data: Array = []
 
 var selected_tile_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE
-var selected_height: float = 0.0
-var selected_ramp: int = EnumMappings.RampTypeEnums.FLAT
+var edit_mode: int = EnumMappings.EditMode.SET_TILE_TYPE
+
+const HEIGHT_STEP: float = 0.5
+const MIN_HEIGHT: float = -2.0
+const MAX_HEIGHT: float = 2.0
 
 var visual_root: Node3D
 var click_root: Node3D
+
+signal map_spawned(map_data: Array)
+
 
 
 func _ready() -> void:
@@ -33,10 +39,7 @@ func _ready() -> void:
 	rebuild_map()
 
 
-func set_palette(tile_type: int, height: float, ramp: int) -> void:
-	selected_tile_type = tile_type
-	selected_height = height
-	selected_ramp = ramp
+
 
 
 func rebuild_map() -> void:
@@ -45,7 +48,11 @@ func rebuild_map() -> void:
 
 	build_visual_chunks()
 	build_click_tiles()
+	call_deferred("_emit_map_spawned")
 
+
+func _emit_map_spawned() -> void:
+	map_spawned.emit(map_data)
 
 func build_visual_chunks() -> void:
 	var map_h := map_data.size()
@@ -94,7 +101,6 @@ func build_click_tiles() -> void:
 			tile.set_tile_data(
 				int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE)),
 				float(cell.get("height", 0.0)),
-				int(cell.get("ramp", EnumMappings.RampTypeEnums.FLAT)),
 				x,
 				y
 			)
@@ -186,110 +192,26 @@ func ensure_map_size(input_map: Array, width: int, height: int) -> Array:
 
 func make_cell(
 	tile_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE,
-	height: float = 0.0,
-	ramp: int = EnumMappings.RampTypeEnums.FLAT
+	height: float = 0.0
 ) -> Dictionary:
 	return {
 		"type": int(tile_type),
 		"height": float(height),
-		"ramp": int(ramp),
-		"corners": make_corners(float(height), int(ramp), int(tile_type))
+		"corners": {
+			"sw": float(height),
+			"se": float(height),
+			"nw": float(height),
+			"ne": float(height)
+		}
 	}
 
 func normalize_cell(value: Dictionary) -> Dictionary:
-	var tile_type := int(value.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
-	var height := float(value.get("height", 0.0))
-	var ramp := int(value.get("ramp", EnumMappings.RampTypeEnums.FLAT))
+	var tile_type: int = int(value.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var height: float = float(value.get("height", 0.0))
 
-	var cell := make_cell(tile_type, height, ramp)
-
-	# Keep already saved corner data. Without this, auto-ramp corner changes
-	# would be overwritten every time the map is loaded from JSON.
-	if value.has("corners") and typeof(value["corners"]) == TYPE_DICTIONARY:
-		var saved_corners: Dictionary = value["corners"]
-		var corners: Dictionary = cell["corners"]
-
-		for key in ["sw", "se", "nw", "ne"]:
-			if saved_corners.has(key):
-				corners[key] = float(saved_corners[key])
-
-		cell["corners"] = corners
-
-	return cell
+	return make_cell(tile_type, height)
 
 
-func make_corners(height: float, ramp: int, tile_type: int) -> Dictionary:
-	var h_sw := height
-	var h_se := height
-	var h_nw := height
-	var h_ne := height
-
-	if tile_type != EnumMappings.TileTypeEnums.RAMP_TILE:
-		return {
-			"sw": h_sw,
-			"se": h_se,
-			"nw": h_nw,
-			"ne": h_ne
-		}
-
-	var low := height - 0.5
-	var high := height
-
-	match ramp:
-		EnumMappings.RampTypeEnums.RAMP_N:
-			h_sw = low
-			h_se = low
-			h_nw = high
-			h_ne = high
-
-		EnumMappings.RampTypeEnums.RAMP_S:
-			h_sw = high
-			h_se = high
-			h_nw = low
-			h_ne = low
-
-		EnumMappings.RampTypeEnums.RAMP_E:
-			h_sw = low
-			h_nw = low
-			h_se = high
-			h_ne = high
-
-		EnumMappings.RampTypeEnums.RAMP_W:
-			h_sw = high
-			h_nw = high
-			h_se = low
-			h_ne = low
-
-		EnumMappings.RampTypeEnums.RAMP_NE:
-			h_sw = low
-			h_se = low
-			h_nw = low
-			h_ne = high
-
-		EnumMappings.RampTypeEnums.RAMP_NW:
-			h_se = low
-			h_sw = low
-			h_ne = low
-			h_nw = high
-
-		EnumMappings.RampTypeEnums.RAMP_SE:
-			h_nw = low
-			h_sw = low
-			h_ne = low
-			h_se = high
-
-		EnumMappings.RampTypeEnums.RAMP_SW:
-			h_ne = low
-			h_se = low
-			h_nw = low
-			h_sw = high
-
-	return {
-		"sw": h_sw,
-		"se": h_se,
-		"nw": h_nw,
-		"ne": h_ne
-	}
 
 
 func reset_map(
@@ -297,7 +219,6 @@ func reset_map(
 	height: int = MAP_HEIGHT,
 	default_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE,
 	default_height: float = 0.0,
-	default_ramp: int = EnumMappings.RampTypeEnums.FLAT
 ) -> void:
 	print("Resetting map...")
 
@@ -306,7 +227,7 @@ func reset_map(
 	for y in range(height):
 		var row: Array = []
 		for x in range(width):
-			row.append(make_cell(default_type, default_height, default_ramp))
+			row.append(make_cell(default_type, default_height))
 		map_data.append(row)
 
 	save_map_to_json()
@@ -319,19 +240,125 @@ func change_tile(grid_x: int, grid_y: int) -> void:
 	if not is_valid_grid_pos(grid_x, grid_y):
 		return
 
-	map_data[grid_y][grid_x] = make_cell(
-		selected_tile_type,
-		selected_height,
-		selected_ramp
-	)
+	var cell: Dictionary = map_data[grid_y][grid_x]
+
+	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var height: float = float(cell.get("height", 0.0))
+
+	match edit_mode:
+		EnumMappings.EditMode.SET_TILE_TYPE:
+			tile_type = selected_tile_type
+
+		EnumMappings.EditMode.HEIGHT_UP:
+			height = clamp(height + HEIGHT_STEP, MIN_HEIGHT, MAX_HEIGHT)
+
+		EnumMappings.EditMode.HEIGHT_DOWN:
+			height = clamp(height - HEIGHT_STEP, MIN_HEIGHT, MAX_HEIGHT)
+
+	map_data[grid_y][grid_x] = make_cell(tile_type, height)
 
 	if auto_ramp_enabled:
-		apply_auto_ramp_to_neighbours(grid_x, grid_y)
+		recalculate_auto_ramps()
 
 	save_map_to_json()
 	rebuild_map()
 
+func recalculate_auto_ramps() -> void:
+	# Reset all corners to base height first.
+	for y in range(map_data.size()):
+		for x in range(map_data[y].size()):
+			var cell: Dictionary = map_data[y][x]
+			var h: float = float(cell.get("height", 0.0))
 
+			cell["corners"] = {
+				"sw": h,
+				"se": h,
+				"nw": h,
+				"ne": h
+			}
+
+			map_data[y][x] = cell
+
+	# Then apply edge ramps.
+	for y in range(map_data.size()):
+		for x in range(map_data[y].size()):
+			_apply_auto_ramp_between(x, y, x + 1, y)
+			_apply_auto_ramp_between(x, y, x, y + 1)
+
+	# Then apply diagonal corner touching.
+	for y in range(map_data.size()):
+		for x in range(map_data[y].size()):
+			_apply_auto_corner_between(x, y, x + 1, y + 1)
+			_apply_auto_corner_between(x + 1, y, x, y + 1)
+
+func _apply_auto_ramp_between(ax: int, ay: int, bx: int, by: int) -> void:
+	if not is_valid_grid_pos(ax, ay):
+		return
+	if not is_valid_grid_pos(bx, by):
+		return
+
+	var a: Dictionary = map_data[ay][ax]
+	var b: Dictionary = map_data[by][bx]
+
+	var ah: float = float(a.get("height", 0.0))
+	var bh: float = float(b.get("height", 0.0))
+
+	if not is_equal_approx(abs(ah - bh), HEIGHT_STEP):
+		return
+
+	# B is east of A
+	if bx == ax + 1 and by == ay:
+		if ah < bh:
+			_set_corners(ax, ay, ["se", "ne"], bh)
+		else:
+			_set_corners(bx, by, ["sw", "nw"], ah)
+
+	# B is south of A
+	if bx == ax and by == ay + 1:
+		if ah < bh:
+			_set_corners(ax, ay, ["sw", "se"], bh)
+		else:
+			_set_corners(bx, by, ["nw", "ne"], ah)
+func _apply_auto_corner_between(ax: int, ay: int, bx: int, by: int) -> void:
+	if not is_valid_grid_pos(ax, ay):
+		return
+	if not is_valid_grid_pos(bx, by):
+		return
+
+	var a: Dictionary = map_data[ay][ax]
+	var b: Dictionary = map_data[by][bx]
+
+	var ah: float = float(a.get("height", 0.0))
+	var bh: float = float(b.get("height", 0.0))
+
+	if not is_equal_approx(abs(ah - bh), HEIGHT_STEP):
+		return
+
+	# B is south-east of A
+	if bx == ax + 1 and by == ay + 1:
+		if ah < bh:
+			_set_corners(ax, ay, ["se"], bh)
+		else:
+			_set_corners(bx, by, ["nw"], ah)
+
+	# B is south-west of A
+	if bx == ax - 1 and by == ay + 1:
+		if ah < bh:
+			_set_corners(ax, ay, ["sw"], bh)
+		else:
+			_set_corners(bx, by, ["ne"], ah)
+
+func _set_corners(grid_x: int, grid_y: int, names: Array[String], value: float) -> void:
+	var cell: Dictionary = map_data[grid_y][grid_x]
+	var corners: Dictionary = cell.get("corners", {})
+
+	for corner_name in names:
+		corners[corner_name] = value
+
+	cell["corners"] = corners
+	map_data[grid_y][grid_x] = cell
+
+		
 func is_valid_grid_pos(grid_x: int, grid_y: int) -> bool:
 	return (
 		grid_y >= 0
@@ -340,58 +367,20 @@ func is_valid_grid_pos(grid_x: int, grid_y: int) -> bool:
 		and grid_x < map_data[grid_y].size()
 	)
 
-
-func apply_auto_ramp_to_neighbours(grid_x: int, grid_y: int) -> void:
-	var tile_height := float(map_data[grid_y][grid_x].get("height", 0.0))
-
-	# Direct neighbours share an edge with the changed tile.
-	_apply_auto_ramp_corner_patch(grid_x, grid_y - 1, tile_height, ["sw", "se"]) # north tile, south edge
-	_apply_auto_ramp_corner_patch(grid_x, grid_y + 1, tile_height, ["nw", "ne"]) # south tile, north edge
-	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y, tile_height, ["se", "ne"]) # west tile, east edge
-	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y, tile_height, ["sw", "nw"]) # east tile, west edge
-
-	# Diagonal neighbours only touch at one corner, but that corner still borders
-	# the changed tile and must be pulled to the same height for clean joins.
-	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y - 1, tile_height, ["se"]) # north-west tile
-	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y - 1, tile_height, ["sw"]) # north-east tile
-	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y + 1, tile_height, ["ne"]) # south-west tile
-	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y + 1, tile_height, ["nw"]) # south-east tile
-
-
-func _apply_auto_ramp_corner_patch(grid_x: int, grid_y: int, target_height: float, corner_names: Array[String]) -> void:
-	if not is_valid_grid_pos(grid_x, grid_y):
-		return
-
-	var cell: Dictionary = map_data[grid_y][grid_x]
-	var neighbour_height := float(cell.get("height", 0.0))
-	var neighbour_ramp := int(cell.get("ramp", EnumMappings.RampTypeEnums.FLAT))
-	var neighbour_type := int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
-
-	# This is the important part for removing ramps again:
-	# first restore the affected border/corner positions to the neighbour tile's
-	# own base corner values. Otherwise old auto-ramp values stay in the JSON
-	# when the height difference goes back from 0.5 to 0.0.
-	var base_corners := make_corners(neighbour_height, neighbour_ramp, neighbour_type)
-	var corners: Dictionary = cell.get("corners", base_corners.duplicate())
-
-	for corner_name in corner_names:
-		if base_corners.has(corner_name):
-			corners[corner_name] = base_corners[corner_name]
-
-	# Auto ramp only applies to one height step. Bigger cliffs and equal-height
-	# neighbours stay with their restored base corners.
-	if is_equal_approx(abs(neighbour_height - target_height), 0.5):
-		for corner_name in corner_names:
-			corners[corner_name] = target_height
-
-	cell["corners"] = corners
-	map_data[grid_y][grid_x] = cell
-
 func clear_children(node: Node) -> void:
 	for child in node.get_children():
 		child.queue_free()
 	
 
+func set_palette(tile_type: int, height_action: float) -> void:
+	selected_tile_type = tile_type
+
+	if is_equal_approx(height_action, 0.5):
+		edit_mode = EnumMappings.EditMode.HEIGHT_UP
+	elif is_equal_approx(height_action, -0.5):
+		edit_mode = EnumMappings.EditMode.HEIGHT_DOWN
+	else:
+		edit_mode = EnumMappings.EditMode.SET_TILE_TYPE
 
 func _on_save_pressed() -> void:
 	save_map_to_json()

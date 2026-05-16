@@ -41,9 +41,6 @@ text = "Height:"
 [node name="OptionButton2" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=157174930]
 layout_mode = 2
 
-[node name="OptionButton3" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1283421965]
-layout_mode = 2
-
 [node name="SaveButton" type="Button" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1932528074]
 layout_mode = 2
 text = "Save"

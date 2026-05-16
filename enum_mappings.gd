@@ -3,17 +3,10 @@ extends Node
 
 enum TileTypeEnums {
 	STANDAD_TILE,
-	GOLD_TILE,
-	RAMP_TILE,
+	GOLD_TILE
 }
-enum RampTypeEnums {
-	FLAT,
-	RAMP_N,
-	RAMP_E,
-	RAMP_S,
-	RAMP_W,
-	RAMP_NE,
-	RAMP_NW,
-	RAMP_SE,
-	RAMP_SW
+enum EditMode {
+	SET_TILE_TYPE,
+	HEIGHT_UP,
+	HEIGHT_DOWN
 }
