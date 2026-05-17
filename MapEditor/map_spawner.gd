@@ -487,4 +487,4 @@ func save_map_as_scene(path: String) -> void:
 	baker.tile_size = TILE_SIZE
 	baker.build_collision = bake_collision
 	baker.show_tile_lines = show_tile_lines
-	baker.save_baked_map(map_data, path, map_name)
+	baker.save_baked_four_rotated_corners(map_data, path, map_name)
