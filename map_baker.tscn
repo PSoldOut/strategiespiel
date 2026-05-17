@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://ckmmlilrft6us"]
+
+[ext_resource type="Script" path="res://MapBaker/map_baker.gd" id="1_jp2ps"]
+
+[node name="MapBaker" type="Node3D" unique_id=370503307]
+script = ExtResource("1_jp2ps")

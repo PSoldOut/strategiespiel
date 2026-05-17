@@ -1,4 +1,4 @@
-[gd_scene format=4]
+[gd_scene format=4 uid="uid://cru1w2feiosqh"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mehtj"]
 cull_mode = 2

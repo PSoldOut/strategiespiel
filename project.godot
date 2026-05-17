@@ -15,13 +15,9 @@ run/main_scene="uid://qohnerc578uf"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
-[autoload]
-
-EnumMappings="*uid://b3ooynqoo3ogw"
-
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/RTSCamera/plugin.cfg")
+enabled=PackedStringArray("res://addons/EnumsMappings/plugin.cfg", "res://addons/MapBaker/plugin.cfg", "res://addons/RTSCamera/plugin.cfg", "res://addons/gameenums/plugin.cfg", "res://addons/mapbaker/plugin.cfg")
 
 [physics]
 
