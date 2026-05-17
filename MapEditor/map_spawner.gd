@@ -49,6 +49,9 @@ func rebuild_map() -> void:
 	clear_children(visual_root)
 	clear_children(click_root)
 
+	if auto_ramp_enabled:
+		recalculate_auto_ramps()
+
 	build_visual_map()
 	build_click_tiles()
 	call_deferred("_emit_map_spawned")
@@ -125,6 +128,7 @@ func set_selected_map_name(new_map_name: String, load_immediately: bool = true) 
 	if cleaned.is_empty():
 		cleaned = "Map001"
 
+	# One source of truth. Both JSON and baked scene paths are derived from this.
 	map_name = cleaned
 
 	if load_immediately:
@@ -311,167 +315,121 @@ func change_tile(grid_x: int, grid_y: int) -> void:
 	map_data[grid_y][grid_x] = make_cell(tile_type, height)
 
 	if auto_ramp_enabled:
-		reset_auto_ramp_area(grid_x, grid_y)
-		apply_auto_ramp_to_neighbours(grid_x, grid_y)
+		recalculate_auto_ramps()
 
 	save_map_to_json()
 	rebuild_map()
 
 
-
-func reset_auto_ramp_area(center_x: int, center_y: int) -> void:
-	# Reset only the changed tile and its 8 neighbours.
-	# This removes old corner overrides when a tile goes back from 0.5 to 0.0
-	# or from -0.5 to 0.0, without destroying the whole map's saved ramps.
-	for dy in range(-1, 2):
-		for dx in range(-1, 2):
-			var x := center_x + dx
-			var y := center_y + dy
-
-			if not is_valid_grid_pos(x, y):
-				continue
-
-			var cell: Dictionary = map_data[y][x]
-			var h: float = float(cell.get("height", 0.0))
-			cell["corners"] = make_flat_corners(h)
-			map_data[y][x] = cell
-
-
-func apply_auto_ramp_to_neighbours(grid_x: int, grid_y: int) -> void:
-	if not is_valid_grid_pos(grid_x, grid_y):
-		return
-
-	var target_height := float(map_data[grid_y][grid_x].get("height", 0.0))
-
-	# Direct neighbours share an edge with the changed tile.
-	# The changed tile stays flat. The neighbour's bordering corners move to target_height.
-	_apply_auto_ramp_corner_patch(grid_x, grid_y - 1, target_height, ["sw", "se"]) # north tile, south edge
-	_apply_auto_ramp_corner_patch(grid_x, grid_y + 1, target_height, ["nw", "ne"]) # south tile, north edge
-	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y, target_height, ["se", "ne"]) # west tile, east edge
-	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y, target_height, ["sw", "nw"]) # east tile, west edge
-
-	# Diagonal neighbours touch only one corner.
-	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y - 1, target_height, ["se"]) # north-west tile
-	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y - 1, target_height, ["sw"]) # north-east tile
-	_apply_auto_ramp_corner_patch(grid_x - 1, grid_y + 1, target_height, ["ne"]) # south-west tile
-	_apply_auto_ramp_corner_patch(grid_x + 1, grid_y + 1, target_height, ["nw"]) # south-east tile
-
-
-func _apply_auto_ramp_corner_patch(
-	grid_x: int,
-	grid_y: int,
-	target_height: float,
-	corner_names: Array[String]
-) -> void:
-	if not is_valid_grid_pos(grid_x, grid_y):
-		return
-
-	var cell: Dictionary = map_data[grid_y][grid_x]
-	var neighbour_height := float(cell.get("height", 0.0))
-
-	# Only connect one height step: +0.5 and -0.5 both work.
-	if not is_equal_approx(abs(neighbour_height - target_height), HEIGHT_STEP):
-		return
-
-	var corners: Dictionary = cell.get("corners", make_flat_corners(neighbour_height))
-
-	for corner_name in corner_names:
-		corners[corner_name] = target_height
-
-	cell["corners"] = corners
-	map_data[grid_y][grid_x] = cell
-
-
 func recalculate_auto_ramps() -> void:
-	# Reset all corners to base height first.
+	# Shared vertex based auto-ramp system.
+	# A corner is not owned by one tile only. Up to four tiles touch the same vertex.
+	# Therefore every shared vertex is calculated once and then written back to all
+	# touching tile corners. This prevents neighbouring edits from overwriting each
+	# other with wrong corner resets.
+	reset_all_corners_to_base_height()
+
+	var map_h := map_data.size()
+	if map_h <= 0:
+		return
+
+	var map_w: int = map_data[0].size()
+
+	# Vertices are grid intersections, so a 32x32 map has 33x33 vertices.
+	for vertex_y in range(map_h + 1):
+		for vertex_x in range(map_w + 1):
+			recalculate_shared_vertex(vertex_x, vertex_y)
+
+
+func reset_all_corners_to_base_height() -> void:
 	for y in range(map_data.size()):
 		for x in range(map_data[y].size()):
 			var cell: Dictionary = map_data[y][x]
 			var h: float = float(cell.get("height", 0.0))
-
 			cell["corners"] = make_flat_corners(h)
 			map_data[y][x] = cell
 
-	# Edge touching tiles.
-	for y in range(map_data.size()):
-		for x in range(map_data[y].size()):
-			_apply_auto_ramp_between(x, y, x + 1, y)
-			_apply_auto_ramp_between(x, y, x, y + 1)
 
-	# Diagonal touching tiles.
-	for y in range(map_data.size()):
-		for x in range(map_data[y].size()):
-			_apply_auto_corner_between(x, y, x + 1, y + 1)
-			_apply_auto_corner_between(x + 1, y, x, y + 1)
-
-
-func _apply_auto_ramp_between(ax: int, ay: int, bx: int, by: int) -> void:
-	if not is_valid_grid_pos(ax, ay):
-		return
-	if not is_valid_grid_pos(bx, by):
+func recalculate_shared_vertex(vertex_x: int, vertex_y: int) -> void:
+	var touching := get_tiles_touching_vertex(vertex_x, vertex_y)
+	if touching.is_empty():
 		return
 
-	var a: Dictionary = map_data[ay][ax]
-	var b: Dictionary = map_data[by][bx]
+	var first: Dictionary = touching[0]
+	var first_cell: Dictionary = map_data[int(first["y"])][int(first["x"])]
+	var min_h: float = float(first_cell.get("height", 0.0))
+	var max_h: float = min_h
 
-	var ah: float = float(a.get("height", 0.0))
-	var bh: float = float(b.get("height", 0.0))
+	for item in touching:
+		var tx: int = int(item["x"])
+		var ty: int = int(item["y"])
+		var cell: Dictionary = map_data[ty][tx]
+		var h: float = float(cell.get("height", 0.0))
+		min_h = min(min_h, h)
+		max_h = max(max_h, h)
 
-	if not is_equal_approx(abs(ah - bh), HEIGHT_STEP):
+	# Same height means the flat reset is already correct.
+	if is_equal_approx(max_h, min_h):
 		return
 
-	# B is east of A.
-	if bx == ax + 1 and by == ay:
-		if ah < bh:
-			_set_corners(ax, ay, ["se", "ne"], bh)
-		else:
-			_set_corners(bx, by, ["sw", "nw"], ah)
-
-	# B is south of A.
-	if bx == ax and by == ay + 1:
-		if ah < bh:
-			_set_corners(ax, ay, ["sw", "se"], bh)
-		else:
-			_set_corners(bx, by, ["nw", "ne"], ah)
-
-
-func _apply_auto_corner_between(ax: int, ay: int, bx: int, by: int) -> void:
-	if not is_valid_grid_pos(ax, ay):
-		return
-	if not is_valid_grid_pos(bx, by):
+	# Only one height step can become an automatic ramp.
+	# Bigger steps stay vertical/steep instead of creating broken multi-height corners.
+	if not is_equal_approx(max_h - min_h, HEIGHT_STEP):
 		return
 
-	var a: Dictionary = map_data[ay][ax]
-	var b: Dictionary = map_data[by][bx]
+	# Shared rule: keep the edited plateau/hole visible.
+	# For normal positive ramps, 0.0 -> 0.5 chooses 0.5.
+	# For holes, 0.0 -> -0.5 chooses -0.5.
+	# In other words: choose the height farther away from zero.
+	var shared_height := get_dominant_vertex_height(min_h, max_h)
 
-	var ah: float = float(a.get("height", 0.0))
-	var bh: float = float(b.get("height", 0.0))
+	for item in touching:
+		var tx: int = int(item["x"])
+		var ty: int = int(item["y"])
+		var corner_name: String = str(item["corner"])
+		set_single_corner(tx, ty, corner_name, shared_height)
 
-	if not is_equal_approx(abs(ah - bh), HEIGHT_STEP):
+
+func get_dominant_vertex_height(min_h: float, max_h: float) -> float:
+	if abs(min_h) > abs(max_h):
+		return min_h
+	return max_h
+
+
+func get_tiles_touching_vertex(vertex_x: int, vertex_y: int) -> Array:
+	var result: Array = []
+
+	# Tile north-west of the vertex touches it with its south-east corner.
+	append_touching_tile(result, vertex_x - 1, vertex_y - 1, "se")
+
+	# Tile north-east of the vertex touches it with its south-west corner.
+	append_touching_tile(result, vertex_x, vertex_y - 1, "sw")
+
+	# Tile south-west of the vertex touches it with its north-east corner.
+	append_touching_tile(result, vertex_x - 1, vertex_y, "ne")
+
+	# Tile south-east of the vertex touches it with its north-west corner.
+	append_touching_tile(result, vertex_x, vertex_y, "nw")
+
+	return result
+
+
+func append_touching_tile(result: Array, grid_x: int, grid_y: int, corner_name: String) -> void:
+	if not is_valid_grid_pos(grid_x, grid_y):
 		return
 
-	# B is south-east of A.
-	if bx == ax + 1 and by == ay + 1:
-		if ah < bh:
-			_set_corners(ax, ay, ["se"], bh)
-		else:
-			_set_corners(bx, by, ["nw"], ah)
-
-	# B is south-west of A.
-	if bx == ax - 1 and by == ay + 1:
-		if ah < bh:
-			_set_corners(ax, ay, ["sw"], bh)
-		else:
-			_set_corners(bx, by, ["ne"], ah)
+	result.append({
+		"x": grid_x,
+		"y": grid_y,
+		"corner": corner_name
+	})
 
 
-func _set_corners(grid_x: int, grid_y: int, names: Array[String], value: float) -> void:
+func set_single_corner(grid_x: int, grid_y: int, corner_name: String, value: float) -> void:
 	var cell: Dictionary = map_data[grid_y][grid_x]
-	var corners: Dictionary = cell.get("corners", make_flat_corners(float(cell.get("height", 0.0))))
-
-	for corner_name in names:
-		corners[corner_name] = value
-
+	var height: float = float(cell.get("height", 0.0))
+	var corners: Dictionary = cell.get("corners", make_flat_corners(height))
+	corners[corner_name] = value
 	cell["corners"] = corners
 	map_data[grid_y][grid_x] = cell
 
@@ -498,8 +456,6 @@ func set_height_action(height_action: float) -> void:
 	else:
 		edit_mode = EnumMappings.EditMode.SET_TILE_TYPE
 
-	print("MapSpawner edit_mode:", edit_mode, " height_action:", height_action)
-
 
 func set_selected_tile_type(tile_type: int) -> void:
 	selected_tile_type = tile_type
@@ -511,8 +467,12 @@ func set_palette(tile_type: int, height_action: float) -> void:
 
 
 func save_map() -> void:
+	var json_path := get_map_json_path()
+	var scene_path := get_baked_scene_path()
+	print("Saving map as JSON: ", json_path)
+	print("Saving baked scene: ", scene_path)
 	save_map_to_json()
-	save_map_as_scene(get_baked_scene_path())
+	save_map_as_scene(scene_path)
 
 
 func save_map_as_scene(path: String) -> void:
