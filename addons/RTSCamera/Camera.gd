@@ -1,5 +1,5 @@
 extends Camera3D
-
+class_name RTSCamera
 @export var speed := 50.0
 @export var edge_speed := 40.0
 @export var zoom_speed := 5.0

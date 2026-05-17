@@ -1,9 +1,12 @@
 extends Control
 class_name DragSelection
 
+#welche Kamera wird in dem Spiel verwendet. Muss von Camera3D erben
 @export var camera : Camera3D
+#Die Einheiten die im Spiel anklickbar sind (auch die gegnerischen Einheiten und Gebäude)
 @export var units : Array = []
 @export var active : bool = true
+#Das Team das ausgewählt und gesteuert werden kann
 @export var team : String = ""
 @onready var timer : Timer = Timer.new()
 var is_selecting = false
@@ -15,6 +18,8 @@ var current_selected : Array = []
 
 signal move_command(positions : Array)
 signal interact_command(target : SelectionUnit)
+signal left_click(pos : Vector3, obj)
+signal right_click(pos : Vector3, obj)
 
 func _ready() -> void:
 	timer.wait_time = 0.2
@@ -69,13 +74,14 @@ func _input(event):
 			var pos
 			if result:
 				pos = result.position
-				print(result["collider"])
 				if result["collider"].find_children("", "SelectionUnit", true, false).size() >= 1:
 					interact_command.emit(result["collider"].find_children("", "SelectionUnit", true, false)[0])
+					right_click.emit(pos, result["collider"].find_children("", "SelectionUnit", true, false)[0])
 					return
 				for unit : SelectionUnit in selection_units:
 					if team != unit.team and unit.global_transform.origin.distance_to(pos) < 1:
 						interact_command.emit(unit)
+						right_click.emit(pos, unit.get_unit())
 						return
 						
 				#var positions = get_formation_positions(pos,units[0].position, units.size(), 1.4)
