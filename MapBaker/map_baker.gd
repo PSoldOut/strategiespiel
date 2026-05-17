@@ -1,8 +1,7 @@
 extends Node3D
-class_name ChunkBuilder
+class_name MapBaker
 
 @export var tile_size: float = 2.0
-@export var tile_height_step: float = 0.5
 @export var build_collision: bool = true
 @export var show_tile_lines: bool = true
 @export var tile_line_color: Color = Color(0.0, 0.0, 0.0, 1.0)
@@ -14,12 +13,11 @@ var static_body: StaticBody3D
 var collision_shape: CollisionShape3D
 var debug_material: StandardMaterial3D
 var line_material: StandardMaterial3D
+var baked_map_data: Array = []
 
 
 func _ready() -> void:
 	ensure_nodes()
-	debug_material = create_debug_material()
-	line_material = create_line_material()
 
 
 func ensure_nodes() -> void:
@@ -48,6 +46,9 @@ func ensure_nodes() -> void:
 			collision_shape.name = "CollisionShape3D"
 			static_body.add_child(collision_shape)
 
+	debug_material = create_debug_material()
+	line_material = create_line_material()
+
 
 func create_debug_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -67,14 +68,16 @@ func create_line_material() -> StandardMaterial3D:
 	return mat
 
 
-func build_from_map(
-	map_data: Array,
-	start_x: int,
-	start_y: int,
-	chunk_width: int,
-	chunk_height: int
-) -> void:
+func bake_map(new_map_data: Array) -> void:
+	baked_map_data = new_map_data
 	ensure_nodes()
+
+	if baked_map_data.is_empty():
+		_clear_generated_meshes()
+		return
+
+	var map_h := baked_map_data.size()
+	var map_w: int = baked_map_data[0].size()
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -83,32 +86,27 @@ func build_from_map(
 	if show_tile_lines:
 		line_st.begin(Mesh.PRIMITIVE_LINES)
 
-	for local_y in range(chunk_height):
-		for local_x in range(chunk_width):
-			var map_x := start_x + local_x
-			var map_y := start_y + local_y
-
-			if map_y < 0 or map_y >= map_data.size():
-				continue
-			if map_x < 0 or map_x >= map_data[map_y].size():
+	for y in range(map_h):
+		for x in range(map_w):
+			if x < 0 or x >= baked_map_data[y].size():
 				continue
 
-			var cell: Dictionary = map_data[map_y][map_x]
+			var cell: Dictionary = baked_map_data[y][x]
 
-			add_cell_top(st, local_x, local_y, cell, map_x, map_y)
+			add_cell_top(st, x, y, cell, x, y)
 
 			if show_tile_lines:
-				add_cell_tile_lines(line_st, local_x, local_y, cell)
+				add_cell_tile_lines(line_st, x, y, cell)
 
-			var north_cell := get_cell_safe(map_data, map_x, map_y - 1)
-			var south_cell := get_cell_safe(map_data, map_x, map_y + 1)
-			var east_cell := get_cell_safe(map_data, map_x + 1, map_y)
-			var west_cell := get_cell_safe(map_data, map_x - 1, map_y)
+			var north_cell := get_cell_safe(baked_map_data, x, y - 1)
+			var south_cell := get_cell_safe(baked_map_data, x, y + 1)
+			var east_cell := get_cell_safe(baked_map_data, x + 1, y)
+			var west_cell := get_cell_safe(baked_map_data, x - 1, y)
 
-			add_north_side(st, local_x, local_y, cell, north_cell, map_x, map_y)
-			add_south_side(st, local_x, local_y, cell, south_cell, map_x, map_y)
-			add_east_side(st, local_x, local_y, cell, east_cell, map_x, map_y)
-			add_west_side(st, local_x, local_y, cell, west_cell, map_x, map_y)
+			add_north_side(st, x, y, cell, north_cell, x, y)
+			add_south_side(st, x, y, cell, south_cell, x, y)
+			add_east_side(st, x, y, cell, east_cell, x, y)
+			add_west_side(st, x, y, cell, west_cell, x, y)
 
 	var mesh := st.commit()
 	mesh_instance.mesh = mesh
@@ -130,8 +128,14 @@ func build_from_map(
 	if build_collision and mesh != null:
 		var shape := mesh.create_trimesh_shape()
 		collision_shape.shape = shape
-	save_as_scene("res://GeneratedMaps/map_01.tscn")
 
+
+func _clear_generated_meshes() -> void:
+	ensure_nodes()
+	mesh_instance.mesh = null
+	line_mesh_instance.mesh = null
+	if collision_shape != null:
+		collision_shape.shape = null
 
 func get_cell_safe(map_data: Array, x: int, y: int) -> Dictionary:
 	if y < 0 or y >= map_data.size():
@@ -195,6 +199,22 @@ func add_quad(
 ) -> void:
 	var normal_1 := Plane(v0, v1, v2).normal
 	var normal_2 := Plane(v0, v2, v3).normal
+
+	# Safety: if this is a mostly-horizontal top face and the normal points down,
+	# flip the triangle order.
+	if abs(normal_1.y) > 0.5 and normal_1.y < 0.0:
+		var old_v1 := v1
+		var old_v3 := v3
+		var old_uv1 := uv1
+		var old_uv3 := uv3
+
+		v1 = old_v3
+		v3 = old_v1
+		uv1 = old_uv3
+		uv3 = old_uv1
+
+		normal_1 = Plane(v0, v1, v2).normal
+		normal_2 = Plane(v0, v2, v3).normal
 
 	st.set_normal(normal_1)
 	st.set_uv(uv0)
@@ -451,23 +471,20 @@ func add_west_side(
 		color
 	)
 
-func save_as_scene(path: String) -> void:
-	if mesh_instance == null or mesh_instance.mesh == null:
-		push_error("Nothing to save!")
-		return
+func create_baked_node(baked_name: String = "BakedMap") -> Node3D:
+	ensure_nodes()
 
 	var root := Node3D.new()
-	root.name = "BakedChunk"
+	root.name = baked_name
 
-	# Mesh
-	var mesh_copy := MeshInstance3D.new()
-	mesh_copy.name = "MeshInstance3D"
-	mesh_copy.mesh = mesh_instance.mesh
-	mesh_copy.material_override = mesh_instance.material_override
-	root.add_child(mesh_copy)
-	mesh_copy.owner = root
+	if mesh_instance != null and mesh_instance.mesh != null:
+		var mesh_copy := MeshInstance3D.new()
+		mesh_copy.name = "MeshInstance3D"
+		mesh_copy.mesh = mesh_instance.mesh
+		if debug_material != null:
+			mesh_copy.material_override = debug_material
+		root.add_child(mesh_copy)
 
-	# Optional tile line overlay
 	if show_tile_lines and line_mesh_instance != null and line_mesh_instance.mesh != null:
 		var line_copy := MeshInstance3D.new()
 		line_copy.name = "TileLines"
@@ -475,31 +492,45 @@ func save_as_scene(path: String) -> void:
 		if line_material != null:
 			line_copy.material_override = line_material
 		root.add_child(line_copy)
-		line_copy.owner = root
 
-	# Collision
 	if build_collision and collision_shape != null and collision_shape.shape != null:
 		var body := StaticBody3D.new()
 		body.name = "StaticBody3D"
 		root.add_child(body)
-		body.owner = root
 
 		var shape := CollisionShape3D.new()
 		shape.name = "CollisionShape3D"
 		shape.shape = collision_shape.shape
 		body.add_child(shape)
-		shape.owner = root
+
+	return root
+
+
+func save_baked_map(new_map_data: Array, path: String, baked_name: String = "BakedMap") -> void:
+	bake_map(new_map_data)
+
+	if mesh_instance == null or mesh_instance.mesh == null:
+		push_error("Nothing to save: baked map mesh is empty")
+		return
+
+	var root := create_baked_node(baked_name)
+	_set_owner_recursive(root, root)
 
 	var packed := PackedScene.new()
 	var result := packed.pack(root)
-
 	if result != OK:
-		push_error("Failed to pack scene! Error code: %s" % result)
+		push_error("Failed to pack baked map scene. Error code: %s" % result)
 		return
 
 	var save_result := ResourceSaver.save(packed, path)
 	if save_result != OK:
-		push_error("Failed to save scene! Error code: %s" % save_result)
+		push_error("Failed to save baked map scene. Error code: %s" % save_result)
 		return
 
-	print("Scene saved to: ", path)
+	print("Baked map scene saved to: ", path)
+
+
+func _set_owner_recursive(node: Node, owner_node: Node) -> void:
+	for child in node.get_children():
+		child.owner = owner_node
+		_set_owner_recursive(child, owner_node)

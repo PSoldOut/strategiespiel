@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cy86oddhd2g7t"]
 
-[ext_resource type="Script" uid="uid://wi0fxxaycdqm" path="res://map_tile.gd" id="1_s8ube"]
+[ext_resource type="Script" uid="uid://cyit8nk43td0w" path="res://MapEditor/map_tile.gd" id="1_s8ube"]
+
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5bxxx"]
 
