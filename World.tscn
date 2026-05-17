@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://duy662vx7mqeq"]
 
 [ext_resource type="Script" uid="uid://b4sl40in0000r" path="res://addons/dragselection/selection.gd" id="1_c6gwx"]
+[ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="2_2dftf"]
 
 [sub_resource type="GDScript" id="GDScript_eu7l1"]
 resource_name = "World"
@@ -26,7 +27,6 @@ func _ready() -> void:
 		agent.position = Vector3( randf_range(-50.0, 50.0), 1,  randf_range(-50.0, 50.0))
 		file.add_child(agent)
 		arr.append(agent)
-		
 	$DragSelection.set_units(arr)
 	#get_tree().get_nodes_in_group(\"units\")
 	pass # Replace with function body.
@@ -35,7 +35,23 @@ func _ready() -> void:
 
 	
 	
-				
+			
+	
+
+
+func _on_drag_selection_move_command(positions: Array) -> void:
+	for i in range($DragSelection.current_selected.size()):
+		var unit = $DragSelection.current_selected[i]
+		unit.get_unit().navigation_agent_3d.set_target_position(positions[i])
+		unit.get_unit().state = unit.get_unit().State.MOVE_STRAIGHT
+
+
+func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
+	for i in range($DragSelection.current_selected.size()):
+		var unit = $DragSelection.current_selected[i]
+		unit.get_unit().target = target
+		unit.get_unit().State.CHASE
+		print(\"chase\")
 "
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_bah7m"]
@@ -51,86 +67,6 @@ albedo_color = Color(1, 0.18431373, 0.20392157, 1)
 [sub_resource type="PlaneMesh" id="PlaneMesh_c6gwx"]
 material = SubResource("StandardMaterial3D_cmany")
 size = Vector2(100, 100)
-
-[sub_resource type="GDScript" id="GDScript_bcbcq"]
-resource_name = "Camera"
-script/source = "extends Camera3D
-
-@export var speed := 50.0
-@export var edge_speed := 40.0
-@export var zoom_speed := 5.0
-@export var mouse_sensitivity := 0.003
-
-var yaw := 0.0
-var pitch := -0.7
-
-func _ready():
-	_update_rotation()
-
-func _input(event):
-	# 🖱️ Rotation mit mittlerer Maustaste
-	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_MIDDLE):
-		yaw -= event.relative.x * mouse_sensitivity
-		pitch -= event.relative.y * mouse_sensitivity
-		pitch = clamp(pitch, -1.2, -0.2)
-		_update_rotation()
-
-	# 🔍 Zoom entlang Blickrichtung
-	if event is InputEventMouseButton and event.pressed:
-		var forward = -transform.basis.z.normalized()
-		
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			global_translate(forward * zoom_speed)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			global_translate(-forward * zoom_speed)
-
-func _process(delta):
-	var move_dir = Vector3.ZERO
-
-	# 🎮 WASD
-	if Input.is_key_pressed(KEY_W): move_dir.z += 1
-	if Input.is_key_pressed(KEY_S): move_dir.z -= 1
-	if Input.is_key_pressed(KEY_A): move_dir.x -= 1
-	if Input.is_key_pressed(KEY_D): move_dir.x += 1
-
-	# 🖱️ Edge Scrolling
-	var mouse_pos = get_viewport().get_mouse_position()
-	var screen_size = get_viewport().get_visible_rect().size
-	var edge := 20
-
-	if mouse_pos.x < edge:
-		move_dir.x -= 1
-	elif mouse_pos.x > screen_size.x - edge:
-		move_dir.x += 1
-
-	if mouse_pos.y < edge:
-		move_dir.z += 1
-	elif mouse_pos.y > screen_size.y - edge:
-		move_dir.z -= 1
-
-	if move_dir != Vector3.ZERO:
-		move_dir = move_dir.normalized()
-
-		# 🔥 LOKALE Richtungen aus Matrix (FIX!)
-		var basis = transform.basis.orthonormalized()
-
-		var forward = -basis.z
-		var right = basis.x
-
-		# Nur XZ Bewegung (RTS typisch)
-		forward.y = 0
-		right.y = 0
-
-		forward = forward.normalized()
-		right = right.normalized()
-
-		var movement = (forward * move_dir.z + right * move_dir.x) * speed * delta
-		global_translate(movement)
-
-func _update_rotation():
-	var rot = Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch)
-	transform.basis = rot
-"
 
 [sub_resource type="Gradient" id="Gradient_c6gwx"]
 offsets = PackedFloat32Array(0.99892473, 1)
@@ -166,10 +102,6 @@ shape = SubResource("BoxShape3D_cmany")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Ground" unique_id=1743773351]
 mesh = SubResource("PlaneMesh_c6gwx")
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=527349195]
-transform = Transform3D(-3.2371773e-08, 0.4774348, -0.8786672, 2.0869338e-08, 0.8786672, 0.4774348, 1, -2.8817908e-09, -3.8407762e-08, -70.849815, 41.869183, -0.6778148)
-script = SubResource("GDScript_bcbcq")
-
 [node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=983864916]
 transform = Transform3D(1, 0, 0, 0, 0.5959586, 0.8030152, 0, -0.8030152, 0.5959586, 0, 47.47566, 34.221367)
 light_energy = 16.0
@@ -188,10 +120,19 @@ mesh = SubResource("PlaneMesh_js7pq")
 
 [node name="Agents" type="Node3D" parent="." unique_id=260396588]
 
-[node name="DragSelection" type="Control" parent="." unique_id=1408996329]
+[node name="DragSelection" type="Control" parent="." unique_id=1408996329 node_paths=PackedStringArray("camera")]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_c6gwx")
+camera = NodePath("../RTSCamera")
 metadata/_custom_type_script = "uid://b4sl40in0000r"
+
+[node name="RTSCamera" type="Camera3D" parent="." unique_id=746180854]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.482632, 0)
+script = ExtResource("2_2dftf")
+metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
+
+[connection signal="interact_command" from="DragSelection" to="." method="_on_drag_selection_interact_command"]
+[connection signal="move_command" from="DragSelection" to="." method="_on_drag_selection_move_command"]

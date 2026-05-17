@@ -1,14 +1,20 @@
 extends Control
 class_name DragSelection
+
+@export var camera : Camera3D
+@export var units : Array = []
+@export var active : bool = true
+@export var team : String = ""
+@onready var timer : Timer = Timer.new()
 var is_selecting = false
 var select_start = Vector2.ZERO
 var select_end = Vector2.ZERO
-@onready var camera : Camera3D = $"../Camera3D"
-@export var units : Array = []
 var selection_units : Array = []
 var half : bool = false
-@onready var timer : Timer = Timer.new()
+var current_selected : Array = []
 
+signal move_command(positions : Array)
+signal interact_command(target : SelectionUnit)
 
 func _ready() -> void:
 	timer.wait_time = 0.2
@@ -27,11 +33,18 @@ func _draw():
 		
 func set_units(arr : Array):
 	units = arr
+	var su : SelectionUnit
 	for unit in units:
-		selection_units.append(unit.find_children("", "SelectionUnit", true, false)[0])
+		su = unit.find_children("", "SelectionUnit", true, false)[0]
+		selection_units.append(su)
+		if team == "":
+			team = su.team
+		su.set_drag_selection(self)
 		
 		
 func _input(event):
+	if not active:
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			
@@ -56,17 +69,19 @@ func _input(event):
 			var pos
 			if result:
 				pos = result.position
-			
-			var units : Array
-			for unit in get_tree().get_nodes_in_group("units"):
-				if unit.selected:
-					units.append(unit)
-			#var positions = get_formation_positions(pos,units[0].position, units.size(), 1.4)
-			var positions = get_formation_positions_simple(pos, units.size(), 1.4)
-			
-			for i in range(units.size()):
-				var unit = units[i]
-				unit.navigation_agent_3d.set_target_position(positions[i])
+				print(result["collider"])
+				if result["collider"].find_children("", "SelectionUnit", true, false).size() >= 1:
+					interact_command.emit(result["collider"].find_children("", "SelectionUnit", true, false)[0])
+					return
+				for unit : SelectionUnit in selection_units:
+					if team != unit.team and unit.global_transform.origin.distance_to(pos) < 1:
+						interact_command.emit(unit)
+						return
+						
+				#var positions = get_formation_positions(pos,units[0].position, units.size(), 1.4)
+				var positions = get_formation_positions_simple(pos, current_selected.size(), 1.4)
+				
+				move_command.emit(positions)
 			
 	elif event is InputEventMouseMotion and is_selecting:
 		select_end = event.position
@@ -144,26 +159,28 @@ func get_formation_positions(center: Vector3, target: Vector3, unit_count: int, 
 func select_units_half():
 	if selection_units.is_empty():
 		return
+	current_selected = []
 	var rect = Rect2(select_start, select_end - select_start).abs()
 	var camera = get_viewport().get_camera_3d()
 	if half:
 		for i in range(selection_units.size()/2):
 			var unit = selection_units[i]
 			var screen_pos = camera.unproject_position(unit.global_transform.origin)
-			
 			if rect.has_point(screen_pos):
 				unit.select()
+				current_selected.append(unit)
 			else:
 				unit.deselect()
 		half=!half
 				
 	else:
 		for i in range(selection_units.size()/2, selection_units.size()):
-			var unit = selection_units[i]
+			var unit : SelectionUnit = selection_units[i]
 			var screen_pos = camera.unproject_position(unit.global_transform.origin)
 			
 			if rect.has_point(screen_pos):
 				unit.select()
+				current_selected.append(unit)
 			else:
 				unit.deselect()
 		half = !half
@@ -172,28 +189,33 @@ func select_units_half():
 
 
 func select_units():
+	if selection_units.is_empty():
+		return
+	current_selected = []
 	var rect = Rect2(select_start, select_end - select_start).abs()
 	var camera = get_viewport().get_camera_3d()
 
 	# Mindestgröße prüfen
 	var is_click = rect.size.length() < 5.0
 
-	if selection_units.is_empty():
-		return
+	
 
-	for unit in selection_units:
+	for unit : SelectionUnit in selection_units:
+		if unit.team != team:
+			continue
 		var screen_pos = camera.unproject_position(unit.global_transform.origin)
 		if is_click:
 			# Abstand Maus -> Einheit prüfen
 			if screen_pos.distance_to(select_start) < 15.0:
-				
 				unit.select()
+				current_selected.append(unit)
 			else:
 				unit.deselect()
 		else:
 			# Normale Box-Auswahl
 			if rect.has_point(screen_pos):
 				unit.select()
+				current_selected.append(unit)
 			else:
 				unit.deselect()
 		

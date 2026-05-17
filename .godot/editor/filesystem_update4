@@ -1,3 +1,4 @@
+res://Agent.tscn
 res://World.tscn
 res://addons/dragselection/selection.gd
-res://Agent.tscn
+res://addons/dragselection/Unit.gd
