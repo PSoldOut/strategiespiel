@@ -13,6 +13,7 @@ func _ready() -> void:
 	option_button.clear()
 	option_button.add_item(tile_type_to_string(EnumMappings.TileTypeEnums.STANDAD_TILE), EnumMappings.TileTypeEnums.STANDAD_TILE)
 	option_button.add_item(tile_type_to_string(EnumMappings.TileTypeEnums.GOLD_TILE), EnumMappings.TileTypeEnums.GOLD_TILE)
+	option_button.add_item(tile_type_to_string(EnumMappings.TileTypeEnums.PLAYER_TILE), EnumMappings.TileTypeEnums.PLAYER_TILE)
 	_update_label()
 	setup_height_options()
 
@@ -56,5 +57,7 @@ func tile_type_to_string(tile_type: int) -> String:
 			return "StandardTile"
 		EnumMappings.TileTypeEnums.GOLD_TILE:
 			return "GoldTile"
+		EnumMappings.TileTypeEnums.PLAYER_TILE:
+			return ""
 		_:
 			return "Unknown"

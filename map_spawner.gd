@@ -5,10 +5,10 @@ class_name MapSpawner
 @export var map_tile_scene: PackedScene = preload("res://MapTile.tscn")
 @export var auto_ramp_enabled: bool = true
 
-const MAP_WIDTH: int = 16
-const MAP_HEIGHT: int = 16
+const MAP_WIDTH: int = 32
+const MAP_HEIGHT: int = 32
 const TILE_SIZE: float = 2.0
-const CHUNK_SIZE: int = 16
+const CHUNK_SIZE: int = 32
 
 var map_data: Array = []
 

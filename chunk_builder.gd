@@ -155,6 +155,8 @@ func get_tile_color(tile_type: int) -> Color:
 			return Color(0.2, 0.8, 0.2)
 		EnumMappings.TileTypeEnums.GOLD_TILE:
 			return Color(1.0, 0.85, 0.2)
+		EnumMappings.TileTypeEnums.PLAYER_TILE:
+			return Color(0, 0,0)
 		_:
 			return Color(0.5, 0.5, 0.5)
 
