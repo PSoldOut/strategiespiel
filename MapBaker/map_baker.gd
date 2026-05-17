@@ -197,24 +197,9 @@ func add_quad(
 	uv3: Vector2,
 	color: Color
 ) -> void:
-	var normal_1 := Plane(v0, v1, v2).normal
-	var normal_2 := Plane(v0, v2, v3).normal
+	var normal_1 := Plane(v2, v1, v0).normal
+	var normal_2 := Plane(v3, v2, v0).normal
 
-	# Safety: if this is a mostly-horizontal top face and the normal points down,
-	# flip the triangle order.
-	if abs(normal_1.y) > 0.5 and normal_1.y < 0.0:
-		var old_v1 := v1
-		var old_v3 := v3
-		var old_uv1 := uv1
-		var old_uv3 := uv3
-
-		v1 = old_v3
-		v3 = old_v1
-		uv1 = old_uv3
-		uv3 = old_uv1
-
-		normal_1 = Plane(v0, v1, v2).normal
-		normal_2 = Plane(v0, v2, v3).normal
 
 	st.set_normal(normal_1)
 	st.set_uv(uv0)
