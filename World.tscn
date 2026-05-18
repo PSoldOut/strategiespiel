@@ -54,6 +54,15 @@ func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
 		unit.get_unit().target = target.get_unit()
 		unit.get_unit().state = unit.get_unit().State.CHASE
 		
+
+
+func _on_button_selection_pressed() -> void:
+	$DragSelection.active = true
+	$RTSBuildSystem.active = false
+
+func _on_button_building_pressed() -> void:
+	$DragSelection.active = false
+	$RTSBuildSystem.active = true
 "
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_js7pq"]
@@ -83,6 +92,108 @@ uv1_triplanar = true
 [sub_resource type="PlaneMesh" id="PlaneMesh_js7pq"]
 material = SubResource("StandardMaterial3D_bcbcq")
 size = Vector2(100, 100)
+
+[sub_resource type="GDScript" id="GDScript_js7pq"]
+script/source = "extends Node3D
+
+var obstacle = preload(\"res://Obstacle.tscn\")
+var AgentScene = preload(\"res://Agent.tscn\")
+var preview_obj = null
+var active : bool = false
+
+
+
+@onready var camera = $\"../RTSCamera\"
+@onready var navRegion = $\"../NavigationRegion3D\"
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	navRegion.bake_navigation_mesh()
+	
+	preview_obj = obstacle.instantiate()
+	add_child(preview_obj)
+
+	# Transparent machen
+	set_color(preview_obj, Color(1, 1, 1, 0.3))
+	
+
+
+func set_color(obj, color : Color):
+	for child in obj.get_children():
+		if child is MeshInstance3D:
+			
+			var mat = child.get_active_material(0)
+			
+			# Falls kein Material vorhanden → neues erstellen
+			if mat == null:
+				mat = StandardMaterial3D.new()
+			
+			# WICHTIG: duplizieren!
+			mat = mat.duplicate()
+			
+			# Transparenz aktivieren
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			mat.albedo_color = color
+			
+			# Optional: weniger Glanz / besser sichtbar
+			mat.metallic = 0
+			mat.roughness = 1
+			
+			child.set_surface_override_material(0, mat)
+
+
+
+func _input(event):
+	if event is InputEventMouseButton and event.pressed and active:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+
+			var obj = obstacle.instantiate()
+			obj.global_position = preview_obj.global_position
+			obj.get_node(\"CollisionShape3D\").disabled = false
+			
+			navRegion.add_child(obj)
+			navRegion.bake_navigation_mesh()
+	
+	
+				
+
+
+
+
+
+
+
+
+
+
+func _process(delta):
+	
+	if active:
+		var camera = get_viewport().get_camera_3d()
+		var mouse_pos = get_viewport().get_mouse_position()
+
+		var from = camera.project_ray_origin(mouse_pos)
+		var to = from + camera.project_ray_normal(mouse_pos) * 10000
+
+		var space_state = get_world_3d().direct_space_state
+		var query = PhysicsRayQueryParameters3D.create(from, to)
+		query.exclude = [preview_obj, self]
+		var result = space_state.intersect_ray(query)
+
+		if result:
+			var pos = result.position
+			
+			var grid_size = 2.0
+			pos = pos.snapped(Vector3(grid_size, 0, grid_size))
+			
+			pos.y += 2.01
+			preview_obj.global_position = pos
+			var area : Area3D = preview_obj.get_node(\"Area3D\")
+			if area.get_overlapping_bodies().size() > 0:
+				set_color(preview_obj, Color(1, 0, 0, 0.3))
+			else:
+				set_color(preview_obj, Color(1, 1, 1, 0.3))
+				
+"
 
 [node name="World" type="Node3D" unique_id=983696813]
 script = SubResource("GDScript_eu7l1")
@@ -134,5 +245,32 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.482632, 0)
 script = ExtResource("2_2dftf")
 metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
 
+[node name="RTSBuildSystem" type="Node3D" parent="." unique_id=1258002134]
+script = SubResource("GDScript_js7pq")
+
+[node name="Control" type="Control" parent="." unique_id=23443045]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ButtonSelection" type="Button" parent="Control" unique_id=1248674214]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 14.0
+offset_right = 95.0
+offset_bottom = 45.0
+text = "Selection"
+
+[node name="ButtonBuilding" type="Button" parent="Control" unique_id=1912990173]
+layout_mode = 0
+offset_left = 15.0
+offset_top = 49.0
+offset_right = 87.0
+offset_bottom = 80.0
+text = "Building"
+
 [connection signal="interact_command" from="DragSelection" to="." method="_on_drag_selection_interact_command"]
 [connection signal="move_command" from="DragSelection" to="." method="_on_drag_selection_move_command"]
+[connection signal="pressed" from="Control/ButtonSelection" to="." method="_on_button_selection_pressed"]
+[connection signal="pressed" from="Control/ButtonBuilding" to="." method="_on_button_building_pressed"]
