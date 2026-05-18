@@ -11,13 +11,17 @@ config_version=5
 [application]
 
 config/name="strategiespiel"
-run/main_scene="uid://duy662vx7mqeq"
+run/main_scene="uid://qohnerc578uf"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://addons/dragselection/icon.svg"
+config/icon="res://icon.svg"
+
+[autoload]
+
+EnumMappings="*uid://b0m7foljp46dc"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/RTSCamera/plugin.cfg", "res://addons/dragselection/plugin.cfg")
+enabled=PackedStringArray("res://addons/RTSCamera/plugin.cfg")
 
 [physics]
 
