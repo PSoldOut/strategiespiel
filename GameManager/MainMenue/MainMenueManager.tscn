@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://b7b0qqww88hwa"]
+
+[ext_resource type="Script" uid="uid://e2kvs0ecveum" path="res://GameManager/MainMenue/main_menue_manager.gd" id="1_1c5ka"]
+[ext_resource type="PackedScene" uid="uid://cex63xmbox2vm" path="res://Menue/MainMenue/MainMenue.tscn" id="2_uv8a3"]
+
+[node name="MainMenueManager" type="Control" unique_id=145741992]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_1c5ka")
+
+[node name="MainMenuePanel" parent="." unique_id=509460706 instance=ExtResource("2_uv8a3")]
+layout_mode = 1

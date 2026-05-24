@@ -12,7 +12,7 @@ static func make_flat_corners(height: float) -> Dictionary:
 
 
 static func make_cell(
-	tile_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE,
+	tile_type: int = EnumMappings.GroundType.GRAS_TILE,
 	height: float = 0.0
 ) -> Dictionary:
 	return {
@@ -23,7 +23,7 @@ static func make_cell(
 
 
 static func normalize_cell(value: Dictionary) -> Dictionary:
-	var tile_type: int = int(value.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var tile_type: int = int(value.get("type", EnumMappings.GroundType.GRAS_TILE))
 	var height: float = float(value.get("height", 0.0))
 	var cell := make_cell(tile_type, height)
 
@@ -66,7 +66,7 @@ static func duplicate_map_data(source_map: Array) -> Array:
 static func create_empty_map(
 	width: int,
 	height: int,
-	default_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE,
+	default_type: int = EnumMappings.GroundType.GRAS_TILE,
 	default_height: float = 0.0
 ) -> Array:
 	var result: Array = []

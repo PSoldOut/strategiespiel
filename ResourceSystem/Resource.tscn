@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cfshqxjbsf144"]
 
-[ext_resource type="Script" uid="uid://dfebdr0ohpcis" path="res://resource.gd" id="1_txoar"]
+[ext_resource type="Script" uid="uid://befxx1gn8klgt" path="res://MapEditor/map_spawner.gd" id="1_txoar"]
+
 
 [sub_resource type="BoxMesh" id="BoxMesh_cpix3"]
 size = Vector3(2, 2, 2)

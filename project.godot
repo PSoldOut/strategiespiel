@@ -11,13 +11,13 @@ config_version=5
 [application]
 
 config/name="strategiespiel"
-run/main_scene="uid://qohnerc578uf"
+run/main_scene="uid://cl2kjbcmu5i5j"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/EnumsMappings/plugin.cfg", "res://addons/MapBaker/plugin.cfg", "res://addons/RTSCamera/plugin.cfg", "res://addons/gameenums/plugin.cfg", "res://addons/mapbaker/plugin.cfg")
+enabled=PackedStringArray("res://addons/EnumsMappings/plugin.cfg", "res://addons/MapBaker/plugin.cfg", "res://addons/RTSCamera/plugin.cfg", "res://addons/mapbaker/plugin.cfg")
 
 [physics]
 

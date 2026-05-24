@@ -2,13 +2,46 @@ extends Node
 class_name EnumMappings
 
 
-enum TileTypeEnums {
-	STANDAD_TILE,
-	GOLD_TILE,
-	PLAYER_TILE
+enum GameState {
+	MAIN_MENU,
+	MAP_EDITOR,
+	LOBBY_SEARCH,
+	LOBBY,
+	STORY_LOBBY,
+	STORY,
+	PVE,
+	PVP
 }
-enum EditMode {
-	SET_TILE_TYPE,
+
+enum GroundType {
+	GRAS_TILE,
+	SAND_TILE,
+}
+
+enum HeightMapping {
+	HEIGHT_NONE,
 	HEIGHT_UP,
 	HEIGHT_DOWN
+}
+
+enum Orientation{
+	NORTH,
+	EAST,
+	WEST,
+	SOUTH
+	
+}
+
+enum Player{
+	WORLD,
+	PLAYER_1,
+	PLAYER_2,
+	PLAYER_3,
+	PLAYER_4,
+}
+enum BuildingType{
+	NONE,
+	GOLD,
+	STONE,
+	HOUSE,
 }

@@ -10,6 +10,7 @@ class_name MapSpawner
 @export var map_save_directory: String = "res://GeneratedMaps"
 @export var map_json_extension: String = ".json"
 @export var baked_scene_extension: String = ".tscn"
+@export var tile_palette : Control
 
 const MAP_WIDTH: int = 32
 const MAP_HEIGHT: int = 32
@@ -21,8 +22,10 @@ const MAX_HEIGHT: float = 2.0
 
 var map_data: Array = []
 
-var selected_tile_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE
-var edit_mode: int = EnumMappings.EditMode.SET_TILE_TYPE
+var ground_type: int = EnumMappings.GroundType.GRAS_TILE
+var height_mode: int = EnumMappings.HeightMapping.HEIGHT_NONE
+var player: int = EnumMappings.Player.WORLD
+var building_type: int = EnumMappings.BuildingType.NONE
 
 var visual_root: Node3D
 var click_root: Node3D
@@ -100,7 +103,7 @@ func build_click_tiles() -> void:
 			)
 
 			tile.set_tile_data(
-				int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE)),
+				int(cell.get("type", EnumMappings.GroundType.GRAS_TILE)),
 				float(cell.get("height", 0.0)),
 				x,
 				y
@@ -233,7 +236,7 @@ func ensure_map_size(input_map: Array, width: int, height: int) -> Array:
 
 
 func make_cell(
-	tile_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE,
+	tile_type: int = EnumMappings.GroundType.GRAS_TILE,
 	height: float = 0.0
 ) -> Dictionary:
 	return {
@@ -253,7 +256,7 @@ func make_flat_corners(height: float) -> Dictionary:
 
 
 func normalize_cell(value: Dictionary) -> Dictionary:
-	var tile_type: int = int(value.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var tile_type: int = int(value.get("type", EnumMappings.GroundType.GRAS_TILE))
 	var height: float = float(value.get("height", 0.0))
 	var cell := make_cell(tile_type, height)
 
@@ -274,7 +277,7 @@ func normalize_cell(value: Dictionary) -> Dictionary:
 func reset_map(
 	width: int = MAP_WIDTH,
 	height: int = MAP_HEIGHT,
-	default_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE,
+	default_type: int = EnumMappings.GroundType.GRAS_TILE,
 	default_height: float = 0.0,
 ) -> void:
 	print("Resetting map...")
@@ -294,34 +297,40 @@ func reset_map(
 
 
 func change_tile(grid_x: int, grid_y: int) -> void:
-	if not is_valid_grid_pos(grid_x, grid_y):
+	if not is_valid_grid_pos(grid_x, grid_y) or tile_palette.selected_building_type != EnumMappings.BuildingType.NONE:
 		return
 
 	var cell: Dictionary = map_data[grid_y][grid_x]
 
-	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var old_height: float = float(cell.get("height", 0.0))
 	var height: float = float(cell.get("height", 0.0))
+	var height_action = tile_palette.selected_height_action
+	print(tile_palette.selected_height_action)
+	match height_action:
+		EnumMappings.HeightMapping.HEIGHT_UP:
+			height = clamp(old_height + HEIGHT_STEP, MIN_HEIGHT, MAX_HEIGHT)
 
-	match edit_mode:
-		EnumMappings.EditMode.SET_TILE_TYPE:
-			tile_type = selected_tile_type
+		EnumMappings.HeightMapping.HEIGHT_DOWN:
+			height = clamp(old_height - HEIGHT_STEP, MIN_HEIGHT, MAX_HEIGHT)
 
-		EnumMappings.EditMode.HEIGHT_UP:
-			height = clamp(height + HEIGHT_STEP, MIN_HEIGHT, MAX_HEIGHT)
+	map_data[grid_y][grid_x] = make_cell(tile_palette.selected_ground_type, height)
 
-		EnumMappings.EditMode.HEIGHT_DOWN:
-			height = clamp(height - HEIGHT_STEP, MIN_HEIGHT, MAX_HEIGHT)
-
-	map_data[grid_y][grid_x] = make_cell(tile_type, height)
-
-	if auto_ramp_enabled:
+	if old_height != height:
 		recalculate_auto_ramps()
+		
+		
+	#var old_ground_type: int = int(cell.get("ground", 0))
+	#var old_player: int = int ()
+	#var player: int = EnumMappings.Player.WORLD
+	#var building_type: int = EnumMappings.BuildingType.NONE
 
 	save_map_to_json()
 	rebuild_map()
 
+func recalculate_auto_ramps():
+	recalculate_auto_ramps_1()
 
-func recalculate_auto_ramps() -> void:
+func recalculate_auto_ramps_1() -> void:
 	# Shared vertex based auto-ramp system.
 	# A corner is not owned by one tile only. Up to four tiles touch the same vertex.
 	# Therefore every shared vertex is calculated once and then written back to all
@@ -450,20 +459,11 @@ func clear_children(node: Node) -> void:
 
 func set_height_action(height_action: float) -> void:
 	if is_equal_approx(height_action, HEIGHT_STEP):
-		edit_mode = EnumMappings.EditMode.HEIGHT_UP
+		height_mode = EnumMappings.HeightMapping.HEIGHT_UP
 	elif is_equal_approx(height_action, -HEIGHT_STEP):
-		edit_mode = EnumMappings.EditMode.HEIGHT_DOWN
+		height_mode = EnumMappings.HeightMapping.HEIGHT_DOWN
 	else:
-		edit_mode = EnumMappings.EditMode.SET_TILE_TYPE
-
-
-func set_selected_tile_type(tile_type: int) -> void:
-	selected_tile_type = tile_type
-
-
-func set_palette(tile_type: int, height_action: float) -> void:
-	set_selected_tile_type(tile_type)
-	set_height_action(height_action)
+		height_mode = EnumMappings.HeightMapping.HEIGHT_NONE
 
 
 func save_map() -> void:

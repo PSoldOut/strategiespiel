@@ -1,17 +1,17 @@
 [gd_scene format=3 uid="uid://qohnerc578uf"]
 
-[ext_resource type="Script" uid="uid://6mkri0pga5ia" path="res://MapEditor/main.gd" id="1_cm0pq"]
-[ext_resource type="Script" uid="uid://befxx1gn8klgt" path="res://MapEditor/map_spawner.gd" id="1_glv2v"]
-[ext_resource type="Script" uid="uid://ceqc8b1b15fjc" path="res://MapEditor/tile_palette.gd" id="4_cm0pq"]
-[ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="4_fos0i"]
+[ext_resource type="Script" uid="uid://6mkri0pga5ia" path="res://MapEditor/map_editor.gd" id="1_k3j5l"]
+[ext_resource type="Script" uid="uid://ceqc8b1b15fjc" path="res://MapEditor/tile_palette.gd" id="2_a65gw"]
+[ext_resource type="Script" uid="uid://befxx1gn8klgt" path="res://MapEditor/map_spawner.gd" id="3_isqww"]
+[ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="4_wy1kg"]
 
 [sub_resource type="Sky" id="Sky_r0du0"]
 
 [sub_resource type="Environment" id="Environment_uu6xs"]
 sky = SubResource("Sky_r0du0")
 
-[node name="Main" type="Node3D" unique_id=1233364208 node_paths=PackedStringArray("camera")]
-script = ExtResource("1_cm0pq")
+[node name="MapEditor" type="Node3D" unique_id=1233364208 node_paths=PackedStringArray("camera")]
+script = ExtResource("1_k3j5l")
 camera = NodePath("RTSCamera")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2110217429]
@@ -21,25 +21,39 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-script = ExtResource("4_cm0pq")
+script = ExtResource("2_a65gw")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/TilePalette" unique_id=255865906]
 layout_mode = 0
 offset_right = 73.0
 offset_bottom = 203.0
 
-[node name="InfoLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=992015370]
+[node name="GroundLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=992015370]
 layout_mode = 2
-text = "Tile"
+text = "Tile: "
 
-[node name="OptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1677351984]
+[node name="GroundOptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1677351984]
 layout_mode = 2
 
 [node name="HeightLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=759716586]
 layout_mode = 2
 text = "Height:"
 
-[node name="OptionButton2" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=157174930]
+[node name="HeightOptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=157174930]
+layout_mode = 2
+
+[node name="Player" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1224599010]
+layout_mode = 2
+text = "Player: "
+
+[node name="PlayerOptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1364219014]
+layout_mode = 2
+
+[node name="BuildingLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=894402125]
+layout_mode = 2
+text = "Building:"
+
+[node name="BuildingOptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=80767620]
 layout_mode = 2
 
 [node name="LineEdit" type="LineEdit" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=556709749]
@@ -55,8 +69,13 @@ text = "Save"
 layout_mode = 2
 text = "Reset"
 
-[node name="MapSpawner" type="Node3D" parent="." unique_id=1022773838]
-script = ExtResource("1_glv2v")
+[node name="QuitButton" type="Button" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=150216589]
+layout_mode = 2
+text = "Haupt Menue"
+
+[node name="MapSpawner" type="Node3D" parent="." unique_id=1022773838 node_paths=PackedStringArray("tile_palette")]
+script = ExtResource("3_isqww")
+tile_palette = NodePath("../CanvasLayer/TilePalette")
 
 [node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=1213681869]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 339.19098, 0)
@@ -65,7 +84,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 339.19098, 0)
 environment = SubResource("Environment_uu6xs")
 
 [node name="RTSCamera" type="Camera3D" parent="." unique_id=472472818]
-script = ExtResource("4_fos0i")
+script = ExtResource("4_wy1kg")
 metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
 
 [connection signal="pressed" from="CanvasLayer/TilePalette/VBoxContainer/SaveButton" to="CanvasLayer/TilePalette" method="_on_save_button_pressed"]

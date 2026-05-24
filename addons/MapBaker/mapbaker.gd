@@ -13,7 +13,7 @@ func _disable_plugin() -> void:
 
 
 func _enter_tree() -> void:
-	add_custom_type("MapBaker", "Node3D", preload("res://addons/mapbaker/map_baker.gd"), preload("icon.svg"))
+	add_custom_type("MapBaker", "Node3D", preload("res://addons/MapBaker/map_baker.gd"), preload("icon.svg"))
 	pass
 
 

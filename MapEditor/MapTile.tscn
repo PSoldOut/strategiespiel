@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://cyit8nk43td0w" path="res://MapEditor/map_tile.gd" id="1_s8ube"]
 
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_5bxxx"]
 
 [node name="MapTile" type="Node3D" unique_id=275152167]

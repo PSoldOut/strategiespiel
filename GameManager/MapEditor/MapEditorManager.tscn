@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://dd4208tr30c8e"]
+
+[ext_resource type="Script" uid="uid://jgob4hb0x3mo" path="res://GameManager/MapEditor/map_editor_manager.gd" id="1_4fvv8"]
+[ext_resource type="PackedScene" uid="uid://qohnerc578uf" path="res://MapEditor/MapEditor.tscn" id="2_80a8k"]
+
+[node name="MapEditorManager" type="Node3D" unique_id=1252431757]
+script = ExtResource("1_4fvv8")
+
+[node name="MapEditor" parent="." unique_id=1233364208 instance=ExtResource("2_80a8k")]

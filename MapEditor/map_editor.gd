@@ -4,7 +4,7 @@ extends Node3D
 @onready var tile_palette: TilePalette = $CanvasLayer/TilePalette
 @export var camera: Camera3D
 var hovered_tile: RTSMapTile = null
-var selected_tile_type: int = EnumMappings.TileTypeEnums.STANDAD_TILE
+var selected_tile_type: int = EnumMappings.GroundType.GRAS_TILE
 var selected_height_action: float = 0.0
 
 
@@ -12,23 +12,8 @@ func _process(_delta: float) -> void:
 	_update_hovered_tile()
 
 func _ready() -> void:
-	tile_palette.tile_type_changed.connect(tile_type_changed)
-	tile_palette.selected_height_action_changed.connect(selected_height_action_changed)
-	tile_palette.map_name_changed.connect(map_name_changed)
 	tile_palette.save_requested.connect(_on_save_requested)
 	tile_palette.reset_requested.connect(_on_reset_requested)
-
-func tile_type_changed(tile_type: int):
-	print(tile_type)
-	map_spawner.set_selected_tile_type(tile_type)
-	
-func selected_height_action_changed(action: float):
-	print(action)
-	map_spawner.set_height_action(action)
-
-func map_name_changed(map_name: String):
-	print(map_name)
-	map_spawner.set_selected_map_name(map_name)
 
 func _on_save_requested() -> void:
 	map_spawner.save_map()

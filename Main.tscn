@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://cl2kjbcmu5i5j"]
+
+[ext_resource type="PackedScene" uid="uid://gkkl8uaasfxs" path="res://GameManager/GameManager.tscn" id="1_glv2v"]
+
+[node name="Main" type="Node" unique_id=1191810259]
+
+[node name="GameManager" parent="." unique_id=1827600099 instance=ExtResource("1_glv2v")]
+
+[node name="CurrentStateRoot" type="Node" parent="." unique_id=1785019731]

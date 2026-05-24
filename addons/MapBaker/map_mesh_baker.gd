@@ -61,19 +61,19 @@ func bake_meshes(map_data: Array) -> Dictionary:
 func get_cell_safe(map_data: Array, x: int, y: int) -> Dictionary:
 	if y < 0 or y >= map_data.size():
 		return {
-			"type": EnumMappings.TileTypeEnums.STANDAD_TILE,
+			"type": EnumMappings.GroundType.GRAS_TILE,
 			"height": 0.0
 		}
 
 	if not map_data[y] is Array:
 		return {
-			"type": EnumMappings.TileTypeEnums.STANDAD_TILE,
+			"type": EnumMappings.GroundType.GRAS_TILE,
 			"height": 0.0
 		}
 
 	if x < 0 or x >= map_data[y].size():
 		return {
-			"type": EnumMappings.TileTypeEnums.STANDAD_TILE,
+			"type": EnumMappings.GroundType.GRAS_TILE,
 			"height": 0.0
 		}
 
@@ -82,12 +82,10 @@ func get_cell_safe(map_data: Array, x: int, y: int) -> Dictionary:
 
 func get_tile_color(tile_type: int) -> Color:
 	match tile_type:
-		EnumMappings.TileTypeEnums.STANDAD_TILE:
+		EnumMappings.GroundType.GRAS_TILE:
 			return Color(0.2, 0.8, 0.2)
-		EnumMappings.TileTypeEnums.GOLD_TILE:
+		EnumMappings.GroundType.SAND_TILE:
 			return Color(1.0, 0.85, 0.2)
-		EnumMappings.TileTypeEnums.PLAYER_TILE:
-			return Color(0.0, 0.0, 0.0)
 		_:
 			return Color(0.5, 0.5, 0.5)
 
@@ -185,7 +183,7 @@ func add_debug_line(line_st: SurfaceTool, a: Vector3, b: Vector3) -> void:
 
 
 func add_cell_top(st: SurfaceTool, local_x: int, local_y: int, cell: Dictionary) -> void:
-	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var tile_type: int = int(cell.get("type", EnumMappings.GroundType.GRAS_TILE))
 	var heights := get_cell_corner_heights(cell)
 	var color := get_tile_color(tile_type)
 
@@ -222,7 +220,7 @@ func add_south_side(st: SurfaceTool, local_x: int, local_y: int, cell: Dictionar
 	if top_left <= bottom_left and top_right <= bottom_right:
 		return
 
-	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var tile_type: int = int(cell.get("type", EnumMappings.GroundType.GRAS_TILE))
 	var color := get_tile_color(tile_type)
 
 	var x0 := local_x * tile_size
@@ -257,7 +255,7 @@ func add_north_side(st: SurfaceTool, local_x: int, local_y: int, cell: Dictionar
 	if top_left <= bottom_left and top_right <= bottom_right:
 		return
 
-	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var tile_type: int = int(cell.get("type", EnumMappings.GroundType.GRAS_TILE))
 	var color := get_tile_color(tile_type)
 
 	var x0 := local_x * tile_size
@@ -292,7 +290,7 @@ func add_east_side(st: SurfaceTool, local_x: int, local_y: int, cell: Dictionary
 	if top_left <= bottom_left and top_right <= bottom_right:
 		return
 
-	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var tile_type: int = int(cell.get("type", EnumMappings.GroundType.GRAS_TILE))
 	var color := get_tile_color(tile_type)
 
 	var x := (local_x + 1) * tile_size
@@ -327,7 +325,7 @@ func add_west_side(st: SurfaceTool, local_x: int, local_y: int, cell: Dictionary
 	if top_left <= bottom_left and top_right <= bottom_right:
 		return
 
-	var tile_type: int = int(cell.get("type", EnumMappings.TileTypeEnums.STANDAD_TILE))
+	var tile_type: int = int(cell.get("type", EnumMappings.GroundType.GRAS_TILE))
 	var color := get_tile_color(tile_type)
 
 	var x := local_x * tile_size
