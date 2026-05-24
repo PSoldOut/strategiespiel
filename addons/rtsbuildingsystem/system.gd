@@ -1,7 +1,8 @@
 extends Node3D
 class_name RTSBuildSystem
 
-
+const DEFAULT_RAY_LENGTH: float = 10000.0
+const INVALID_GRID: Vector2i = Vector2i(-999999, -999999)
 
 var obj_scene
 var preview_object = null
@@ -78,20 +79,8 @@ func _input(event):
 			
 			building_root.add_child(obj)
 			building_set.emit(obj)
-	
-	
-				
 
-
-
-
-
-
-
-
-
-
-func _process(delta):
+func _process_old(delta):
 	
 	if active:
 		var camera = get_viewport().get_camera_3d()
@@ -107,10 +96,10 @@ func _process(delta):
 
 		if result:
 			var pos = result.position
-			
 			var grid_size = 2.0
 			pos = pos.snapped(Vector3(grid_size, 0, grid_size))
-			
+			print(pos)
+			#pos += Vector3(-1,0.01,-1)
 			pos.y += 1.01
 			preview_object.global_position = pos
 			
@@ -130,3 +119,144 @@ func _process(delta):
 					valid_position = false
 				
 				
+
+func _process(_delta: float) -> void:
+	var tile_size : float = 2.0
+	if active:
+		var hit := _get_mouse_map_hit()
+		if hit.is_empty():
+			return
+		var grid_pos: Vector2i = hit["grid"]
+		var hit_position: Vector3 = hit["position"]
+		hit_position = hit_position.snapped(Vector3(0,0.5,0))
+		var new_pos =Vector3(
+			(float(grid_pos.x) + 0.5) * tile_size,
+			hit_position.y + 0.03,
+			(float(grid_pos.y) + 0.5) * tile_size
+		)
+		preview_object.global_position = new_pos
+		
+		
+		
+			
+		
+		if main_area.get_overlapping_bodies().size() > 0:
+			set_color(preview_object, Color(1, 0, 0, 0.3))
+			valid_position = false
+		else:
+			if ground_area1.get_overlapping_bodies().size() > 0 and ground_area2.get_overlapping_bodies().size() > 0 and ground_area3.get_overlapping_bodies().size() > 0 and ground_area4.get_overlapping_bodies().size() > 0:
+				set_color(preview_object, Color(1, 1, 1, 0.3))
+				valid_position = true
+			else:
+				set_color(preview_object, Color(1, 0, 0, 0.3))
+				valid_position = false
+
+func _get_grid_under_mouse() -> Vector2i:
+	var hit := _get_mouse_map_hit()
+
+	if hit.is_empty():
+		return INVALID_GRID
+
+	return hit["grid"]
+
+
+func _get_mouse_map_hit() -> Dictionary:
+	return get_mouse_map_hit(
+		get_viewport(),
+		get_world_3d(),
+		camera,
+		[self],
+		DEFAULT_RAY_LENGTH,
+		MapSpawner.TILE_SIZE
+	)
+
+
+static func get_mouse_map_hit(
+	viewport: Viewport,
+	world_3d: World3D,
+	camera_ref: Camera3D = null,
+	exclude: Array = [],
+	ray_length: float = DEFAULT_RAY_LENGTH,
+	tile_size: float = 2.0
+) -> Dictionary:
+	if viewport == null:
+		return {}
+
+	if world_3d == null:
+		return {}
+
+	if camera_ref == null:
+		camera_ref = viewport.get_camera_3d()
+
+	if camera_ref == null:
+		return {}
+
+	var mouse_pos := viewport.get_mouse_position()
+	var from := camera_ref.project_ray_origin(mouse_pos)
+	var to := from + camera_ref.project_ray_normal(mouse_pos) * ray_length
+
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.exclude = exclude
+	query.collide_with_bodies = true
+	query.collide_with_areas = true
+	query.collision_mask = 1
+
+	var result := world_3d.direct_space_state.intersect_ray(query)
+
+	if result.is_empty():
+		return {}
+
+	var pos: Vector3 = result.position
+	var grid_pos := world_position_to_grid(pos, tile_size)
+	#print(grid_pos)
+
+	return {
+		"grid": grid_pos,
+		"position": pos,
+		"collider": result.collider
+	}
+
+
+static func world_position_to_grid(pos: Vector3, tile_size: float = 2.0) -> Vector2i:
+	var grid_x := int(floor(pos.x / tile_size))
+	var grid_y := int(floor(pos.z / tile_size))
+	return Vector2i(grid_x, grid_y)
+
+
+static func get_snapped_mouse_position(
+	viewport: Viewport,
+	world_3d: World3D,
+	camera_ref: Camera3D = null,
+	exclude: Array = [],
+	ray_length: float = DEFAULT_RAY_LENGTH,
+	grid_size: float = 2.0
+) -> Vector3:
+	if viewport == null:
+		return Vector3.ZERO
+
+	if world_3d == null:
+		return Vector3.ZERO
+
+	if camera_ref == null:
+		camera_ref = viewport.get_camera_3d()
+
+	if camera_ref == null:
+		return Vector3.ZERO
+
+	var mouse_pos := viewport.get_mouse_position()
+	var from := camera_ref.project_ray_origin(mouse_pos)
+	var to := from + camera_ref.project_ray_normal(mouse_pos) * ray_length
+
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.exclude = exclude
+	query.collide_with_bodies = true
+	query.collide_with_areas = true
+	query.collision_mask = 1
+
+	var result := world_3d.direct_space_state.intersect_ray(query)
+
+	if result.is_empty():
+		return Vector3.ZERO
+
+	var pos: Vector3 = result.position
+	return pos.snapped(Vector3(grid_size, 0.0, grid_size))

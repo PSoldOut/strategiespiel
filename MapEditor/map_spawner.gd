@@ -1,9 +1,7 @@
 extends Node3D
 class_name MapSpawner
 
-const DEFAULT_MAP_TILE_SCENE_PATH: String = "res://MapEditor/MapTile.tscn"
 
-@export var map_tile_scene: PackedScene
 @export var auto_ramp_enabled: bool = true
 @export var show_tile_lines: bool = true
 @export var bake_collision: bool = true
@@ -16,6 +14,7 @@ const DEFAULT_MAP_TILE_SCENE_PATH: String = "res://MapEditor/MapTile.tscn"
 
 const MAP_WIDTH: int = 32
 const MAP_HEIGHT: int = 32
+const EDITOR_JUNKS: int = 4
 const TILE_SIZE: float = 2.0
 
 const HEIGHT_STEP: float = 0.5
@@ -30,52 +29,31 @@ var player: int = EnumMappings.Player.WORLD
 var building_type: int = EnumMappings.BuildingType.NONE
 
 var visual_root: Node3D
-var click_root: Node3D
-var click_tiles_by_grid: Dictionary = {}
 var map_baker: MapBaker
 
 signal map_spawned(map_data: Array)
-signal tile_clicked(tile: RTSMapTile) # Legacy/optional. Click logic is handled by MapEditor via baked map raycast.
 
 
 func _ready() -> void:
-	_ensure_required_scenes()
 
 	visual_root = Node3D.new()
 	visual_root.name = "VisualMap"
 	add_child(visual_root)
 
-	click_root = Node3D.new()
-	click_root.name = "ClickableTiles"
-	add_child(click_root)
 
 	load_map_from_json()
 	rebuild_map()
 
 
-func _ensure_required_scenes() -> void:
-	if map_tile_scene != null:
-		return
-
-	if not ResourceLoader.exists(DEFAULT_MAP_TILE_SCENE_PATH):
-		push_error("MapSpawner: MapTile scene not found: " + DEFAULT_MAP_TILE_SCENE_PATH)
-		return
-
-	map_tile_scene = load(DEFAULT_MAP_TILE_SCENE_PATH) as PackedScene
-
-	if map_tile_scene == null:
-		push_error("MapSpawner: Could not load MapTile scene as PackedScene: " + DEFAULT_MAP_TILE_SCENE_PATH)
 
 
 func rebuild_map() -> void:
 	clear_children(visual_root)
-	clear_children(click_root)
 
 	if auto_ramp_enabled:
 		recalculate_auto_ramps()
 
 	build_visual_map()
-	build_click_tiles()
 	call_deferred("_emit_map_spawned")
 
 
@@ -102,80 +80,6 @@ func build_visual_map() -> void:
 func build_visual_chunks() -> void:
 	build_visual_map()
 
-
-func build_click_tiles() -> void:
-	_ensure_required_scenes()
-	click_tiles_by_grid.clear()
-
-	if map_tile_scene == null:
-		push_error("MapSpawner: map_tile_scene is null. Assign MapTile.tscn in the Inspector or fix DEFAULT_MAP_TILE_SCENE_PATH.")
-		return
-
-	for y in range(map_data.size()):
-		for x in range(map_data[y].size()):
-			var cell: Dictionary = map_data[y][x]
-
-			var tile := map_tile_scene.instantiate() as RTSMapTile
-
-			if tile == null:
-				push_error("MapTile.tscn root does not have RTSMapTile script")
-				continue
-
-			click_root.add_child(tile)
-
-			tile.position = Vector3(
-				(x + 0.5) * TILE_SIZE,
-				float(cell.get("height", 0.0)) + 0.05,
-				(y + 0.5) * TILE_SIZE
-			)
-
-			tile.set_tile_data(
-				int(cell.get("type", EnumMappings.GroundType.GRAS_TILE)),
-				float(cell.get("height", 0.0)),
-				x,
-				y
-			)
-
-			click_tiles_by_grid[Vector2i(x, y)] = tile
-
-			# Clickable tiles are now only hover/highlight visuals.
-			# Click and drag editing is handled by MapEditor via raycast against the baked map collision.
-			# Therefore these tiles do not need collision and should not directly change map data.
-			# _ensure_click_tile_collision(tile)
-
-
-func _ensure_click_tile_collision(tile: RTSMapTile) -> void:
-	# GetTileUnderMouse uses a physics raycast.
-	# Therefore every spawned editor tile needs a collision object.
-	# The collision is added slightly above the visual map so the ray hits
-	# the editable RTSMapTile instead of the baked visual map collision.
-	if tile == null:
-		return
-
-	var existing := tile.find_child("ClickCollisionBody", false, false)
-	if existing != null:
-		return
-
-	var body := StaticBody3D.new()
-	body.name = "ClickCollisionBody"
-	body.input_ray_pickable = true
-	body.set_meta("tile_ref", tile)
-
-	var shape := CollisionShape3D.new()
-	shape.name = "CollisionShape3D"
-
-	var box := BoxShape3D.new()
-	box.size = Vector3(TILE_SIZE, 0.12, TILE_SIZE)
-	shape.shape = box
-
-	body.add_child(shape)
-	tile.add_child(body)
-
-
-func _on_tile_clicked(tile: RTSMapTile) -> void:
-	# Legacy compatibility only.
-	# Map editing is now handled by MapEditor click/drag logic, not by RTSMapTile clicks.
-	tile_clicked.emit(tile)
 
 
 func get_map_json_path() -> String:
@@ -356,15 +260,6 @@ func reset_map(
 	print("Map reset complete")
 
 
-func get_tile_at_grid(grid_x: int, grid_y: int) -> RTSMapTile:
-	if not is_valid_grid_pos(grid_x, grid_y):
-		return null
-
-	var key := Vector2i(grid_x, grid_y)
-	if not click_tiles_by_grid.has(key):
-		return null
-
-	return click_tiles_by_grid[key] as RTSMapTile
 
 
 func world_position_to_grid(pos: Vector3) -> Vector2i:

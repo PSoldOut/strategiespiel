@@ -11,6 +11,17 @@
 [sub_resource type="Environment" id="Environment_uu6xs"]
 sky = SubResource("Sky_r0du0")
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a65gw"]
+transparency = 1
+albedo_color = Color(0, 1, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_isqww"]
+material = SubResource("StandardMaterial3D_a65gw")
+size = Vector3(1, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_a65gw"]
+size = Vector3(1, 10, 1)
+
 [node name="MapEditor" type="Node3D" unique_id=1233364208]
 script = ExtResource("1_k3j5l")
 
@@ -94,6 +105,12 @@ script = ExtResource("5_a65gw")
 building_root = NodePath("../BuildingRoot")
 camera = NodePath("../RTSCamera")
 metadata/_custom_type_script = "uid://bxlx015maqnwf"
+
+[node name="HoverHighlightMesh" type="MeshInstance3D" parent="." unique_id=1766582247]
+mesh = SubResource("BoxMesh_isqww")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=804651834]
+mesh = SubResource("BoxMesh_a65gw")
 
 [connection signal="pressed" from="CanvasLayer/TilePalette/VBoxContainer/SaveButton" to="CanvasLayer/TilePalette" method="_on_save_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/TilePalette/VBoxContainer/ResetButton" to="CanvasLayer/TilePalette" method="_on_reset_button_pressed"]
