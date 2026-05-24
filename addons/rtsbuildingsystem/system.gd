@@ -106,7 +106,7 @@ func _process(delta):
 		var query = PhysicsRayQueryParameters3D.create(from, to)
 		query.exclude = [preview_object, self]
 		var result = space_state.intersect_ray(query)
-
+		
 		if result:
 			var pos = result.position
 			
