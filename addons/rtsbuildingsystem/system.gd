@@ -16,12 +16,9 @@ var valid_position : bool = false
 signal building_set(building)
 @export var building_root : Node
 @export var camera : Camera3D
-@onready var navRegion = $"../NavigationRegion3D"
+@export var grid_size : float = 2.0
 # Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	navRegion.bake_navigation_mesh()
-	# Transparent machen
-	
+
 
 func set_preview_object(scene):
 	obj_scene = scene
@@ -113,7 +110,6 @@ func _process(delta):
 		if result:
 			var pos = result.position
 			
-			var grid_size = 2.0
 			pos = pos.snapped(Vector3(grid_size, 0, grid_size))
 			
 			pos.y += 2.01
