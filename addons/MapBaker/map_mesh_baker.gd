@@ -121,38 +121,50 @@ func add_quad(
 	uv3: Vector2,
 	color: Color
 ) -> void:
-	var normal_1 := Plane(v0, v1, v2).normal
-	var normal_2 := Plane(v0, v2, v3).normal
+	# Wichtig:
+	# Godot/Physics wertet die Triangle-Winding für Trimesh-Collision aus.
+	# Wenn der Raycast nur von unten trifft, ist die Vorderseite der Dreiecke
+	# falsch herum. Deshalb werden die beiden Triangles hier gedreht:
+	#
+	# vorher: v0, v1, v2  und  v0, v2, v3
+	# jetzt:  v0, v2, v1  und  v0, v3, v2
+	#
+	# Dadurch zeigen die Frontfaces der Quads auf die andere Seite,
+	# ohne den MeshInstance3D oder CollisionShape3D räumlich zu rotieren.
+
+	var normal_1 := Plane(v0, v2, v1).normal
+	var normal_2 := Plane(v0, v3, v2).normal
 
 	st.set_normal(normal_1)
 	st.set_uv(uv0)
 	st.set_color(color)
 	st.add_vertex(v0)
+
+	st.set_normal(normal_1)
+	st.set_uv(uv2)
+	st.set_color(color)
+	st.add_vertex(v2)
 
 	st.set_normal(normal_1)
 	st.set_uv(uv1)
 	st.set_color(color)
 	st.add_vertex(v1)
 
-	st.set_normal(normal_1)
-	st.set_uv(uv2)
-	st.set_color(color)
-	st.add_vertex(v2)
-
 	st.set_normal(normal_2)
 	st.set_uv(uv0)
 	st.set_color(color)
 	st.add_vertex(v0)
 
 	st.set_normal(normal_2)
+	st.set_uv(uv3)
+	st.set_color(color)
+	st.add_vertex(v3)
+
+	st.set_normal(normal_2)
 	st.set_uv(uv2)
 	st.set_color(color)
 	st.add_vertex(v2)
 
-	st.set_normal(normal_2)
-	st.set_uv(uv3)
-	st.set_color(color)
-	st.add_vertex(v3)
 
 
 func add_cell_tile_lines(line_st: SurfaceTool, local_x: int, local_y: int, cell: Dictionary) -> void:

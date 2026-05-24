@@ -1,15 +1,8 @@
 [gd_scene format=3 uid="uid://cy86oddhd2g7t"]
 
-[ext_resource type="Script" uid="uid://cyit8nk43td0w" path="res://MapEditor/map_tile.gd" id="1_s8ube"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_5bxxx"]
+[ext_resource type="Script" uid="uid://bgklqg3btrujq" path="res://MapEditor/map_tile.gd" id="1_s8ube"]
 
 [node name="MapTile" type="Node3D" unique_id=275152167]
 script = ExtResource("1_s8ube")
 
 [node name="Selector" type="MeshInstance3D" parent="." unique_id=2058750844]
-
-[node name="ClickBody" type="StaticBody3D" parent="." unique_id=102475405]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="ClickBody" unique_id=327463971]
-shape = SubResource("BoxShape3D_5bxxx")

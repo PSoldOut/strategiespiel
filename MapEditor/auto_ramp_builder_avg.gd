@@ -14,7 +14,7 @@ class_name AutoRampBuilderAvg
 #   nw_cell.height + ne_cell.height + sw_cell.height + se_cell.height / 4
 #
 # Border vertices naturally use only 1 or 2 touching cells.
-static func recalculate_auto_ramps(map_data: Array, _height_step: float = 0.0) -> void:
+static func recalculate_auto_ramps(map_data: Array) -> void:
 	if map_data.is_empty():
 		return
 

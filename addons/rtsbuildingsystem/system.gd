@@ -74,7 +74,7 @@ func _input(event):
 
 			var obj = obj_scene.instantiate()
 			obj.global_position = preview_object.global_position
-			obj.get_node("CollisionShape3D").disabled = false
+			#obj.get_node("CollisionShape3D").disabled = false
 			
 			building_root.add_child(obj)
 			building_set.emit(obj)
@@ -111,7 +111,7 @@ func _process(delta):
 			var grid_size = 2.0
 			pos = pos.snapped(Vector3(grid_size, 0, grid_size))
 			
-			pos.y += 2.01
+			pos.y += 1.01
 			preview_object.global_position = pos
 			
 			

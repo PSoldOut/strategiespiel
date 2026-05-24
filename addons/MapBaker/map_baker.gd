@@ -90,9 +90,12 @@ func bake_map(new_map_data: Array) -> void:
 	_apply_tile_line_mesh(tile_line_mesh)
 	_apply_collision_from_mesh(terrain_mesh)
 
+	
+
 
 func _apply_terrain_mesh(terrain_mesh: Mesh) -> void:
 	mesh_instance.mesh = terrain_mesh
+	
 
 	if terrain_mesh != null:
 		debug_material = create_debug_material()

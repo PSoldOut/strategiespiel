@@ -9,19 +9,19 @@ var grid_x: int = 0
 var grid_y: int = 0
 
 @onready var selector: MeshInstance3D = $Selector
-@onready var click_body: StaticBody3D = $ClickBody
+#@onready var click_body: StaticBody3D = $ClickBody
 
 
 func _ready() -> void:
 	add_to_group("map_tiles")
 	_setup_selector()
 
-	if click_body == null:
-		push_error("ClickBody missing in MapTile")
-		return
+	#if click_body == null:
+		#push_error("ClickBody missing in MapTile")
+		#return
 
-	click_body.input_event.connect(_on_click_body_input_event)
-	click_body.set_meta("tile_ref", self)
+	#click_body.input_event.connect(_on_click_body_input_event)
+	#click_body.set_meta("tile_ref", self)
 
 
 func set_tile_data(tvalue: int, hvalue: float, x: int, y: int) -> void:
