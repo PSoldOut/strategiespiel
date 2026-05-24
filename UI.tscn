@@ -1,0 +1,110 @@
+[gd_scene format=3 uid="uid://dcnfebmxreiui"]
+
+[sub_resource type="GDScript" id="GDScript_wusub"]
+script/source = "extends Control
+
+signal button_house_pressed
+signal button_kaserne_pressed
+signal button_mil_pressed
+signal button_selection_pressed
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+	pass
+
+
+func _on_button_build_pressed() -> void:
+	$Panel/Build.visible = true
+
+
+func _on_button_selection_pressed() -> void:
+	button_selection_pressed.emit()
+
+
+func _on_button_house_pressed() -> void:
+	button_house_pressed.emit()
+
+func _on_button_kaserne_pressed() -> void:
+	button_kaserne_pressed.emit()
+
+func _on_button_mil_pressed() -> void:
+	button_mil_pressed.emit()
+"
+
+[node name="UI" type="Control" unique_id=785861755]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = SubResource("GDScript_wusub")
+
+[node name="Panel" type="Panel" parent="." unique_id=864546948]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -161.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Main" type="Control" parent="Panel" unique_id=188452222]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/Main" unique_id=583475393]
+layout_mode = 0
+offset_right = 54.0
+offset_bottom = 66.0
+
+[node name="ButtonBuild" type="Button" parent="Panel/Main/VBoxContainer" unique_id=906982479]
+layout_mode = 2
+text = "Build"
+
+[node name="ButtonSelection" type="Button" parent="Panel/Main/VBoxContainer" unique_id=433659831]
+layout_mode = 2
+text = "Select"
+
+[node name="Build" type="Control" parent="Panel" unique_id=802215050]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 40.0
+grow_horizontal = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/Build" unique_id=1637130129]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -71.0
+offset_bottom = 66.0
+grow_horizontal = 0
+
+[node name="ButtonHouse" type="Button" parent="Panel/Build/VBoxContainer" unique_id=194353205]
+layout_mode = 2
+text = "house"
+
+[node name="ButtonKaserne" type="Button" parent="Panel/Build/VBoxContainer" unique_id=427888597]
+layout_mode = 2
+text = "Kaserne"
+
+[node name="ButtonMil" type="Button" parent="Panel/Build/VBoxContainer" unique_id=386394074]
+layout_mode = 2
+text = "Mühle"
+
+[connection signal="pressed" from="Panel/Main/VBoxContainer/ButtonBuild" to="." method="_on_button_build_pressed"]
+[connection signal="pressed" from="Panel/Main/VBoxContainer/ButtonSelection" to="." method="_on_button_selection_pressed"]
+[connection signal="pressed" from="Panel/Build/VBoxContainer/ButtonHouse" to="." method="_on_button_house_pressed"]
+[connection signal="pressed" from="Panel/Build/VBoxContainer/ButtonKaserne" to="." method="_on_button_kaserne_pressed"]
+[connection signal="pressed" from="Panel/Build/VBoxContainer/ButtonMil" to="." method="_on_button_mil_pressed"]

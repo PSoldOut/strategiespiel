@@ -111,8 +111,9 @@ func _process(delta):
 			var pos = result.position
 			
 			pos = pos.snapped(Vector3(grid_size, 0, grid_size))
-			
-			pos.y += 2.01
+			pos.x += 1
+			pos.z += 1
+			pos.y += 1.01
 			preview_object.global_position = pos
 			
 			

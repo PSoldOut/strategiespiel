@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="2_2dftf"]
 [ext_resource type="ArrayMesh" uid="uid://ccs4u1c3csfia" path="res://testmap.tres" id="2_js7pq"]
 [ext_resource type="Script" uid="uid://bxlx015maqnwf" path="res://addons/rtsbuildingsystem/system.gd" id="5_eu7l1"]
+[ext_resource type="PackedScene" uid="uid://dcnfebmxreiui" path="res://UI.tscn" id="6_p1v5b"]
 
 [sub_resource type="GDScript" id="GDScript_eu7l1"]
 resource_name = "World"
@@ -59,19 +60,37 @@ func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
 		
 
 
-func _on_button_selection_pressed() -> void:
-	$RTSBuildSystem.unset_preview_object()
-	$RTSBuildSystem.active = false
-	$DragSelection.active = true
-
-func _on_button_building_pressed() -> void:
-	$DragSelection.active = false
-	$RTSBuildSystem.active = true
-	$RTSBuildSystem.set_preview_object(preload(\"res://Obstacle.tscn\"))
 
 
 func _on_rts_build_system_building_set(building: Variant) -> void:
 	navRegion.bake_navigation_mesh()
+
+
+	
+
+
+func _on_ui_button_selection_pressed() -> void:
+	$RTSBuildSystem.unset_preview_object()
+	$RTSBuildSystem.active = false
+	$DragSelection.active = true
+
+
+func _on_ui_button_house_pressed() -> void:
+	$DragSelection.active = false
+	$RTSBuildSystem.active = true
+	$RTSBuildSystem.set_preview_object(preload(\"res://house.tscn\"))
+
+
+func _on_ui_button_kaserne_pressed() -> void:
+	$DragSelection.active = false
+	$RTSBuildSystem.active = true
+	$RTSBuildSystem.set_preview_object(preload(\"res://kaserne.tscn\"))
+
+
+func _on_ui_button_mil_pressed() -> void:
+	$DragSelection.active = false
+	$RTSBuildSystem.active = true
+	$RTSBuildSystem.set_preview_object(preload(\"res://mil.tscn\"))
 "
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_js7pq"]
@@ -154,36 +173,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.482632, 0)
 script = ExtResource("2_2dftf")
 metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
 
-[node name="Control" type="Control" parent="." unique_id=23443045]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="ButtonSelection" type="Button" parent="Control" unique_id=1248674214]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 14.0
-offset_right = 95.0
-offset_bottom = 45.0
-text = "Selection"
-
-[node name="ButtonBuilding" type="Button" parent="Control" unique_id=1912990173]
-layout_mode = 0
-offset_left = 15.0
-offset_top = 49.0
-offset_right = 87.0
-offset_bottom = 80.0
-text = "Building"
-
 [node name="RTSBuildSystem" type="Node3D" parent="." unique_id=1307062194 node_paths=PackedStringArray("building_root", "camera")]
 script = ExtResource("5_eu7l1")
 building_root = NodePath("../NavigationRegion3D/Buildings")
 camera = NodePath("../RTSCamera")
 metadata/_custom_type_script = "uid://bxlx015maqnwf"
 
+[node name="UI" parent="." unique_id=785861755 instance=ExtResource("6_p1v5b")]
+
 [connection signal="interact_command" from="DragSelection" to="." method="_on_drag_selection_interact_command"]
 [connection signal="move_command" from="DragSelection" to="." method="_on_drag_selection_move_command"]
-[connection signal="pressed" from="Control/ButtonSelection" to="." method="_on_button_selection_pressed"]
-[connection signal="pressed" from="Control/ButtonBuilding" to="." method="_on_button_building_pressed"]
 [connection signal="building_set" from="RTSBuildSystem" to="." method="_on_rts_build_system_building_set"]
+[connection signal="button_house_pressed" from="UI" to="." method="_on_ui_button_house_pressed"]
+[connection signal="button_kaserne_pressed" from="UI" to="." method="_on_ui_button_kaserne_pressed"]
+[connection signal="button_mil_pressed" from="UI" to="." method="_on_ui_button_mil_pressed"]
+[connection signal="button_selection_pressed" from="UI" to="." method="_on_ui_button_selection_pressed"]

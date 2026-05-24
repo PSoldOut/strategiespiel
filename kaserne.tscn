@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://b15whnog2yv32"]
+
+[ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="1_ch1vy"]
+
+[sub_resource type="GDScript" id="GDScript_nx21j"]
+script/source = "extends StaticBody3D
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+	pass
+"
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ch1vy"]
+size = Vector3(3.99, 1.99, 1.99)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gv18o"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jsqlb"]
+size = Vector3(3.99, 1.99, 1.99)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ch1vy"]
+size = Vector3(4, 2, 2)
+
+[node name="Kaserne" type="StaticBody3D" unique_id=116757346]
+script = SubResource("GDScript_nx21j")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1338165127]
+shape = SubResource("BoxShape3D_ch1vy")
+disabled = true
+
+[node name="RTSBuilding" type="Node3D" parent="." unique_id=816318615 node_paths=PackedStringArray("main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
+script = ExtResource("1_ch1vy")
+main_area = NodePath("../Area3D5")
+ground_area1 = NodePath("../Area3D4")
+ground_area2 = NodePath("../Area3D3")
+ground_area3 = NodePath("../Area3D2")
+ground_area4 = NodePath("../Area3D")
+metadata/_custom_type_script = "uid://cvt0q65feqdc6"
+
+[node name="Area3D" type="Area3D" parent="." unique_id=1685386063]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1861257230]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.8595403, -1.0143642, -0.86524916)
+shape = SubResource("BoxShape3D_gv18o")
+
+[node name="Area3D2" type="Area3D" parent="." unique_id=561640705]
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Area3D2" unique_id=1518387249]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.8798811, -1.0143642, 0.8752941)
+shape = SubResource("BoxShape3D_gv18o")
+
+[node name="Area3D3" type="Area3D" parent="." unique_id=1610323848]
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="Area3D3" unique_id=1756879244]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.8666124, -1.0143642, 0.8752941)
+shape = SubResource("BoxShape3D_gv18o")
+
+[node name="Area3D4" type="Area3D" parent="." unique_id=2012265001]
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="Area3D4" unique_id=1845241247]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.8798811, -1.0143642, -0.8797146)
+shape = SubResource("BoxShape3D_gv18o")
+
+[node name="Area3D5" type="Area3D" parent="." unique_id=1962478222]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D5" unique_id=143611545]
+shape = SubResource("BoxShape3D_jsqlb")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1901360169]
+mesh = SubResource("BoxMesh_ch1vy")

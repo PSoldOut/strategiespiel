@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://bjlpm178vwatj"]
+
+[ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="1_hfkix"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_g5ubp"]
+size = Vector3(2, 2, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hfkix"]
+size = Vector3(2, 2, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_metfq"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_10qhy"]
+size = Vector3(2, 2, 2)
+
+[node name="House" type="StaticBody3D" unique_id=1970737323]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=450661025]
+shape = SubResource("BoxShape3D_g5ubp")
+disabled = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2126260075]
+mesh = SubResource("BoxMesh_hfkix")
+
+[node name="Area3D" type="Area3D" parent="." unique_id=459930434]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=2020451994]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.86696345, -1.0136923, -0.8617659)
+shape = SubResource("BoxShape3D_metfq")
+
+[node name="Area3D2" type="Area3D" parent="." unique_id=544393703]
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Area3D2" unique_id=2072541606]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.86273, -1.0160617, -0.8732504)
+shape = SubResource("BoxShape3D_metfq")
+
+[node name="Area3D3" type="Area3D" parent="." unique_id=310322025]
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="Area3D3" unique_id=1000480841]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.87143534, -0.9705748, 0.8804005)
+shape = SubResource("BoxShape3D_metfq")
+
+[node name="Area3D4" type="Area3D" parent="." unique_id=634384424]
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="Area3D4" unique_id=625224810]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.8681444, -1.0288168, 0.8709826)
+shape = SubResource("BoxShape3D_metfq")
+
+[node name="Main" type="Area3D" parent="." unique_id=18434608]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Main" unique_id=1578217557]
+shape = SubResource("BoxShape3D_10qhy")
+
+[node name="RTSBuilding" type="Node3D" parent="." unique_id=452273638 node_paths=PackedStringArray("main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
+script = ExtResource("1_hfkix")
+main_area = NodePath("../Main")
+ground_area1 = NodePath("../Area3D4")
+ground_area2 = NodePath("../Area3D3")
+ground_area3 = NodePath("../Area3D2")
+ground_area4 = NodePath("../Area3D")
+metadata/_custom_type_script = "uid://cvt0q65feqdc6"

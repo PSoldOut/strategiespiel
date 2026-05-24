@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://cg7fd0xjmmwdh"]
+
+[ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="1_dcouy"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_pvl8o"]
+size = Vector3(4, 3, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ohnmb"]
+size = Vector3(4, 3, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bgfqr"]
+size = Vector3(4, 3, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_heh1b"]
+
+[node name="Mil" type="StaticBody3D" unique_id=1745382759]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1607875121]
+mesh = SubResource("BoxMesh_pvl8o")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1516807661]
+shape = SubResource("BoxShape3D_ohnmb")
+disabled = true
+
+[node name="Main" type="Area3D" parent="." unique_id=1983738281]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Main" unique_id=1118642549]
+shape = SubResource("BoxShape3D_bgfqr")
+
+[node name="Area3D2" type="Area3D" parent="." unique_id=869572698]
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="Area3D2" unique_id=296021457]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.8683711, -1.4715786, 1.8440628)
+shape = SubResource("BoxShape3D_heh1b")
+
+[node name="Area3D3" type="Area3D" parent="." unique_id=1091599201]
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="Area3D3" unique_id=1100008827]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.8683711, -1.4715786, -1.8520663)
+shape = SubResource("BoxShape3D_heh1b")
+
+[node name="Area3D4" type="Area3D" parent="." unique_id=1122294793]
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Area3D4" unique_id=454356243]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.8495001, -1.4715786, -1.8520663)
+shape = SubResource("BoxShape3D_heh1b")
+
+[node name="Area3D5" type="Area3D" parent="." unique_id=1851566856]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D5" unique_id=1267324086]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.8495001, -1.4715786, 1.87236)
+shape = SubResource("BoxShape3D_heh1b")
+
+[node name="RTSBuilding" type="Node3D" parent="." unique_id=1819285493 node_paths=PackedStringArray("main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
+script = ExtResource("1_dcouy")
+main_area = NodePath("../Main")
+ground_area1 = NodePath("../Area3D2")
+ground_area2 = NodePath("../Area3D3")
+ground_area3 = NodePath("../Area3D4")
+ground_area4 = NodePath("../Area3D5")
+metadata/_custom_type_script = "uid://cvt0q65feqdc6"
