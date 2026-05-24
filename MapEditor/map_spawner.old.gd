@@ -1,9 +1,7 @@
 extends Node3D
 class_name MapSpawner
 
-const DEFAULT_MAP_TILE_SCENE_PATH: String = "res://MapEditor/MapTile.tscn"
-
-@export var map_tile_scene: PackedScene
+@export var map_tile_scene: PackedScene = preload("res://MapEditor/MapTile.tscn")
 @export var auto_ramp_enabled: bool = true
 @export var show_tile_lines: bool = true
 @export var bake_collision: bool = true
@@ -16,11 +14,11 @@ const DEFAULT_MAP_TILE_SCENE_PATH: String = "res://MapEditor/MapTile.tscn"
 
 const MAP_WIDTH: int = 32
 const MAP_HEIGHT: int = 32
-const TILE_SIZE: float = 1.0
+const TILE_SIZE: float = 2.0
 
 const HEIGHT_STEP: float = 0.5
-const MIN_HEIGHT: float = -4.0
-const MAX_HEIGHT: float = 4.0
+const MIN_HEIGHT: float = -2.0
+const MAX_HEIGHT: float = 2.0
 
 var map_data: Array = []
 
@@ -80,20 +78,6 @@ func build_visual_map() -> void:
 	map_baker.bake_map(map_data)
 
 
-func _ensure_required_scenes() -> void:
-	if map_tile_scene != null:
-		return
-
-	if not ResourceLoader.exists(DEFAULT_MAP_TILE_SCENE_PATH):
-		push_error("MapSpawner: MapTile scene not found: " + DEFAULT_MAP_TILE_SCENE_PATH)
-		return
-
-	map_tile_scene = load(DEFAULT_MAP_TILE_SCENE_PATH) as PackedScene
-
-	if map_tile_scene == null:
-		push_error("MapSpawner: Could not load MapTile scene as PackedScene: " + DEFAULT_MAP_TILE_SCENE_PATH)
-
-
 # Compatibility wrapper, in case another script still calls the old name.
 # It no longer builds chunks. It bakes the whole map.
 func build_visual_chunks() -> void:
@@ -101,11 +85,6 @@ func build_visual_chunks() -> void:
 
 
 func build_click_tiles() -> void:
-	_ensure_required_scenes()
-
-	if map_tile_scene == null:
-		push_error("MapSpawner: map_tile_scene is null. Assign MapTile.tscn in the Inspector or fix DEFAULT_MAP_TILE_SCENE_PATH.")
-		return
 	for y in range(map_data.size()):
 		for x in range(map_data[y].size()):
 			var cell: Dictionary = map_data[y][x]
@@ -348,8 +327,124 @@ func change_tile(grid_x: int, grid_y: int) -> void:
 	save_map_to_json()
 	rebuild_map()
 
-func recalculate_auto_ramps() -> void:
-	AutoRampBuilderAvg.recalculate_auto_ramps(map_data, HEIGHT_STEP)
+func recalculate_auto_ramps():
+	recalculate_auto_ramps_1()
+	
+func recalculate_auto_ramps_2() -> void:
+	
+	return
+
+func recalculate_auto_ramps_1() -> void:
+	# Shared vertex based auto-ramp system.
+	# A corner is not owned by one tile only. Up to four tiles touch the same vertex.
+	# Therefore every shared vertex is calculated once and then written back to all
+	# touching tile corners. This prevents neighbouring edits from overwriting each
+	# other with wrong corner resets.
+	reset_all_corners_to_base_height()
+
+	var map_h := map_data.size()
+	if map_h <= 0:
+		return
+
+	var map_w: int = map_data[0].size()
+
+	# Vertices are grid intersections, so a 32x32 map has 33x33 vertices.
+	for vertex_y in range(map_h + 1):
+		for vertex_x in range(map_w + 1):
+			recalculate_shared_vertex(vertex_x, vertex_y)
+
+
+func reset_all_corners_to_base_height() -> void:
+	for y in range(map_data.size()):
+		for x in range(map_data[y].size()):
+			var cell: Dictionary = map_data[y][x]
+			var h: float = float(cell.get("height", 0.0))
+			cell["corners"] = make_flat_corners(h)
+			map_data[y][x] = cell
+
+
+func recalculate_shared_vertex(vertex_x: int, vertex_y: int) -> void:
+	var touching := get_tiles_touching_vertex(vertex_x, vertex_y)
+	if touching.is_empty():
+		return
+
+	var first: Dictionary = touching[0]
+	var first_cell: Dictionary = map_data[int(first["y"])][int(first["x"])]
+	var min_h: float = float(first_cell.get("height", 0.0))
+	var max_h: float = min_h
+
+	for item in touching:
+		var tx: int = int(item["x"])
+		var ty: int = int(item["y"])
+		var cell: Dictionary = map_data[ty][tx]
+		var h: float = float(cell.get("height", 0.0))
+		min_h = min(min_h, h)
+		max_h = max(max_h, h)
+
+	# Same height means the flat reset is already correct.
+	if is_equal_approx(max_h, min_h):
+		return
+
+	# Only one height step can become an automatic ramp.
+	# Bigger steps stay vertical/steep instead of creating broken multi-height corners.
+	if not is_equal_approx(max_h - min_h, HEIGHT_STEP):
+		return
+
+	# Shared rule: keep the edited plateau/hole visible.
+	# For normal positive ramps, 0.0 -> 0.5 chooses 0.5.
+	# For holes, 0.0 -> -0.5 chooses -0.5.
+	# In other words: choose the height farther away from zero.
+	var shared_height := get_dominant_vertex_height(min_h, max_h)
+
+	for item in touching:
+		var tx: int = int(item["x"])
+		var ty: int = int(item["y"])
+		var corner_name: String = str(item["corner"])
+		set_single_corner(tx, ty, corner_name, shared_height)
+
+
+func get_dominant_vertex_height(min_h: float, max_h: float) -> float:
+	if abs(min_h) > abs(max_h):
+		return min_h
+	return max_h
+
+
+func get_tiles_touching_vertex(vertex_x: int, vertex_y: int) -> Array:
+	var result: Array = []
+
+	# Tile north-west of the vertex touches it with its south-east corner.
+	append_touching_tile(result, vertex_x - 1, vertex_y - 1, "se")
+
+	# Tile north-east of the vertex touches it with its south-west corner.
+	append_touching_tile(result, vertex_x, vertex_y - 1, "sw")
+
+	# Tile south-west of the vertex touches it with its north-east corner.
+	append_touching_tile(result, vertex_x - 1, vertex_y, "ne")
+
+	# Tile south-east of the vertex touches it with its north-west corner.
+	append_touching_tile(result, vertex_x, vertex_y, "nw")
+
+	return result
+
+
+func append_touching_tile(result: Array, grid_x: int, grid_y: int, corner_name: String) -> void:
+	if not is_valid_grid_pos(grid_x, grid_y):
+		return
+
+	result.append({
+		"x": grid_x,
+		"y": grid_y,
+		"corner": corner_name
+	})
+
+
+func set_single_corner(grid_x: int, grid_y: int, corner_name: String, value: float) -> void:
+	var cell: Dictionary = map_data[grid_y][grid_x]
+	var height: float = float(cell.get("height", 0.0))
+	var corners: Dictionary = cell.get("corners", make_flat_corners(height))
+	corners[corner_name] = value
+	cell["corners"] = corners
+	map_data[grid_y][grid_x] = cell
 
 
 func is_valid_grid_pos(grid_x: int, grid_y: int) -> bool:

@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://qohnerc578uf"]
 
-[ext_resource type="Script" uid="uid://6mkri0pga5ia" path="res://MapEditor/map_editor.gd" id="1_k3j5l"]
-[ext_resource type="Script" uid="uid://ceqc8b1b15fjc" path="res://MapEditor/tile_palette.gd" id="2_a65gw"]
-[ext_resource type="Script" uid="uid://befxx1gn8klgt" path="res://MapEditor/map_spawner.gd" id="3_isqww"]
-[ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="4_wy1kg"]
+[ext_resource type="Script" uid="uid://1fi5mw8vtte4" path="res://MapEditor/map_editor.gd" id="1_k3j5l"]
+[ext_resource type="Script" uid="uid://0bf3wa8emdvl" path="res://MapEditor/tile_palette.gd" id="2_a65gw"]
+[ext_resource type="Script" uid="uid://dr3r7ippi17oh" path="res://MapEditor/map_spawner.gd" id="3_isqww"]
+[ext_resource type="Script" uid="uid://b31fwwrpgckym" path="res://addons/RTSCamera/Camera.gd" id="4_wy1kg"]
 
 [sub_resource type="Sky" id="Sky_r0du0"]
 
@@ -16,12 +16,13 @@ camera = NodePath("RTSCamera")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2110217429]
 
-[node name="TilePalette" type="Control" parent="CanvasLayer" unique_id=680693362]
+[node name="TilePalette" type="Control" parent="CanvasLayer" unique_id=680693362 node_paths=PackedStringArray("rtsbuildsystem")]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("2_a65gw")
+rtsbuildsystem = NodePath("")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/TilePalette" unique_id=255865906]
 layout_mode = 0
@@ -85,7 +86,8 @@ environment = SubResource("Environment_uu6xs")
 
 [node name="RTSCamera" type="Camera3D" parent="." unique_id=472472818]
 script = ExtResource("4_wy1kg")
-metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
+
+[node name="BuildingRoot" type="Node3D" parent="." unique_id=208136423]
 
 [connection signal="pressed" from="CanvasLayer/TilePalette/VBoxContainer/SaveButton" to="CanvasLayer/TilePalette" method="_on_save_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/TilePalette/VBoxContainer/ResetButton" to="CanvasLayer/TilePalette" method="_on_reset_button_pressed"]

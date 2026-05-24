@@ -8,7 +8,10 @@ signal selected_player_changed(player: int)
 signal selected_orientation_changed(orientation: int)
 signal map_name_changed(map_name: String)
 signal save_requested
-signal reset_requested
+signal reset_requested 
+
+@export var rtsbuildsystem: RTSBuildSystem
+var building = preload("res://ResourceSystem/Resource.tscn")
 
 @onready var ground_label: Label = $VBoxContainer/GroundLabel
 @onready var ground_option_button: OptionButton = $VBoxContainer/GroundOptionButton
@@ -226,6 +229,12 @@ func _on_building_selected(index: int) -> void:
 		return
 
 	selected_building_type = value
+	if value != EnumMappings.BuildingType.NONE:
+		rtsbuildsystem.active = true
+		rtsbuildsystem.set_preview_object(building)
+	else:
+		rtsbuildsystem.active = false
+		rtsbuildsystem.unset_preview_object()
 	_update_building_label()
 	selected_building_type_changed.emit(selected_building_type)
 
