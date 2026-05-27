@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://b4sl40in0000r" path="res://addons/dragselection/selection.gd" id="1_c6gwx"]
 [ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="2_2dftf"]
 [ext_resource type="ArrayMesh" uid="uid://ccs4u1c3csfia" path="res://testmap.tres" id="2_js7pq"]
-[ext_resource type="Script" uid="uid://bxlx015maqnwf" path="res://addons/rtsbuildingsystem/system.gd" id="5_eu7l1"]
+[ext_resource type="Script" uid="uid://bxlx015maqnwf" path="res://addons/rtsbuildingsystem/RTS_building_system.gd" id="5_eu7l1"]
 
 [sub_resource type="GDScript" id="GDScript_eu7l1"]
 resource_name = "World"

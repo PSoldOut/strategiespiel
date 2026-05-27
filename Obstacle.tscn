@@ -17,13 +17,13 @@ size = Vector3(4, 4, 4)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2001168844]
 shape = SubResource("BoxShape3D_js7pq")
-disabled = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1525475962]
 mesh = SubResource("BoxMesh_eu7l1")
 
-[node name="RTSBuilding" type="Node3D" parent="." unique_id=1479294473 node_paths=PackedStringArray("main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
+[node name="RTSBuilding" type="Node3D" parent="." unique_id=1479294473 node_paths=PackedStringArray("collision_body", "main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
 script = ExtResource("1_nfn2k")
+collision_body = NodePath("..")
 main_area = NodePath("Area3D")
 ground_area1 = NodePath("AreaGround1")
 ground_area2 = NodePath("AreaGround2")
