@@ -1,11 +1,15 @@
 extends Node3D
 class_name RTSBuilding
 
+@export var collision_body : StaticBody3D
 @export var main_area : Area3D
 @export var ground_area1 : Area3D
 @export var ground_area2 : Area3D
 @export var ground_area3 : Area3D
 @export var ground_area4 : Area3D
+@export var width : float = 2
+@export var height : float = 2
+@export var depth : float = 2
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
