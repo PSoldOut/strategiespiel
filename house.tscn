@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="1_hfkix"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_g5ubp"]
-size = Vector3(2, 2, 2)
+size = Vector3(1.99, 1.99, 1.99)
 
 [sub_resource type="BoxMesh" id="BoxMesh_hfkix"]
 size = Vector3(2, 2, 2)
@@ -17,7 +17,6 @@ size = Vector3(2, 2, 2)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=450661025]
 shape = SubResource("BoxShape3D_g5ubp")
-disabled = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2126260075]
 mesh = SubResource("BoxMesh_hfkix")
@@ -51,8 +50,9 @@ shape = SubResource("BoxShape3D_metfq")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Main" unique_id=1578217557]
 shape = SubResource("BoxShape3D_10qhy")
 
-[node name="RTSBuilding" type="Node3D" parent="." unique_id=452273638 node_paths=PackedStringArray("main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
+[node name="RTSBuilding" type="Node3D" parent="." unique_id=452273638 node_paths=PackedStringArray("collision_body", "main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
 script = ExtResource("1_hfkix")
+collision_body = NodePath("..")
 main_area = NodePath("../Main")
 ground_area1 = NodePath("../Area3D4")
 ground_area2 = NodePath("../Area3D3")

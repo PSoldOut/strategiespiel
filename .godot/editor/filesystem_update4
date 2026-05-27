@@ -1,2 +1,5 @@
 res://World.tscn
 res://testmap.tres
+res://addons/rtsbuildingsystem/RTS_building_system.gd
+res://house.tscn
+res://mil.tscn

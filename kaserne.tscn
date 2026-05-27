@@ -32,15 +32,16 @@ script = SubResource("GDScript_nx21j")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1338165127]
 shape = SubResource("BoxShape3D_ch1vy")
-disabled = true
 
-[node name="RTSBuilding" type="Node3D" parent="." unique_id=816318615 node_paths=PackedStringArray("main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
+[node name="RTSBuilding" type="Node3D" parent="." unique_id=816318615 node_paths=PackedStringArray("collision_body", "main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
 script = ExtResource("1_ch1vy")
+collision_body = NodePath("..")
 main_area = NodePath("../Area3D5")
 ground_area1 = NodePath("../Area3D4")
 ground_area2 = NodePath("../Area3D3")
 ground_area3 = NodePath("../Area3D2")
 ground_area4 = NodePath("../Area3D")
+width = 4.0
 metadata/_custom_type_script = "uid://cvt0q65feqdc6"
 
 [node name="Area3D" type="Area3D" parent="." unique_id=1685386063]

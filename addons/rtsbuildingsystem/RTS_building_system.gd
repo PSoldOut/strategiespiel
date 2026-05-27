@@ -22,6 +22,7 @@ signal building_set(building)
 @export var grid_size : float = 2.0
 
 func set_preview_object(scene):
+	unset_preview_object()
 	obj_scene = scene
 	preview_object = scene.instantiate()
 	rts_building = preview_object.get_node("RTSBuilding")
@@ -106,7 +107,7 @@ func _process(delta):
 			var z = int(floor(pos.z / grid_size)) * grid_size
 			
 			pos.x = x+1
-			pos.y = pos.y + rts_building.depth
+			pos.y = floor(pos.y) + (rts_building.depth/2)
 			pos.z = z+1
 			
 			pos.y += 0.01

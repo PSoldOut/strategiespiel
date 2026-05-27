@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://b4sl40in0000r" path="res://addons/dragselection/selection.gd" id="1_c6gwx"]
 [ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="2_2dftf"]
 [ext_resource type="ArrayMesh" uid="uid://ccs4u1c3csfia" path="res://testmap.tres" id="2_js7pq"]
-[ext_resource type="Script" uid="uid://bxlx015maqnwf" path="res://addons/rtsbuildingsystem/system.gd" id="5_eu7l1"]
+[ext_resource type="Script" uid="uid://bxlx015maqnwf" path="res://addons/rtsbuildingsystem/RTS_building_system.gd" id="5_eu7l1"]
 [ext_resource type="PackedScene" uid="uid://dcnfebmxreiui" path="res://UI.tscn" id="6_p1v5b"]
 
 [sub_resource type="GDScript" id="GDScript_eu7l1"]
@@ -91,6 +91,15 @@ func _on_ui_button_mil_pressed() -> void:
 	$DragSelection.active = false
 	$RTSBuildSystem.active = true
 	$RTSBuildSystem.set_preview_object(preload(\"res://mil.tscn\"))
+
+
+func _on_ui_mouse_entered() -> void:
+	print(\"entered\")
+
+
+func _on_ui_mouse_exited() -> void:
+	print(\"exited\")
+	$RTSBuildSystem.active = false
 "
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_js7pq"]
@@ -188,3 +197,5 @@ metadata/_custom_type_script = "uid://bxlx015maqnwf"
 [connection signal="button_kaserne_pressed" from="UI" to="." method="_on_ui_button_kaserne_pressed"]
 [connection signal="button_mil_pressed" from="UI" to="." method="_on_ui_button_mil_pressed"]
 [connection signal="button_selection_pressed" from="UI" to="." method="_on_ui_button_selection_pressed"]
+[connection signal="mouse_entered" from="UI" to="." method="_on_ui_mouse_entered"]
+[connection signal="mouse_exited" from="UI" to="." method="_on_ui_mouse_exited"]
