@@ -1,0 +1,15 @@
+# Godot runtime/editor cache and local state
+.godot/
+.import/
+
+# Godot editor state (open tabs, window layout, cursor positions)
+.godot/editor/editor_layout.cfg
+.godot/editor/script_editor_cache.cfg
+.godot/editor/project_metadata.cfg
+
+# Local/temporary files
+*.tmp
+*.temp
+*.log
+.DS_Store
+Thumbs.db

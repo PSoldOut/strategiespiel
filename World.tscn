@@ -1,0 +1,88 @@
+[gd_scene format=3 uid="uid://c3hpwunyl7a5l"]
+
+[ext_resource type="Script" uid="uid://b4sl40in0000r" path="res://addons/dragselection/selection.gd" id="1_c6gwx"]
+[ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="2_2dftf"]
+[ext_resource type="Script" path="res://src/World.gd" id="3_world"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_bah7m"]
+vertices = PackedVector3Array(-49.5, 0.4, -49.5, -49.5, 0.4, 49.5, 49.5, 0.4, 49.5, 49.5, 0.4, -49.5)
+polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cmany"]
+size = Vector3(100, 0.1, 100)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cmany"]
+albedo_color = Color(1, 0.18431373, 0.20392157, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_c6gwx"]
+material = SubResource("StandardMaterial3D_cmany")
+size = Vector2(100, 100)
+
+[sub_resource type="Gradient" id="Gradient_c6gwx"]
+offsets = PackedFloat32Array(0.99892473, 1)
+colors = PackedColorArray(1, 1, 1, 0, 0, 0, 0, 0.8)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_2dftf"]
+gradient = SubResource("Gradient_c6gwx")
+fill = 2
+fill_from = Vector2(0.5, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bcbcq"]
+transparency = 1
+albedo_texture = SubResource("GradientTexture2D_2dftf")
+uv1_scale = Vector3(0.5, 0.5, 0.5)
+uv1_triplanar = true
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_js7pq"]
+material = SubResource("StandardMaterial3D_bcbcq")
+size = Vector2(100, 100)
+
+[node name="World" type="Node3D" unique_id=983696813]
+script = ExtResource("3_world")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1603754618]
+navigation_mesh = SubResource("NavigationMesh_bah7m")
+
+[node name="Ground" type="StaticBody3D" parent="NavigationRegion3D" unique_id=2077567095]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Ground" unique_id=1200378594]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+shape = SubResource("BoxShape3D_cmany")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Ground" unique_id=1743773351]
+mesh = SubResource("PlaneMesh_c6gwx")
+
+[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=983864916]
+transform = Transform3D(1, 0, 0, 0, 0.5959586, 0.8030152, 0, -0.8030152, 0.5959586, 0, 47.47566, 34.221367)
+light_energy = 16.0
+light_indirect_energy = 16.0
+light_size = 0.218
+distance_fade_enabled = true
+distance_fade_begin = 567.21
+distance_fade_shadow = 51.5
+distance_fade_length = 618.31
+spot_range = 4096.0
+spot_angle = 50.35
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1017127216]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
+mesh = SubResource("PlaneMesh_js7pq")
+
+[node name="Agents" type="Node3D" parent="." unique_id=260396588]
+
+[node name="DragSelection" type="Control" parent="." unique_id=1408996329 node_paths=PackedStringArray("camera")]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_c6gwx")
+camera = NodePath("../RTSCamera")
+metadata/_custom_type_script = "uid://b4sl40in0000r"
+
+[node name="RTSCamera" type="Camera3D" parent="." unique_id=746180854]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.482632, 0)
+script = ExtResource("2_2dftf")
+metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
+
+[connection signal="interact_command" from="DragSelection" to="." method="_on_drag_selection_interact_command"]
+[connection signal="move_command" from="DragSelection" to="." method="_on_drag_selection_move_command"]

@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://d4d5f1iwhj5os"]
+
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="1_ll3od"]
+[ext_resource type="Script" uid="uid://boc6i5xbytfgt" path="res://scripts/unit_simple.gd" id="1_oclqg"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_oclqg"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_788xm"]
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_oclqg"]
+
+[node name="UnitSimple" type="CharacterBody3D" unique_id=1489960132]
+script = ExtResource("1_oclqg")
+
+[node name="SelectionUnit" type="Node3D" parent="." unique_id=35477951]
+script = ExtResource("1_ll3od")
+metadata/_custom_type_script = "uid://bnpexxmljtv8g"
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1319199614]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=175016051]
+shape = SubResource("CapsuleShape3D_oclqg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1236448904]
+mesh = SubResource("CapsuleMesh_788xm")
+
+[node name="Area3D" type="Area3D" parent="." unique_id=2125845163]
+
+[node name="DragSelectionUnit" type="Node3D" parent="." unique_id=581924703 node_paths=PackedStringArray("unit")]
+script = ExtResource("1_ll3od")
+unit = NodePath("../SelectionUnit")
+metadata/_custom_type_script = "uid://bnpexxmljtv8g"
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=2096589520]
+replication_config = SubResource("SceneReplicationConfig_oclqg")

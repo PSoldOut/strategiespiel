@@ -1,0 +1,102 @@
+[gd_scene format=3 uid="uid://dhkjk0vcl8ri"]
+
+[ext_resource type="Texture2D" path="res://purple/texture_02.png" id="1_h5bnm"]
+[ext_resource type="Texture2D" path="res://texture_02_normal.png" id="2_c810y"]
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="3_c810y"]
+[ext_resource type="Script" path="res://src/Agent.gd" id="4_agent"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_c810y"]
+margin = 0.133
+size = Vector3(1, 1.677002, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f5c0m"]
+albedo_texture = ExtResource("1_h5bnm")
+normal_enabled = true
+normal_texture = ExtResource("2_c810y")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_b2ar6"]
+material = SubResource("StandardMaterial3D_f5c0m")
+
+[sub_resource type="BoxMesh" id="BoxMesh_c810y"]
+size = Vector3(1, 0.1, 0.1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_y8jal"]
+size = Vector3(10, 10, 10)
+
+[sub_resource type="Animation" id="Animation_c810y"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("MeshInstance3D:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_y8jal"]
+resource_name = "attack"
+length = 0.23333333
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("MeshInstance3D:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(-0.29991737, 0, 0), Vector3(0, 0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ebcwy"]
+_data = {
+&"RESET": SubResource("Animation_c810y"),
+&"attack": SubResource("Animation_y8jal")
+}
+
+[node name="Agent" type="CharacterBody3D" unique_id=901319167 groups=["units"]]
+collision_mask = 0
+script = ExtResource("4_agent")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1403128487]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06237793, 0)
+shape = SubResource("BoxShape3D_c810y")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=568868584]
+transform = Transform3D(1, 0, 0, 0, 0.9999999, 0, 0, 0, 0.9999999, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_b2ar6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MeshInstance3D" unique_id=157526465]
+transform = Transform3D(-0.014398479, 0, 0.99989635, 0, 1, 0, -0.99989635, 0, -0.014398479, -0.0172702, 0.4759619, -0.5194984)
+mesh = SubResource("BoxMesh_c810y")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=222574760]
+avoidance_enabled = true
+
+[node name="DragSelectionUnit" type="Node3D" parent="." unique_id=426395741 node_paths=PackedStringArray("unit")]
+script = ExtResource("3_c810y")
+unit = NodePath("..")
+metadata/_custom_type_script = "uid://bnpexxmljtv8g"
+
+[node name="Area3D" type="Area3D" parent="." unique_id=1304559331]
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1555758789]
+shape = SubResource("BoxShape3D_y8jal")
+
+[node name="Timer" type="Timer" parent="." unique_id=2001033235]
+one_shot = true
+autostart = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=534584478]
+libraries/ = SubResource("AnimationLibrary_ebcwy")
+
+[connection signal="deselected" from="DragSelectionUnit" to="." method="_on_drag_selection_unit_deselected"]
+[connection signal="selected" from="DragSelectionUnit" to="." method="_on_drag_selection_unit_selected"]
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

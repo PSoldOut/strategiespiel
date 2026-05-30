@@ -11,8 +11,13 @@ config_version=5
 [application]
 
 config/name="strategiespiel"
+run/main_scene="res://scenes/core/World.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="res://assets/icons/icon.png"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/RTSCamera/plugin.cfg", "res://addons/dragselection/plugin.cfg")
 
 [physics]
 

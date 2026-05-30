@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://ccvu51nnssond"]
+
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="1_b2pv0"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_umeaf"]
+size = Vector3(1, 1.677, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yc63n"]
+albedo_color = Color(1, 0, 1, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_lug0u"]
+material = SubResource("StandardMaterial3D_yc63n")
+
+[sub_resource type="BoxMesh" id="BoxMesh_dg1j7"]
+size = Vector3(1, 0.1, 0.1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_b2pv0"]
+size = Vector3(10, 10, 10)
+
+[node name="Agent" type="CharacterBody3D" unique_id=991358548]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1706777749]
+shape = SubResource("BoxShape3D_umeaf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1122079406]
+mesh = SubResource("CapsuleMesh_lug0u")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MeshInstance3D" unique_id=1885516192]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.01, 0.476, -0.51)
+mesh = SubResource("BoxMesh_dg1j7")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1391846277]
+avoidance_enabled = true
+
+[node name="DragSelectionUnit" type="Node3D" parent="." unique_id=1519504006 node_paths=PackedStringArray("unit")]
+script = ExtResource("1_b2pv0")
+unit = NodePath("..")
+metadata/_custom_type_script = "uid://bnpexxmljtv8g"
+
+[node name="Area3D" type="Area3D" parent="." unique_id=1192614268]
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=615634961]
+shape = SubResource("BoxShape3D_b2pv0")
+
+[node name="Timer" type="Timer" parent="." unique_id=281334255]
+one_shot = true
+autostart = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1368914673]
