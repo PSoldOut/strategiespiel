@@ -14,9 +14,14 @@ script/source = "extends Node3D
 var obstacle = preload(\"res://Obstacle.tscn\")
 var AgentScene = preload(\"res://Agent.tscn\")
 var preview_obj = null
-var state = \"place\"
 
 
+enum states {
+	BUILD,
+	SELECT
+}
+
+var state = states.SELECT
 
 @onready var camera = $Camera3D
 @onready var navRegion = $NavigationRegion3D
@@ -25,13 +30,13 @@ func _ready() -> void:
 	navRegion.bake_navigation_mesh()
 	
 	var arr : Array = []
-	for i in range(50):  
+	for i in range(500):  
 		var file = get_node(\"Agents\")
 		var agent = AgentScene.instantiate()
 		agent.position = Vector3( randf_range(-25.0, 25.0), 1,  randf_range(-25.0, 25.0))
 		file.add_child(agent)
 		arr.append(agent)
-	$DragSelection.set_units(arr)
+	$DragSelection.register_units(arr)
 	#get_tree().get_nodes_in_group(\"units\")
 	
 	navRegion.bake_navigation_mesh()
@@ -48,22 +53,19 @@ func _ready() -> void:
 func _on_drag_selection_move_command(positions: Array) -> void:
 	for i in range($DragSelection.current_selected.size()):
 		var unit = $DragSelection.current_selected[i]
-		unit.get_unit().navigation_agent_3d.set_target_position(positions[i])
-		unit.get_unit().state = unit.get_unit().State.MOVE_STRAIGHT
+		if is_instance_valid(unit):
+			unit.get_unit().navigation_agent_3d.set_target_position(positions[i])
+			unit.get_unit().state = unit.get_unit().State.MOVE_STRAIGHT
 
 
 func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
 	for i in range($DragSelection.current_selected.size()):
 		var unit = $DragSelection.current_selected[i]
-		unit.get_unit().target = target.get_unit()
-		unit.get_unit().state = unit.get_unit().State.CHASE
+		if is_instance_valid(unit):
+			unit.get_unit().target = target.get_unit()
+			unit.get_unit().state = unit.get_unit().State.CHASE
 		
 
-
-
-
-func _on_rts_build_system_building_set(building: Variant) -> void:
-	navRegion.bake_navigation_mesh()
 
 
 	
@@ -73,33 +75,50 @@ func _on_ui_button_selection_pressed() -> void:
 	$RTSBuildSystem.unset_preview_object()
 	$RTSBuildSystem.active = false
 	$DragSelection.active = true
+	state = states.SELECT
 
 
 func _on_ui_button_house_pressed() -> void:
 	$DragSelection.active = false
 	$RTSBuildSystem.active = true
 	$RTSBuildSystem.set_preview_object(preload(\"res://house.tscn\"))
-
+	state = states.BUILD
 
 func _on_ui_button_kaserne_pressed() -> void:
 	$DragSelection.active = false
 	$RTSBuildSystem.active = true
 	$RTSBuildSystem.set_preview_object(preload(\"res://kaserne.tscn\"))
-
+	state = states.BUILD
 
 func _on_ui_button_mil_pressed() -> void:
 	$DragSelection.active = false
 	$RTSBuildSystem.active = true
 	$RTSBuildSystem.set_preview_object(preload(\"res://mil.tscn\"))
+	state = states.BUILD
 
 
-func _on_ui_mouse_entered() -> void:
+
+
+func _on_ui_mouse_entered_panel() -> void:
 	print(\"entered\")
-
-
-func _on_ui_mouse_exited() -> void:
-	print(\"exited\")
 	$RTSBuildSystem.active = false
+
+
+func _on_ui_mouse_exited_panel() -> void:
+	print(\"exited\")
+	if state == states.BUILD:
+		$RTSBuildSystem.active = true
+
+
+func _on_rts_build_system_building_set_command(position: Vector3, scene: Variant) -> void:
+	var obj = scene.instantiate()
+	obj.global_position = position
+	$NavigationRegion3D/Buildings.add_child(obj)
+	$DragSelection.register_unit(obj)
+	navRegion.bake_navigation_mesh()
+	state = states.SELECT
+	$RTSBuildSystem.active = false
+	$DragSelection.active = true
 "
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_js7pq"]
@@ -175,6 +194,8 @@ offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_c6gwx")
 camera = NodePath("../RTSCamera")
+team = "blue"
+stroke_color = Color(0, 1, 0, 0)
 metadata/_custom_type_script = "uid://b4sl40in0000r"
 
 [node name="RTSCamera" type="Camera3D" parent="." unique_id=746180854]
@@ -182,20 +203,23 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.482632, 0)
 script = ExtResource("2_2dftf")
 metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
 
-[node name="RTSBuildSystem" type="Node3D" parent="." unique_id=1307062194 node_paths=PackedStringArray("building_root", "camera")]
+[node name="RTSBuildSystem" type="Node3D" parent="." unique_id=1307062194 node_paths=PackedStringArray("camera")]
 script = ExtResource("5_eu7l1")
-building_root = NodePath("../NavigationRegion3D/Buildings")
 camera = NodePath("../RTSCamera")
 metadata/_custom_type_script = "uid://bxlx015maqnwf"
 
 [node name="UI" parent="." unique_id=785861755 instance=ExtResource("6_p1v5b")]
+anchors_preset = -1
+anchor_top = 0.75200003
+offset_top = -482.29602
+grow_vertical = 0
 
 [connection signal="interact_command" from="DragSelection" to="." method="_on_drag_selection_interact_command"]
 [connection signal="move_command" from="DragSelection" to="." method="_on_drag_selection_move_command"]
-[connection signal="building_set" from="RTSBuildSystem" to="." method="_on_rts_build_system_building_set"]
+[connection signal="building_set_command" from="RTSBuildSystem" to="." method="_on_rts_build_system_building_set_command"]
 [connection signal="button_house_pressed" from="UI" to="." method="_on_ui_button_house_pressed"]
 [connection signal="button_kaserne_pressed" from="UI" to="." method="_on_ui_button_kaserne_pressed"]
 [connection signal="button_mil_pressed" from="UI" to="." method="_on_ui_button_mil_pressed"]
 [connection signal="button_selection_pressed" from="UI" to="." method="_on_ui_button_selection_pressed"]
-[connection signal="mouse_entered" from="UI" to="." method="_on_ui_mouse_entered"]
-[connection signal="mouse_exited" from="UI" to="." method="_on_ui_mouse_exited"]
+[connection signal="mouse_entered_panel" from="UI" to="." method="_on_ui_mouse_entered_panel"]
+[connection signal="mouse_exited_panel" from="UI" to="." method="_on_ui_mouse_exited_panel"]

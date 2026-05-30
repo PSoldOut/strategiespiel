@@ -20,7 +20,6 @@ enum State {
 }
 
 var state = State.IDLE
-
 var selected : bool = false
 var team : String = \"blue\"
 
@@ -42,10 +41,10 @@ func _ready():
 	randomize()
 
 	# Zufälliges Team
-	if randi() % 2 == 0:
-		team = \"blue\"
-	else:
+	if randi() % 3 == 0:
 		team = \"red\"
+	else:
+		team = \"blue\"
 	$DragSelectionUnit.set_team(team)
 	update_team_color()
 
@@ -66,6 +65,7 @@ func scan_for_enemys():
 			continue
 		target = body
 		state = State.CHASE
+		return
 
 func _unhandled_input(event: InputEvent) -> void:
 

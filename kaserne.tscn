@@ -1,19 +1,33 @@
 [gd_scene format=3 uid="uid://b15whnog2yv32"]
 
 [ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="1_ch1vy"]
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="2_iw27e"]
 
 [sub_resource type="GDScript" id="GDScript_nx21j"]
 script/source = "extends StaticBody3D
 
 
-# Called when the node enters the scene tree for the first time.
+@export var width : float = 2
+@export var height : float = 2
+@export var depth : float = 2
+
+
 func _ready() -> void:
-	pass # Replace with function body.
+	$SelectionUnit.team = \"blue\"
+	
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	pass
+
+
+func _on_selection_unit_selected() -> void:
+	print(\"kaserne selected\")
+
+
+func _on_selection_unit_deselected() -> void:
+	print(\"kaserne deselected\")
 "
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ch1vy"]
@@ -32,17 +46,6 @@ script = SubResource("GDScript_nx21j")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1338165127]
 shape = SubResource("BoxShape3D_ch1vy")
-
-[node name="RTSBuilding" type="Node3D" parent="." unique_id=816318615 node_paths=PackedStringArray("collision_body", "main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
-script = ExtResource("1_ch1vy")
-collision_body = NodePath("..")
-main_area = NodePath("../Area3D5")
-ground_area1 = NodePath("../Area3D4")
-ground_area2 = NodePath("../Area3D3")
-ground_area3 = NodePath("../Area3D2")
-ground_area4 = NodePath("../Area3D")
-width = 4.0
-metadata/_custom_type_script = "uid://cvt0q65feqdc6"
 
 [node name="Area3D" type="Area3D" parent="." unique_id=1685386063]
 
@@ -75,3 +78,22 @@ shape = SubResource("BoxShape3D_jsqlb")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1901360169]
 mesh = SubResource("BoxMesh_ch1vy")
+
+[node name="SelectionUnit" type="Node3D" parent="." unique_id=1042885806 node_paths=PackedStringArray("unit")]
+script = ExtResource("2_iw27e")
+unit = NodePath("..")
+metadata/_custom_type_script = "uid://bnpexxmljtv8g"
+
+[node name="RTSBuilding" type="Node3D" parent="." unique_id=816318615 node_paths=PackedStringArray("collision_body", "main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
+script = ExtResource("1_ch1vy")
+collision_body = NodePath("..")
+main_area = NodePath("../Area3D5")
+ground_area1 = NodePath("../Area3D4")
+ground_area2 = NodePath("../Area3D3")
+ground_area3 = NodePath("../Area3D2")
+ground_area4 = NodePath("../Area3D")
+width = 4.0
+metadata/_custom_type_script = "uid://cvt0q65feqdc6"
+
+[connection signal="deselected" from="SelectionUnit" to="." method="_on_selection_unit_deselected"]
+[connection signal="selected" from="SelectionUnit" to="." method="_on_selection_unit_selected"]

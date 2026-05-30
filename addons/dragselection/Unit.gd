@@ -6,6 +6,7 @@ signal deselected
 @export var drag_selection : DragSelection
 @export var team : String
 @export var unit : Node3D
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	pass # Replace with function body.
@@ -17,9 +18,7 @@ func _process(delta: float) -> void:
 	
 	
 func unregister():
-	drag_selection.selection_units.erase(self)
-	drag_selection.units.erase(self.get_unit())
-	drag_selection.current_selected.erase(self)
+	drag_selection.unregister_unit(self)
 
 func set_drag_selection(ds : DragSelection):
 	drag_selection = ds

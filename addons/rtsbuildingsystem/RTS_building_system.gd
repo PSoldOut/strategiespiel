@@ -16,8 +16,9 @@ var active : bool = false
 var valid_position : bool = false
 
 
-signal building_set(building)
-@export var building_root : Node
+
+signal building_set_command(position : Vector3, scene)
+
 @export var camera : Camera3D
 @export var grid_size : float = 2.0
 
@@ -31,7 +32,7 @@ func set_preview_object(scene):
 	ground_area2 = rts_building.get_ground_area2()
 	ground_area3 = rts_building.get_ground_area3()
 	ground_area4 = rts_building.get_ground_area4()
-	building_root.add_child(preview_object)
+	self.add_child(preview_object)
 	set_color(preview_object, Color(1, 1, 1, 0.3))
 	set_collision(rts_building, false)
 	
@@ -49,7 +50,7 @@ func set_collision(building : RTSBuilding, state : bool):
 
 
 func unset_preview_object():
-	building_root.remove_child(preview_object)
+	self.remove_child(preview_object)
 	obj_scene = null
 	preview_object = null
 	rts_building = null
@@ -88,18 +89,14 @@ func set_color(obj, color : Color):
 func _input(event):
 	if event is InputEventMouseButton and event.pressed and active:
 		if event.button_index == MOUSE_BUTTON_LEFT and valid_position:
+			building_set_command.emit(preview_object.global_position, obj_scene)
+			#var obj = obj_scene.instantiate()
+			#obj.global_position = preview_object.global_position
+			#building_root.add_child(obj)
+			#building_set.emit(obj)
 
-			var obj = obj_scene.instantiate()
-			obj.global_position = preview_object.global_position
-			#obj.get_node("CollisionShape3D").disabled = false
-			
-			building_root.add_child(obj)
-			building_set.emit(obj)
-
-func _process(delta):
-	
+func _physics_process(delta):
 	if active:
-		
 		var dic : Dictionary = _get_mouse_map_hit()
 		if dic.has("position"):
 			var pos = dic["position"]

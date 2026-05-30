@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bjlpm178vwatj"]
 
 [ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="1_hfkix"]
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="2_metfq"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_g5ubp"]
 size = Vector3(1.99, 1.99, 1.99)
@@ -59,3 +60,8 @@ ground_area2 = NodePath("../Area3D3")
 ground_area3 = NodePath("../Area3D2")
 ground_area4 = NodePath("../Area3D")
 metadata/_custom_type_script = "uid://cvt0q65feqdc6"
+
+[node name="SelectionUnit" type="Node3D" parent="." unique_id=928943575 node_paths=PackedStringArray("unit")]
+script = ExtResource("2_metfq")
+unit = NodePath("..")
+metadata/_custom_type_script = "uid://bnpexxmljtv8g"

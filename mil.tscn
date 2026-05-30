@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cg7fd0xjmmwdh"]
 
 [ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="1_dcouy"]
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="2_pvl8o"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_pvl8o"]
 size = Vector3(4, 3, 4)
@@ -62,3 +63,8 @@ width = 4.0
 height = 4.0
 depth = 3.0
 metadata/_custom_type_script = "uid://cvt0q65feqdc6"
+
+[node name="SelectionUnit" type="Node3D" parent="." unique_id=370600845 node_paths=PackedStringArray("unit")]
+script = ExtResource("2_pvl8o")
+unit = NodePath("..")
+metadata/_custom_type_script = "uid://bnpexxmljtv8g"
