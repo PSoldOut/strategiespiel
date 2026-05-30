@@ -22,6 +22,7 @@ var _network_manager: Node
 var _network_ui_layer: CanvasLayer
 var _network_panel: PanelContainer
 var _status_label: Label
+var _local_ip_label: Label
 var _ip_input: LineEdit
 var _port_input: SpinBox
 var _host_button: Button
@@ -30,6 +31,8 @@ var _disconnect_button: Button
 var _start_button: Button
 var _pause_button: Button
 var _restart_button: Button
+var _self_test_button: Button
+var _diagnostic_label: Label
 var _stats_label: Label
 
 
@@ -38,6 +41,7 @@ func _ready() -> void:
 	nav_region.bake_navigation_mesh()
 	_setup_network_manager()
 	_create_ui()
+	_refresh_local_ip_info()
 	_update_role_actions()
 	_set_status("Offline. F1 blendet das Multiplayer-Panel ein/aus.")
 
@@ -65,15 +69,21 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _on_drag_selection_move_command(positions: Array) -> void:
 	for i in range(drag_selection.current_selected.size()):
 		var unit = drag_selection.current_selected[i]
-		unit.get_unit().navigation_agent_3d.set_target_position(positions[i])
-		unit.get_unit().state = unit.get_unit().State.MOVE_STRAIGHT
+		var controlled_unit: Node3D = unit.get_unit()
+		if not controlled_unit.is_multiplayer_authority():
+			continue
+		if controlled_unit.has_method("issue_move_order"):
+			controlled_unit.issue_move_order(positions[i])
 
 
 func _on_drag_selection_interact_command(target) -> void:
 	for i in range(drag_selection.current_selected.size()):
 		var unit = drag_selection.current_selected[i]
-		unit.get_unit().target = target
-		unit.get_unit().State.CHASE
+		var controlled_unit: Node3D = unit.get_unit()
+		if not controlled_unit.is_multiplayer_authority():
+			continue
+		if controlled_unit.has_method("issue_attack_order"):
+			controlled_unit.issue_attack_order(target.get_unit())
 
 
 func _setup_network_manager() -> void:
@@ -117,6 +127,10 @@ func _create_ui() -> void:
 	_status_label = Label.new()
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	panel_vbox.add_child(_status_label)
+
+	_local_ip_label = Label.new()
+	_local_ip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	panel_vbox.add_child(_local_ip_label)
 
 	var ip_row := HBoxContainer.new()
 	panel_vbox.add_child(ip_row)
@@ -171,9 +185,19 @@ func _create_ui() -> void:
 	_restart_button.pressed.connect(_on_restart_pressed)
 	panel_vbox.add_child(_restart_button)
 
+	_self_test_button = Button.new()
+	_self_test_button.text = "Netzwerk-Selbsttest"
+	_self_test_button.pressed.connect(_on_self_test_pressed)
+	panel_vbox.add_child(_self_test_button)
+
+	_diagnostic_label = Label.new()
+	_diagnostic_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_diagnostic_label.text = "Diagnose: nicht ausgefuehrt"
+	panel_vbox.add_child(_diagnostic_label)
+
 	var help := Label.new()
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	help.text = "Steuerung Figuren: Pfeiltasten oder IJKL, Sprint: Shift\nUI ein/aus: F1 | Pause/Fortsetzen: P | Host-Neustart: F5"
+	help.text = "RTS-Steuerung: Einheiten auswaehlen und mit Rechtsklick bewegen/angreifen\nUI ein/aus: F1 | Pause/Fortsetzen: P | Host-Neustart: F5"
 	panel_vbox.add_child(help)
 
 	var stats_panel := PanelContainer.new()
@@ -197,6 +221,7 @@ func _toggle_network_panel() -> void:
 
 func _on_host_pressed() -> void:
 	_network_manager.host_game(int(_port_input.value))
+	_refresh_local_ip_info()
 	_update_role_actions()
 
 
@@ -226,6 +251,7 @@ func _on_restart_pressed() -> void:
 
 func _on_network_status_changed(message: String) -> void:
 	_set_status(message)
+	_run_self_test()
 
 
 func _on_network_spawn_player(peer_id: int, slot: int, color: Color) -> void:
@@ -241,8 +267,8 @@ func _on_network_peer_left(peer_id: int) -> void:
 		var node: Node = _player_nodes[peer_id]
 		if is_instance_valid(node):
 			node.queue_free()
-			_player_nodes.erase(peer_id)
-			_refresh_drag_selection_units()
+		_player_nodes.erase(peer_id)
+	_refresh_drag_selection_units()
 
 
 func _on_network_match_started_changed(_started: bool) -> void:
@@ -266,8 +292,10 @@ func _spawn_player_for_peer(peer_id: int, slot: int, color: Color) -> void:
 	agent.global_position = SPAWN_POINTS[slot % SPAWN_POINTS.size()]
 	if agent.has_method("configure_player"):
 		agent.configure_player(peer_id, slot, color)
-		_player_nodes[peer_id] = agent
-		_refresh_drag_selection_units()
+	_player_nodes[peer_id] = agent
+	if peer_id == multiplayer.get_unique_id():
+		drag_selection.team = agent.team
+	_refresh_drag_selection_units()
 
 	if peer_id == multiplayer.get_unique_id():
 		rts_camera.global_position = agent.global_position + Vector3(0.0, 18.0, 0.0)
@@ -278,8 +306,8 @@ func _clear_players() -> void:
 		var node: Node = _player_nodes[peer_id]
 		if is_instance_valid(node):
 			node.queue_free()
-			_player_nodes.clear()
-			_refresh_drag_selection_units()
+	_player_nodes.clear()
+	_refresh_drag_selection_units()
 
 
 func _refresh_drag_selection_units() -> void:
@@ -288,7 +316,7 @@ func _refresh_drag_selection_units() -> void:
 	var arr: Array = []
 	for child in agents_root.get_children():
 		arr.append(child)
-		drag_selection.set_units(arr)
+	drag_selection.set_units(arr)
 
 
 func register_network_packet_sent(count: int = 1) -> void:
@@ -310,6 +338,44 @@ func is_game_paused() -> bool:
 func _set_status(message: String) -> void:
 	if _status_label:
 		_status_label.text = message
+
+
+func _refresh_local_ip_info() -> void:
+	if _network_manager == null or not _network_manager.has_method("get_local_ipv4_addresses"):
+		return
+	var ips: Array[String] = _network_manager.get_local_ipv4_addresses()
+	if ips.is_empty():
+		_local_ip_label.text = "Lokale IP: keine LAN-IP gefunden"
+		return
+	_local_ip_label.text = "Lokale IP(s): %s" % ", ".join(ips)
+	if _ip_input and (_ip_input.text == "" or _ip_input.text == "127.0.0.1"):
+		_ip_input.text = ips[0]
+
+
+func _on_self_test_pressed() -> void:
+	_run_self_test()
+
+
+func _run_self_test() -> void:
+	if _network_manager == null or not _network_manager.has_method("get_connection_diagnostics"):
+		return
+	var diag: Dictionary = _network_manager.get_connection_diagnostics()
+	var host_state := "Ja" if diag.get("is_host", false) else "Nein"
+	var peer_state := "Ja" if diag.get("has_peer", false) else "Nein"
+	var local_ips: Array = diag.get("local_ipv4", [])
+	var ips_text := "keine"
+	if local_ips.size() > 0:
+		ips_text = ", ".join(local_ips)
+	_diagnostic_label.text = "Diagnose:\nPeer aktiv: %s\nHost: %s\nPort: %s\nPeers: %s\nLast Join IP: %s\nFehler: %s (%s)\nLokale IP(s): %s" % [
+		peer_state,
+		host_state,
+		str(diag.get("active_port", "-")),
+		str(diag.get("peer_count", 0)),
+		str(diag.get("last_join_address", "-")),
+		str(diag.get("last_error_code", OK)),
+		str(diag.get("last_error_name", "OK")),
+		ips_text
+	]
 
 
 func _update_role_actions() -> void:

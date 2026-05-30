@@ -22,6 +22,9 @@ var _packets_sent: int = 0
 var _packets_received: int = 0
 var _ping_ms: float = 0.0
 var _ping_timer: float = 0.0
+var _last_error_code: int = OK
+var _active_port: int = DEFAULT_PORT
+var _last_join_address: String = ""
 
 
 func _ready() -> void:
@@ -70,13 +73,50 @@ func get_packets_received() -> int:
 	return _packets_received
 
 
+func get_last_error_code() -> int:
+	return _last_error_code
+
+
+func get_last_error_name() -> String:
+	return error_string(_last_error_code)
+
+
+func get_local_ipv4_addresses() -> Array[String]:
+	var result: Array[String] = []
+	for addr in IP.get_local_addresses():
+		if addr == "127.0.0.1":
+			continue
+		if addr.contains(":"):
+			continue
+		result.append(addr)
+	return result
+
+
+func get_connection_diagnostics() -> Dictionary:
+	return {
+		"has_peer": multiplayer.has_multiplayer_peer(),
+		"is_host": is_host(),
+		"unique_id": multiplayer.get_unique_id(),
+		"peer_count": multiplayer.get_peers().size(),
+		"active_port": _active_port,
+		"last_join_address": _last_join_address,
+		"last_error_code": _last_error_code,
+		"last_error_name": error_string(_last_error_code),
+		"local_ipv4": get_local_ipv4_addresses()
+	}
+
+
 func host_game(port: int) -> void:
 	disconnect_game(false)
+	_active_port = port
+	_last_join_address = ""
 	var peer := ENetMultiplayerPeer.new()
 	var err := peer.create_server(port, MAX_PLAYERS)
 	if err != OK:
-		_emit_status("Host fehlgeschlagen: %s" % error_string(err))
+		_last_error_code = err
+		_emit_status("Host fehlgeschlagen (Code %d - %s)" % [err, error_string(err)])
 		return
+	_last_error_code = OK
 	multiplayer.multiplayer_peer = peer
 	_match_started = false
 	_set_pause_state(false)
@@ -86,11 +126,15 @@ func host_game(port: int) -> void:
 
 func join_game(address: String, port: int) -> void:
 	disconnect_game(false)
+	_active_port = port
+	_last_join_address = address
 	var peer := ENetMultiplayerPeer.new()
 	var err := peer.create_client(address, port)
 	if err != OK:
-		_emit_status("Join fehlgeschlagen: %s" % error_string(err))
+		_last_error_code = err
+		_emit_status("Join fehlgeschlagen (Code %d - %s)" % [err, error_string(err)])
 		return
+	_last_error_code = OK
 	multiplayer.multiplayer_peer = peer
 	_match_started = false
 	_set_pause_state(false)
@@ -196,16 +240,19 @@ func _on_peer_disconnected(id: int) -> void:
 
 
 func _on_connected_to_server() -> void:
+	_last_error_code = OK
 	_emit_status("Mit Host verbunden. Warte auf Start...")
 
 
 func _on_connection_failed() -> void:
-	_emit_status("Verbindung fehlgeschlagen.")
+	_last_error_code = ERR_CANT_CONNECT
+	_emit_status("Verbindung fehlgeschlagen (Code %d - %s)." % [_last_error_code, error_string(_last_error_code)])
 	disconnect_game(false)
 
 
 func _on_server_disconnected() -> void:
-	_emit_status("Host-Verbindung verloren.")
+	_last_error_code = ERR_CONNECTION_ERROR
+	_emit_status("Host-Verbindung verloren (Code %d - %s)." % [_last_error_code, error_string(_last_error_code)])
 	disconnect_game(false)
 
 

@@ -105,28 +105,22 @@ func _physics_process(delta: float) -> void:
 
 func _physics_process_player(delta: float) -> void:
 	if is_multiplayer_authority():
-		var input_dir := Vector3.ZERO
-		if Input.is_key_pressed(KEY_UP) or Input.is_key_pressed(KEY_I):
-			input_dir.z -= 1.0
-		if Input.is_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_K):
-			input_dir.z += 1.0
-		if Input.is_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_J):
-			input_dir.x -= 1.0
-		if Input.is_key_pressed(KEY_RIGHT) or Input.is_key_pressed(KEY_L):
-			input_dir.x += 1.0
+		if attack_timer > 0.0:
+			attack_timer -= delta
 
-		var movement_speed := speed
-		if Input.is_key_pressed(KEY_SHIFT):
-			movement_speed *= 1.6
-
-		if input_dir.length_squared() > 0.0:
-			input_dir = input_dir.normalized()
-			velocity = input_dir * movement_speed
-			look_at(global_position + Vector3(velocity.x, 0.0, velocity.z), Vector3.UP)
-		else:
-			velocity = Vector3.ZERO
+		match state:
+			State.IDLE:
+				velocity = Vector3.ZERO
+			State.MOVE, State.MOVE_STRAIGHT:
+				handle_move()
+			State.CHASE:
+				handle_chase()
+			State.ATTACK:
+				handle_attack()
 
 		move_and_slide()
+		if velocity.length_squared() > 0.001:
+			look_at(global_position + Vector3(velocity.x, 0.0, velocity.z), Vector3.UP)
 		_network_sync_timer += delta
 		if multiplayer.has_multiplayer_peer() and _network_sync_timer >= PLAYER_SYNC_RATE:
 			_network_sync_timer = 0.0
@@ -136,6 +130,21 @@ func _physics_process_player(delta: float) -> void:
 		global_position = global_position.lerp(_remote_position, clamp(delta * 12.0, 0.0, 1.0))
 		rotation.y = lerp_angle(rotation.y, _remote_yaw, clamp(delta * 12.0, 0.0, 1.0))
 		velocity = _remote_velocity
+
+
+func issue_move_order(destination: Vector3) -> void:
+	if not is_player_controlled:
+		return
+	target = null
+	navigation_agent_3d.set_target_position(destination)
+	state = State.MOVE_STRAIGHT
+
+
+func issue_attack_order(target_unit: Node3D) -> void:
+	if not is_player_controlled:
+		return
+	target = target_unit
+	state = State.CHASE
 
 
 @rpc("any_peer", "unreliable")
