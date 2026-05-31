@@ -1,4 +1,5 @@
 extends CharacterBody3D
+class_name RTSAgent
 
 @onready var navigation_agent_3d: NavigationAgent3D = $NavigationAgent3D
 @onready var mesh: MeshInstance3D = $MeshInstance3D
@@ -61,6 +62,10 @@ func configure_player(peer_id: int, slot: int, color: Color) -> void:
 		_setup_name_label()
 
 
+func get_player_color() -> Color:
+	return _player_color
+
+
 func _ready() -> void:
 	if is_player_controlled:
 		set_multiplayer_authority(owner_peer_id)
@@ -104,6 +109,25 @@ func _physics_process(delta: float) -> void:
 
 
 func _physics_process_player(delta: float) -> void:
+	if not multiplayer.has_multiplayer_peer():
+		if attack_timer > 0.0:
+			attack_timer -= delta
+
+		match state:
+			State.IDLE:
+				velocity = Vector3.ZERO
+			State.MOVE, State.MOVE_STRAIGHT:
+				handle_move()
+			State.CHASE:
+				handle_chase()
+			State.ATTACK:
+				handle_attack()
+
+		move_and_slide()
+		if velocity.length_squared() > 0.001:
+			look_at(global_position + Vector3(velocity.x, 0.0, velocity.z), Vector3.UP)
+		return
+
 	if is_multiplayer_authority():
 		if attack_timer > 0.0:
 			attack_timer -= delta
@@ -161,8 +185,6 @@ func _rpc_sync_player_state(position_value: Vector3, velocity_value: Vector3, ya
 
 
 func scan_for_enemys() -> void:
-	if is_player_controlled:
-		return
 	if target != null or state == State.MOVE_STRAIGHT or state == State.ATTACK:
 		return
 	for body in detection_area.get_overlapping_bodies():
@@ -280,9 +302,6 @@ func _on_drag_selection_unit_deselected() -> void:
 
 
 func _on_timer_timeout() -> void:
-	if is_player_controlled:
-		$Timer.start()
-		return
 	scan_for_enemys()
 	$Timer.start()
 

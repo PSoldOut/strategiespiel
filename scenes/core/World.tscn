@@ -5,18 +5,18 @@
 [ext_resource type="Script" path="res://scripts/world/World.gd" id="3_world"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_bah7m"]
-vertices = PackedVector3Array(-49.5, 0.4, -49.5, -49.5, 0.4, 49.5, 49.5, 0.4, 49.5, 49.5, 0.4, -49.5)
+vertices = PackedVector3Array(-99.5, 0.4, -99.5, -99.5, 0.4, 99.5, 99.5, 0.4, 99.5, 99.5, 0.4, -99.5)
 polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_cmany"]
-size = Vector3(100, 0.1, 100)
+size = Vector3(200, 0.1, 200)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cmany"]
 albedo_color = Color(1, 0.18431373, 0.20392157, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_c6gwx"]
 material = SubResource("StandardMaterial3D_cmany")
-size = Vector2(100, 100)
+size = Vector2(200, 200)
 
 [sub_resource type="Gradient" id="Gradient_c6gwx"]
 offsets = PackedFloat32Array(0.99892473, 1)
@@ -35,7 +35,7 @@ uv1_triplanar = true
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_js7pq"]
 material = SubResource("StandardMaterial3D_bcbcq")
-size = Vector2(100, 100)
+size = Vector2(200, 200)
 
 [node name="World" type="Node3D" unique_id=983696813]
 script = ExtResource("3_world")

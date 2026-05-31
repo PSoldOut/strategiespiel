@@ -17,7 +17,7 @@ config/icon="res://assets/icons/icon.png"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/RTSCamera/plugin.cfg", "res://addons/dragselection/plugin.cfg")
+enabled=PackedStringArray("res://addons/RTSCamera/plugin.cfg", "res://addons/dragselection/plugin.cfg", "res://addons/rts_multiplayer_bridge/plugin.cfg", "res://addons/terrain_3d/plugin.cfg")
 
 [physics]
 

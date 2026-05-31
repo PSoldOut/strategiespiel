@@ -1,10 +1,10 @@
 extends Node3D
 
 const SPAWN_POINTS: Array[Vector3] = [
-Vector3(-12.0, 1.0, -12.0),
-Vector3(12.0, 1.0, -12.0),
-Vector3(-12.0, 1.0, 12.0),
-Vector3(12.0, 1.0, 12.0)
+Vector3(-24.0, 1.0, -24.0),
+Vector3(24.0, 1.0, -24.0),
+Vector3(-24.0, 1.0, 24.0),
+Vector3(24.0, 1.0, 24.0)
 ]
 
 var agent_scene: PackedScene = preload("res://scenes/core/Agent.tscn")
@@ -31,6 +31,7 @@ var _disconnect_button: Button
 var _start_button: Button
 var _pause_button: Button
 var _restart_button: Button
+var _reinforce_button: Button
 var _self_test_button: Button
 var _diagnostic_label: Label
 var _stats_label: Label
@@ -64,6 +65,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_F5:
 			if _network_manager and _network_manager.is_host():
 				_network_manager.host_restart_match()
+		KEY_N:
+			_on_reinforce_pressed()
 
 
 func _on_drag_selection_move_command(positions: Array) -> void:
@@ -92,6 +95,7 @@ func _setup_network_manager() -> void:
 	add_child(_network_manager)
 	_network_manager.status_changed.connect(_on_network_status_changed)
 	_network_manager.spawn_player_requested.connect(_on_network_spawn_player)
+	_network_manager.reinforcements_requested.connect(_on_network_reinforcements_requested)
 	_network_manager.clear_players_requested.connect(_on_network_clear_players)
 	_network_manager.peer_left.connect(_on_network_peer_left)
 	_network_manager.match_started_changed.connect(_on_network_match_started_changed)
@@ -105,6 +109,7 @@ func _create_ui() -> void:
 
 	var root := Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.scale = Vector2(0.5, 0.5)
 	_network_ui_layer.add_child(root)
 
 	_network_panel = PanelContainer.new()
@@ -185,6 +190,11 @@ func _create_ui() -> void:
 	_restart_button.pressed.connect(_on_restart_pressed)
 	panel_vbox.add_child(_restart_button)
 
+	_reinforce_button = Button.new()
+	_reinforce_button.text = "Einheiten erzeugen"
+	_reinforce_button.pressed.connect(_on_reinforce_pressed)
+	panel_vbox.add_child(_reinforce_button)
+
 	_self_test_button = Button.new()
 	_self_test_button.text = "Netzwerk-Selbsttest"
 	_self_test_button.pressed.connect(_on_self_test_pressed)
@@ -249,6 +259,10 @@ func _on_restart_pressed() -> void:
 	_update_role_actions()
 
 
+func _on_reinforce_pressed() -> void:
+	_spawn_reinforcements_for_local_peer(3)
+
+
 func _on_network_status_changed(message: String) -> void:
 	_set_status(message)
 	_run_self_test()
@@ -258,16 +272,16 @@ func _on_network_spawn_player(peer_id: int, slot: int, color: Color) -> void:
 	_spawn_player_for_peer(peer_id, slot, color)
 
 
+func _on_network_reinforcements_requested(peer_id: int, count: int) -> void:
+	_spawn_reinforcements_for_peer(peer_id, count)
+
+
 func _on_network_clear_players() -> void:
 	_clear_players()
 
 
 func _on_network_peer_left(peer_id: int) -> void:
-	if _player_nodes.has(peer_id):
-		var node: Node = _player_nodes[peer_id]
-		if is_instance_valid(node):
-			node.queue_free()
-		_player_nodes.erase(peer_id)
+	_remove_units_for_peer(peer_id)
 	_refresh_drag_selection_units()
 
 
@@ -280,11 +294,7 @@ func _on_network_pause_state_changed(paused: bool) -> void:
 
 
 func _spawn_player_for_peer(peer_id: int, slot: int, color: Color) -> void:
-	if _player_nodes.has(peer_id):
-		var old_node: Node = _player_nodes[peer_id]
-		if is_instance_valid(old_node):
-			old_node.queue_free()
-			_player_nodes.erase(peer_id)
+	_remove_units_for_peer(peer_id)
 
 	var agent := agent_scene.instantiate()
 	agent.name = "Player_%d" % peer_id
@@ -302,12 +312,61 @@ func _spawn_player_for_peer(peer_id: int, slot: int, color: Color) -> void:
 
 
 func _clear_players() -> void:
-	for peer_id in _player_nodes.keys():
-		var node: Node = _player_nodes[peer_id]
-		if is_instance_valid(node):
-			node.queue_free()
+	for child in agents_root.get_children():
+		if is_instance_valid(child) and not child.is_queued_for_deletion():
+			child.queue_free()
 	_player_nodes.clear()
+	drag_selection.team = ""
 	_refresh_drag_selection_units()
+
+
+func _remove_units_for_peer(peer_id: int) -> void:
+	for child in agents_root.get_children():
+		if not is_instance_valid(child):
+			continue
+		if child.is_queued_for_deletion():
+			continue
+		if child is RTSAgent and child.owner_peer_id == peer_id:
+			child.queue_free()
+	if _player_nodes.has(peer_id):
+		_player_nodes.erase(peer_id)
+
+
+func _spawn_reinforcements_for_local_peer(count: int) -> void:
+	var local_peer_id := multiplayer.get_unique_id() if multiplayer.has_multiplayer_peer() else 1
+	if _network_manager and _network_manager.has_method("request_reinforcements"):
+		_network_manager.request_reinforcements(count)
+		return
+	_spawn_reinforcements_for_peer(local_peer_id, count)
+
+
+func _spawn_reinforcements_for_peer(peer_id: int, count: int) -> void:
+	var color := _get_peer_color(peer_id)
+	var base_position := _get_peer_base_position(peer_id)
+	for i in range(count):
+		var agent := agent_scene.instantiate()
+		agent.name = "Reinforcement_%d_%d" % [peer_id, Time.get_ticks_msec() + i]
+		agents_root.add_child(agent)
+		agent.global_position = base_position + Vector3(randf_range(-8.0, 8.0), 0.0, randf_range(-8.0, 8.0))
+		if agent.has_method("configure_player"):
+			agent.configure_player(peer_id, 0, color)
+	_refresh_drag_selection_units()
+
+
+func _get_peer_color(peer_id: int) -> Color:
+	if _player_nodes.has(peer_id):
+		var node = _player_nodes.get(peer_id)
+		if is_instance_valid(node) and node.has_method("get_player_color"):
+			return node.get_player_color()
+	return Color(0.2, 0.5, 1.0, 1.0)
+
+
+func _get_peer_base_position(peer_id: int) -> Vector3:
+	if _player_nodes.has(peer_id):
+		var node = _player_nodes.get(peer_id)
+		if is_instance_valid(node):
+			return node.global_position
+	return SPAWN_POINTS[0]
 
 
 func _refresh_drag_selection_units() -> void:
@@ -315,6 +374,8 @@ func _refresh_drag_selection_units() -> void:
 		return
 	var arr: Array = []
 	for child in agents_root.get_children():
+		if child.is_queued_for_deletion():
+			continue
 		arr.append(child)
 	drag_selection.set_units(arr)
 

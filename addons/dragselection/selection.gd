@@ -16,6 +16,16 @@ var current_selected : Array = []
 signal move_command(positions : Array)
 signal interact_command(target : SelectionUnit)
 
+
+func _prune_invalid_selection_units() -> void:
+	var valid_units: Array = []
+	for unit in selection_units:
+		if is_instance_valid(unit):
+			var parent = unit.get_parent()
+			if is_instance_valid(parent) and not parent.is_queued_for_deletion():
+				valid_units.append(unit)
+	selection_units = valid_units
+
 func _ready() -> void:
 	if timer.get_parent() == null:
 		add_child(timer)
@@ -41,11 +51,17 @@ func set_units(arr : Array):
 	half = false
 	var su : SelectionUnit
 	for unit in units:
-		su = unit.find_children("", "SelectionUnit", true, false)[0]
+		if not is_instance_valid(unit) or unit.is_queued_for_deletion():
+			continue
+		var found: Array = unit.find_children("", "SelectionUnit", true, false)
+		if found.is_empty():
+			continue
+		su = found[0]
 		selection_units.append(su)
 		if team == "":
 			team = su.team
 		su.set_drag_selection(self)
+	_prune_invalid_selection_units()
 		
 		
 func _input(event):
@@ -65,6 +81,7 @@ func _input(event):
 				select_units()
 				
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			_prune_invalid_selection_units()
 			var camera = get_viewport().get_camera_3d()
 			var mouse_pos = get_viewport().get_mouse_position()
 			var from = camera.project_ray_origin(mouse_pos)
@@ -80,6 +97,8 @@ func _input(event):
 					interact_command.emit(result["collider"].find_children("", "SelectionUnit", true, false)[0])
 					return
 				for unit : SelectionUnit in selection_units:
+					if not is_instance_valid(unit):
+						continue
 					if team != unit.team and unit.global_transform.origin.distance_to(pos) < 1:
 						interact_command.emit(unit)
 						return
@@ -163,6 +182,7 @@ func get_formation_positions(center: Vector3, target: Vector3, unit_count: int, 
 		
 	
 func select_units_half():
+	_prune_invalid_selection_units()
 	if selection_units.is_empty():
 		return
 	current_selected = []
@@ -171,6 +191,8 @@ func select_units_half():
 	if half:
 		for i in range(selection_units.size()/2):
 			var unit = selection_units[i]
+			if not is_instance_valid(unit):
+				continue
 			var screen_pos = camera.unproject_position(unit.global_transform.origin)
 			if rect.has_point(screen_pos):
 				unit.select()
@@ -182,6 +204,8 @@ func select_units_half():
 	else:
 		for i in range(selection_units.size()/2, selection_units.size()):
 			var unit : SelectionUnit = selection_units[i]
+			if not is_instance_valid(unit):
+				continue
 			var screen_pos = camera.unproject_position(unit.global_transform.origin)
 			
 			if rect.has_point(screen_pos):
@@ -195,6 +219,7 @@ func select_units_half():
 
 
 func select_units():
+	_prune_invalid_selection_units()
 	if selection_units.is_empty():
 		return
 	current_selected = []
@@ -207,6 +232,8 @@ func select_units():
 	
 
 	for unit : SelectionUnit in selection_units:
+		if not is_instance_valid(unit):
+			continue
 		if unit.team != team:
 			continue
 		var screen_pos = camera.unproject_position(unit.global_transform.origin)

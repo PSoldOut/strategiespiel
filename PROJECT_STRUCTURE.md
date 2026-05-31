@@ -16,6 +16,8 @@ Trennung von Verantwortlichkeiten in Gameplay, Netzwerk, Szenen, Addons und Asse
   - `textures/teams/` fuer Team-/Farbtexturen
   - `textures/shared/` fuer gemeinsame Texturen (z. B. Normalmaps)
   - `icons/` fuer Projekt-/UI-Icons
+- `addons/rts_multiplayer_bridge/`
+  - Wiederverwendbares Netzwerk-Addon mit Host/Join, Reinforcements und Diagnose
 - `addons/`
   - Drittanbieter- oder Projekt-Addons
 - `demo/`
