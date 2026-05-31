@@ -96,12 +96,12 @@ func get_local_ipv4_addresses() -> Array[String]:
 
 
 func get_connection_diagnostics() -> Dictionary:
-	var has_peer := multiplayer.has_multiplayer_peer()
+	var peer_active := multiplayer.has_multiplayer_peer()
 	return {
-		"has_peer": has_peer,
+		"has_peer": peer_active,
 		"is_host": is_host(),
-		"unique_id": multiplayer.get_unique_id() if has_peer else 0,
-		"peer_count": multiplayer.get_peers().size() if has_peer else 0,
+		"unique_id": multiplayer.get_unique_id() if peer_active else 0,
+		"peer_count": multiplayer.get_peers().size() if peer_active else 0,
 		"active_port": _active_port,
 		"last_join_address": _last_join_address,
 		"last_error_code": _last_error_code,

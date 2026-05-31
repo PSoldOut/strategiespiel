@@ -17,6 +17,7 @@ var network_manager_script: Script = preload("res://scripts/network/NetworkManag
 
 var _ui_visible: bool = true
 var _player_nodes: Dictionary = {}
+var _peer_reinforcement_counters: Dictionary = {}
 var _network_manager: Node
 
 var _network_ui_layer: CanvasLayer
@@ -316,6 +317,7 @@ func _clear_players() -> void:
 		if is_instance_valid(child) and not child.is_queued_for_deletion():
 			child.queue_free()
 	_player_nodes.clear()
+	_peer_reinforcement_counters.clear()
 	drag_selection.team = ""
 	_refresh_drag_selection_units()
 
@@ -330,6 +332,8 @@ func _remove_units_for_peer(peer_id: int) -> void:
 			child.queue_free()
 	if _player_nodes.has(peer_id):
 		_player_nodes.erase(peer_id)
+	if _peer_reinforcement_counters.has(peer_id):
+		_peer_reinforcement_counters.erase(peer_id)
 
 
 func _spawn_reinforcements_for_local_peer(count: int) -> void:
@@ -343,14 +347,26 @@ func _spawn_reinforcements_for_local_peer(count: int) -> void:
 func _spawn_reinforcements_for_peer(peer_id: int, count: int) -> void:
 	var color := _get_peer_color(peer_id)
 	var base_position := _get_peer_base_position(peer_id)
+	var start_index := int(_peer_reinforcement_counters.get(peer_id, 0))
 	for i in range(count):
+		var reinforcement_index := start_index + i
 		var agent := agent_scene.instantiate()
-		agent.name = "Reinforcement_%d_%d" % [peer_id, Time.get_ticks_msec() + i]
+		agent.name = "Reinforcement_%d_%d" % [peer_id, reinforcement_index]
 		agents_root.add_child(agent)
-		agent.global_position = base_position + Vector3(randf_range(-8.0, 8.0), 0.0, randf_range(-8.0, 8.0))
+		agent.global_position = base_position + _get_reinforcement_offset(reinforcement_index)
 		if agent.has_method("configure_player"):
 			agent.configure_player(peer_id, 0, color)
+	_peer_reinforcement_counters[peer_id] = start_index + count
 	_refresh_drag_selection_units()
+
+
+func _get_reinforcement_offset(index: int) -> Vector3:
+	# Deterministic spawn offsets keep names/paths and placement identical on all peers.
+	var ring := int(index / 8)
+	var slot := index % 8
+	var radius := 3.0 + float(ring) * 2.5
+	var angle := TAU * float(slot) / 8.0
+	return Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 
 
 func _get_peer_color(peer_id: int) -> Color:

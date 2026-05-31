@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b4sl40in0000r" path="res://addons/dragselection/selection.gd" id="1_c6gwx"]
 [ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="2_2dftf"]
-[ext_resource type="Script" path="res://scripts/world/World.gd" id="3_world"]
+[ext_resource type="Script" uid="uid://bjle72hdvfcx" path="res://scripts/world/World.gd" id="3_world"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_bah7m"]
 vertices = PackedVector3Array(-99.5, 0.4, -99.5, -99.5, 0.4, 99.5, 99.5, 0.4, 99.5, 99.5, 0.4, -99.5)
