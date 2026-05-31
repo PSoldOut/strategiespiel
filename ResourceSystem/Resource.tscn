@@ -1,7 +1,5 @@
 [gd_scene format=3 uid="uid://cfshqxjbsf144"]
 
-[ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="2_kai3k"]
-
 [sub_resource type="BoxMesh" id="BoxMesh_cpix3"]
 size = Vector3(2, 2, 2)
 
@@ -10,9 +8,6 @@ albedo_color = Color(1, 1, 0.007843138, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_udj7j"]
 size = Vector3(2, 2, 2)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_acyfp"]
-size = Vector3(0.5, 0.5, 0.5)
 
 [node name="Resource" type="Node3D" unique_id=976212969]
 
@@ -31,41 +26,3 @@ visible = false
 visible = false
 shape = SubResource("BoxShape3D_udj7j")
 disabled = true
-
-[node name="RTSBuilding" type="Node3D" parent="." unique_id=358986513 node_paths=PackedStringArray("main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
-script = ExtResource("2_kai3k")
-main_area = NodePath("../Area3D1")
-ground_area1 = NodePath("../Area3D2")
-ground_area2 = NodePath("../Area3D3")
-ground_area3 = NodePath("../Area3D4")
-ground_area4 = NodePath("../Area3D5")
-metadata/_custom_type_script = "uid://cvt0q65feqdc6"
-
-[node name="Area3D5" type="Area3D" parent="." unique_id=22883665]
-transform = Transform3D(0.9998951, 0, 0.014485726, 0, 1, 0, -0.014485726, 0, 0.9998951, 0.75, -0.8, 0.75)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D5" unique_id=1118109488]
-shape = SubResource("BoxShape3D_acyfp")
-
-[node name="Area3D4" type="Area3D" parent="." unique_id=1927174814]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.75, -0.8, -0.751)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D4" unique_id=504694540]
-shape = SubResource("BoxShape3D_acyfp")
-
-[node name="Area3D3" type="Area3D" parent="." unique_id=2096567321]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.75, -0.8, -0.75)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D3" unique_id=1174118504]
-shape = SubResource("BoxShape3D_acyfp")
-
-[node name="Area3D2" type="Area3D" parent="." unique_id=170930950]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.75, -0.8, 0.75)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D2" unique_id=570734591]
-shape = SubResource("BoxShape3D_acyfp")
-
-[node name="Area3D1" type="Area3D" parent="." unique_id=454417494]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D1" unique_id=2048158516]
-shape = SubResource("BoxShape3D_acyfp")

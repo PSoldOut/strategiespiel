@@ -34,6 +34,7 @@ enum Orientation{
 
 enum Player{
 	WORLD,
+	PLAYER_0,
 	PLAYER_1,
 	PLAYER_2,
 	PLAYER_3,
@@ -41,7 +42,13 @@ enum Player{
 }
 enum BuildingType{
 	NONE,
+	HOUSE,
+	KASERNE
+}
+
+enum ResourceType{
+	NONE,
 	GOLD,
 	STONE,
-	HOUSE,
+	
 }

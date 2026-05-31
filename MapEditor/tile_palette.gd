@@ -4,14 +4,13 @@ class_name TilePalette
 signal selected_ground_type_changed(tile_type: int)
 signal selected_height_action_changed(action: float)
 signal selected_building_type_changed(building_type: int)
+signal selected_resource_type_changed(resource_type: int)
 signal selected_player_changed(player: int)
 signal selected_orientation_changed(orientation: int)
 signal map_name_changed(map_name: String)
 signal save_requested
 signal reset_requested 
 
-@export var rtsbuildsystem: RTSBuildSystem
-var building = preload("res://ResourceSystem/Resource.tscn")
 
 @onready var ground_label: Label = $VBoxContainer/GroundLabel
 @onready var ground_option_button: OptionButton = $VBoxContainer/GroundOptionButton
@@ -22,17 +21,21 @@ var building = preload("res://ResourceSystem/Resource.tscn")
 @onready var building_label: Label = $VBoxContainer/BuildingLabel
 @onready var building_option_button: OptionButton = $VBoxContainer/BuildingOptionButton
 
+@onready var resource_label: Label = $VBoxContainer/ResourceLabel
+@onready var resource_option_button: OptionButton = $VBoxContainer/ResourceOptionButton
+
 # Optional nodes. These may not exist yet in your scene.
-@onready var player_label: Label = $VBoxContainer.get_node_or_null("PlayerLabel") as Label
-@onready var player_option_button: OptionButton = $VBoxContainer.get_node_or_null("PlayerOptionButton") as OptionButton
-@onready var orientation_label: Label = $VBoxContainer.get_node_or_null("OrientationLabel") as Label
-@onready var orientation_option_button: OptionButton = $VBoxContainer.get_node_or_null("OrientationOptionButton") as OptionButton
+@onready var player_label: Label =  $VBoxContainer/PlayerLabel
+@onready var player_option_button: OptionButton = $VBoxContainer/PlayerOptionButton
+@onready var orientation_label: Label = $VBoxContainer/OrientationLabel
+@onready var orientation_option_button: OptionButton = $VBoxContainer/OrientationOptionButton
 
 @onready var map_name: LineEdit = $VBoxContainer/LineEdit
 
 var selected_ground_type: int = EnumMappings.GroundType.GRAS_TILE
 var selected_height_action: int = 0.0
 var selected_building_type: int = EnumMappings.BuildingType.NONE
+var selected_resource_type: int = EnumMappings.ResourceType.NONE
 var selected_player: int = EnumMappings.Player.WORLD
 var selected_orientation: int = EnumMappings.Orientation.NORTH
 var selected_map_name: String = "Map001"
@@ -42,6 +45,7 @@ func _ready() -> void:
 	setup_ground_options()
 	setup_height_options()
 	setup_building_options()
+	setup_resource_options()
 	setup_player_options()
 	setup_orientation_options()
 	setup_map_name()
@@ -128,9 +132,9 @@ func setup_height_options() -> void:
 	_setup_value_option_button(
 		height_option_button,
 		[
-			{"text": "0", "id": 0},
-			{"text": "+0.5", "id": 1},
-			{"text": "-0.5", "id": 2},
+			{"text": "0", "id": EnumMappings.HeightMapping.HEIGHT_NONE},
+			{"text": "+0.5", "id": EnumMappings.HeightMapping.HEIGHT_UP},
+			{"text": "-0.5", "id": EnumMappings.HeightMapping.HEIGHT_DOWN},
 		],
 		Callable(self, "_on_height_selected")
 	)
@@ -150,6 +154,19 @@ func setup_building_options() -> void:
 
 	_update_building_label()
 	selected_building_type_changed.emit(selected_building_type)
+
+
+func setup_resource_options() -> void:
+	_setup_enum_option_button(
+		resource_option_button,
+		EnumMappings.ResourceType,
+		selected_resource_type,
+		Callable(self, "resource_type_to_string"),
+		Callable(self, "_on_resource_selected")
+	)
+
+	_update_resource_label()
+	selected_resource_type_changed.emit(selected_resource_type)
 
 
 func setup_player_options() -> void:
@@ -206,21 +223,14 @@ func _on_ground_selected(index: int) -> void:
 
 
 func _on_height_selected(index: int) -> void:
-	match index:
-		0:
-			selected_height_action = EnumMappings.HeightMapping.HEIGHT_NONE
-			_update_height_label("0.0")
-		1:
-			selected_height_action = EnumMappings.HeightMapping.HEIGHT_UP
-			_update_height_label("0.5")
-		2:
-			selected_height_action = EnumMappings.HeightMapping.HEIGHT_DOWN
-			_update_height_label("-0.5")
-		_:
-			selected_height_action = EnumMappings.HeightMapping.HEIGHT_NONE
-			_update_height_label("0.0")
+	var value := _get_selected_item_id(height_option_button, index)
+	if value == -1:
+		return
 
-	selected_height_action_changed.emit(selected_height_action)
+	selected_height_action = value
+	_sanitize_selection("height")
+	_sync_all_option_buttons()
+	_emit_all_selection_signals()
 
 
 func _on_building_selected(index: int) -> void:
@@ -229,14 +239,20 @@ func _on_building_selected(index: int) -> void:
 		return
 
 	selected_building_type = value
-	if value != EnumMappings.BuildingType.NONE:
-		rtsbuildsystem.active = true
-		rtsbuildsystem.set_preview_object(building)
-	else:
-		rtsbuildsystem.active = false
-		rtsbuildsystem.unset_preview_object()
-	_update_building_label()
-	selected_building_type_changed.emit(selected_building_type)
+	_sanitize_selection("building")
+	_sync_all_option_buttons()
+	_emit_all_selection_signals()
+
+
+func _on_resource_selected(index: int) -> void:
+	var value := _get_selected_item_id(resource_option_button, index)
+	if value == -1:
+		return
+
+	selected_resource_type = value
+	_sanitize_selection("resource")
+	_sync_all_option_buttons()
+	_emit_all_selection_signals()
 
 
 func _on_player_selected(index: int) -> void:
@@ -278,6 +294,11 @@ func _update_building_label() -> void:
 		building_label.text = "Building: " + building_type_to_string(selected_building_type)
 
 
+func _update_resource_label() -> void:
+	if resource_label != null:
+		resource_label.text = "Resource: " + resource_type_to_string(selected_resource_type)
+
+
 func _update_player_label() -> void:
 	if player_label != null:
 		player_label.text = "Player: " + player_to_string(selected_player)
@@ -286,6 +307,89 @@ func _update_player_label() -> void:
 func _update_orientation_label() -> void:
 	if orientation_label != null:
 		orientation_label.text = "Orientation: " + orientation_to_string(selected_orientation)
+
+
+
+# -------------------------------------------------------------------------
+# Selection validation / synchronization
+# -------------------------------------------------------------------------
+
+func _sanitize_selection(changed_by: String = "") -> void:
+	# A tile may either receive a building or a resource, never both.
+	# Height edits are only valid while no entity is selected.
+	match changed_by:
+		"building":
+			if selected_building_type != EnumMappings.BuildingType.NONE:
+				selected_resource_type = EnumMappings.ResourceType.NONE
+				selected_height_action = EnumMappings.HeightMapping.HEIGHT_NONE
+		"resource":
+			if selected_resource_type != EnumMappings.ResourceType.NONE:
+				selected_building_type = EnumMappings.BuildingType.NONE
+				selected_height_action = EnumMappings.HeightMapping.HEIGHT_NONE
+		"height":
+			if selected_height_action != EnumMappings.HeightMapping.HEIGHT_NONE:
+				selected_building_type = EnumMappings.BuildingType.NONE
+				selected_resource_type = EnumMappings.ResourceType.NONE
+		_:
+			if selected_building_type != EnumMappings.BuildingType.NONE and selected_resource_type != EnumMappings.ResourceType.NONE:
+				selected_resource_type = EnumMappings.ResourceType.NONE
+
+			if _has_entity_selected():
+				selected_height_action = EnumMappings.HeightMapping.HEIGHT_NONE
+
+
+func _has_entity_selected() -> bool:
+	return (
+		selected_building_type != EnumMappings.BuildingType.NONE
+		or selected_resource_type != EnumMappings.ResourceType.NONE
+	)
+
+
+func _sync_all_option_buttons() -> void:
+	_select_option_button_item_by_id(ground_option_button, selected_ground_type)
+	_select_option_button_item_by_id(height_option_button, selected_height_action)
+	_select_option_button_item_by_id(building_option_button, selected_building_type)
+	_select_option_button_item_by_id(resource_option_button, selected_resource_type)
+	_select_option_button_item_by_id(player_option_button, selected_player)
+	_select_option_button_item_by_id(orientation_option_button, selected_orientation)
+
+	_update_ground_label()
+	_update_height_label(height_action_to_string(selected_height_action))
+	_update_building_label()
+	_update_resource_label()
+	_update_player_label()
+	_update_orientation_label()
+
+
+func _select_option_button_item_by_id(option_button: OptionButton, id: int) -> void:
+	if option_button == null:
+		return
+
+	for i in option_button.item_count:
+		if option_button.get_item_id(i) == id:
+			option_button.select(i)
+			return
+
+
+func _emit_all_selection_signals() -> void:
+	selected_ground_type_changed.emit(selected_ground_type)
+	selected_height_action_changed.emit(selected_height_action)
+	selected_building_type_changed.emit(selected_building_type)
+	selected_resource_type_changed.emit(selected_resource_type)
+	selected_player_changed.emit(selected_player)
+	selected_orientation_changed.emit(selected_orientation)
+
+
+func height_action_to_string(action: int) -> String:
+	match action:
+		EnumMappings.HeightMapping.HEIGHT_NONE:
+			return "0.0"
+		EnumMappings.HeightMapping.HEIGHT_UP:
+			return "0.5"
+		EnumMappings.HeightMapping.HEIGHT_DOWN:
+			return "-0.5"
+		_:
+			return "Unknown Height: " + str(action)
 
 
 # -------------------------------------------------------------------------
@@ -332,20 +436,32 @@ func building_type_to_string(building_type: int) -> String:
 	match building_type:
 		EnumMappings.BuildingType.NONE:
 			return "None"
-		EnumMappings.BuildingType.GOLD:
-			return "Gold"
-		EnumMappings.BuildingType.STONE:
-			return "Stone"
 		EnumMappings.BuildingType.HOUSE:
 			return "House"
+		EnumMappings.BuildingType.KASERNE:
+			return "Kaserne"
 		_:
 			return "Unknown Building: " + str(building_type)
+			
+
+func resource_type_to_string(resource_type: int) -> String:
+	match resource_type:
+		EnumMappings.ResourceType.NONE:
+			return "None"
+		EnumMappings.ResourceType.GOLD:
+			return "Gold"
+		EnumMappings.ResourceType.STONE:
+			return "Stone"
+		_:
+			return "Unknown Resource: " + str(resource_type)
 
 
 func player_to_string(player_enum: int) -> String:
 	match player_enum:
 		EnumMappings.Player.WORLD:
 			return "World"
+		EnumMappings.Player.PLAYER_0:
+			return "Player 0"
 		EnumMappings.Player.PLAYER_1:
 			return "Player 1"
 		EnumMappings.Player.PLAYER_2:

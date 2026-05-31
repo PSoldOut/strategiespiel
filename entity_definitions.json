@@ -1,0 +1,54 @@
+{
+	"version": 0.1,
+
+	"resources": {
+		"0": {
+			"enum_name": "NONE",
+			"name": "None",
+			"color": "#00000000",
+			"value": 0
+		},
+		"1": {
+			"enum_name": "GOLD",
+			"name": "Gold",
+			"color": "#FFD700",
+			"value": 100
+		},
+		"2": {
+			"enum_name": "STONE",
+			"name": "Stone",
+			"color": "#808080",
+			"value": 50
+		}
+	},
+
+	"buildings": {
+		"0": {
+			"enum_name": "NONE",
+			"name": "None",
+			"color": "#00000000",
+			"size": {
+				"x": 0,
+				"y": 0
+			}
+		},
+		"1": {
+			"enum_name": "HOUSE",
+			"name": "House",
+			"color": "#8B4513",
+			"size": {
+				"x": 2,
+				"y": 2
+			}
+		},
+		"2": {
+			"enum_name": "KASERNE",
+			"name": "Kaserne",
+			"color": "#8B4513",
+			"size": {
+				"x": 3,
+				"y": 2
+			}
+		}
+	}
+}

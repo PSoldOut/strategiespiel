@@ -1,10 +1,9 @@
 [gd_scene format=3 uid="uid://qohnerc578uf"]
 
-[ext_resource type="Script" uid="uid://dcpmmoaxrqcfv" path="res://MapEditor/map_editor.gd" id="1_k3j5l"]
-[ext_resource type="Script" uid="uid://0bf3wa8emdvl" path="res://MapEditor/tile_palette.gd" id="2_a65gw"]
-[ext_resource type="Script" uid="uid://17p6j2bkksr8" path="res://MapEditor/map_spawner.gd" id="3_isqww"]
+[ext_resource type="Script" uid="uid://su7i5i3igdbb" path="res://MapEditor/map_editor.gd" id="1_k3j5l"]
+[ext_resource type="Script" uid="uid://h5cxapeptxkp" path="res://MapEditor/tile_palette.gd" id="2_a65gw"]
+[ext_resource type="Script" uid="uid://bro26yiop3b1e" path="res://MapEditor/map_spawner.gd" id="3_isqww"]
 [ext_resource type="Script" uid="uid://b31fwwrpgckym" path="res://addons/RTSCamera/Camera.gd" id="4_wy1kg"]
-[ext_resource type="Script" uid="uid://bxlx015maqnwf" path="res://addons/rtsbuildingsystem/system.gd" id="5_a65gw"]
 
 [sub_resource type="Sky" id="Sky_r0du0"]
 
@@ -27,13 +26,12 @@ script = ExtResource("1_k3j5l")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2110217429]
 
-[node name="TilePalette" type="Control" parent="CanvasLayer" unique_id=680693362 node_paths=PackedStringArray("rtsbuildsystem")]
+[node name="TilePalette" type="Control" parent="CanvasLayer" unique_id=680693362]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("2_a65gw")
-rtsbuildsystem = NodePath("../../RTSBuildSystem")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/TilePalette" unique_id=255865906]
 layout_mode = 0
@@ -54,7 +52,7 @@ text = "Height:"
 [node name="HeightOptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=157174930]
 layout_mode = 2
 
-[node name="Player" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1224599010]
+[node name="PlayerLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1224599010]
 layout_mode = 2
 text = "Player: "
 
@@ -66,6 +64,20 @@ layout_mode = 2
 text = "Building:"
 
 [node name="BuildingOptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=80767620]
+layout_mode = 2
+
+[node name="ResourceLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=1429581315]
+layout_mode = 2
+text = "Resource:"
+
+[node name="ResourceOptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=586700903]
+layout_mode = 2
+
+[node name="OrientationLabel" type="Label" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=190413859]
+layout_mode = 2
+text = "Resource:"
+
+[node name="OrientationOptionButton" type="OptionButton" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=587691544]
 layout_mode = 2
 
 [node name="LineEdit" type="LineEdit" parent="CanvasLayer/TilePalette/VBoxContainer" unique_id=556709749]
@@ -100,14 +112,10 @@ script = ExtResource("4_wy1kg")
 
 [node name="BuildingRoot" type="Node3D" parent="." unique_id=208136423]
 
-[node name="RTSBuildSystem" type="Node3D" parent="." unique_id=1827493982 node_paths=PackedStringArray("building_root", "camera")]
-script = ExtResource("5_a65gw")
-building_root = NodePath("../BuildingRoot")
-camera = NodePath("../RTSCamera")
-metadata/_custom_type_script = "uid://bxlx015maqnwf"
-
 [node name="HoverHighlightMesh" type="MeshInstance3D" parent="." unique_id=1766582247]
 mesh = SubResource("BoxMesh_isqww")
+
+[node name="Outline" type="Node" parent="HoverHighlightMesh" unique_id=928852257]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=804651834]
 mesh = SubResource("BoxMesh_a65gw")
