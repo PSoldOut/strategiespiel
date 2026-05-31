@@ -5,6 +5,14 @@ class_name RTSCamera
 @export var zoom_speed := 5.0
 @export var mouse_sensitivity := 0.003
 
+
+var zoom := 0.0
+var min_zoom := 10.0
+var max_zoom := 20.0
+
+var min_pitch := deg_to_rad(35) # nah dran (stärker geneigt)
+var max_pitch := deg_to_rad(70) # weit weg (flacher)
+
 var yaw := 0.0
 var pitch := -0.7
 
@@ -24,9 +32,17 @@ func _input(event):
 		var forward = -transform.basis.z.normalized()
 		
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			global_translate(forward * zoom_speed)
+			if zoom < max_zoom:
+				zoom += zoom_speed
+				global_translate(forward * zoom_speed)
+				if global_position.y < 20:
+					rotate_object_local(Vector3(1,0,0), 0.05)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			global_translate(-forward * zoom_speed)
+			if zoom > 0:
+				zoom -= zoom_speed
+				global_translate(-forward * zoom_speed)
+				if global_position.y < 20:
+					rotate_object_local(Vector3(1,0,0), -0.05)
 
 func _process(delta):
 	var move_dir = Vector3.ZERO
@@ -74,3 +90,11 @@ func _process(delta):
 func _update_rotation():
 	var rot = Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch)
 	transform.basis = rot
+	
+func update_camera():
+	var t := inverse_lerp(min_zoom, max_zoom, zoom)
+	var pitch := lerp(min_pitch, max_pitch, t)
+	#pitch_pivot.rotation.x = -pitch
+
+	# Kamera zurückziehen (klassischer RTS Zoom)
+	$PitchPivot/Camera3D.position.z = zoom

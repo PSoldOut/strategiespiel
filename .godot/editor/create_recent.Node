@@ -1,7 +1,8 @@
-SelectionUnit
-RTSBuilding
+Node3D
 CollisionShape3D
 Area3D
+SelectionUnit
+RTSBuilding
 MeshInstance3D
 StaticBody3D
 Button
@@ -9,6 +10,5 @@ VBoxContainer
 Control
 Panel
 TextureRect
-Node3D
 RTSBuildSystem
 AnimationPlayer

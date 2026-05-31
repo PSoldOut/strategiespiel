@@ -22,7 +22,7 @@ enum State {
 var state = State.IDLE
 var selected : bool = false
 var team : String = \"blue\"
-
+var area_is_monitoring : bool = true
 var target = null
 
 var hp = 100
@@ -90,25 +90,31 @@ func _physics_process(delta: float) -> void:
 	match state:
 
 		State.IDLE:
+			$Area3D/CollisionShape3D.disabled = false
+			await get_tree().physics_frame
 			velocity = Vector3.ZERO
 
 		State.MOVE:
+			$Area3D/CollisionShape3D.disabled = false
+			await get_tree().physics_frame
 			handle_move()
 		
 		State.MOVE_STRAIGHT:
+			$Area3D/CollisionShape3D.disabled = true
 			handle_move()
 		
 		State.CHASE:
+			$Area3D/CollisionShape3D.disabled = true
 			handle_chase()
 
 		State.ATTACK:
+			$Area3D/CollisionShape3D.disabled = true
 			handle_attack()
 
 	move_and_slide()
 
 
 func handle_move():
-	
 	if navigation_agent_3d.is_navigation_finished():
 		state = State.IDLE
 		target = null

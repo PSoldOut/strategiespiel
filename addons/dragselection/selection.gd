@@ -10,7 +10,9 @@ class_name DragSelection
 @export var stroke_color : Color = Color(0, 1, 0, 0.2)
 @export var stroke_width : float = 1.0
 @export var fill_color : Color = Color(0.787, 0.813, 1.0, 1.0)
+@export var use_collision_shapes : bool = false
 @onready var timer : Timer = Timer.new()
+
 var is_selecting = false
 var select_start = Vector2.ZERO
 var select_end = Vector2.ZERO
@@ -19,27 +21,40 @@ var half : bool = false
 var current_selected : Array = []
 var units : Array = []
 
+var selection_area : Area3D
+var collision_shape : CollisionShape3D
+
 signal move_command(positions : Array)
 signal interact_command(target : SelectionUnit)
 signal left_click(pos : Vector3, obj)
 signal right_click(pos : Vector3, obj)
 
 func _ready() -> void:
+	if use_collision_shapes:
+		selection_area = Area3D.new()
+		collision_shape = CollisionShape3D.new()
+		self.add_child(selection_area)
+		selection_area.add_child(collision_shape)
 	timer.wait_time = 0.2
 	timer.start()
 
 func _physics_process(delta):
 	if is_selecting:
 		queue_redraw()
+		
 		if timer.is_stopped():
 			timer.start()
-			select_units_half()
+			if use_collision_shapes:
+				select_units_by_collision()
+			else:
+				select_units_by_rect()
 
 func _draw():
 	if is_selecting:
 		var rect = Rect2(select_start, select_end - select_start).abs()
 		draw_rect(rect, stroke_color, true)
 		draw_rect(rect, fill_color, false, stroke_width)
+		
 		
 func register_units(arr : Array):
 	for unit in arr:
@@ -76,11 +91,14 @@ func _input(event):
 				is_selecting = true
 				select_start = event.position
 				select_end = event.position
-				select_unit_by_collision()
+				if use_collision_shapes:
+					select_unit_by_collision()
+				else:
+					select_unit_by_distance()
 			else:
 				is_selecting = false
 				queue_redraw()
-				#select_units()
+				
 				
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			var camera = get_viewport().get_camera_3d()
@@ -179,7 +197,7 @@ func get_formation_positions(center: Vector3, target: Vector3, unit_count: int, 
 		
 		
 	
-func select_units_half():
+func select_units_half_by_rect():
 	if selection_units.is_empty():
 		return
 	var rect = Rect2(select_start, select_end - select_start).abs()
@@ -215,8 +233,26 @@ func select_units_half():
 		
 
 
+func select_units_by_collision():
+	var rect = Rect2(select_start, select_end - select_start).abs()
+	if rect.size.length() < 5.0:
+		return
+	update_selection_shape(camera, rect)
+	await get_tree().physics_frame
+	var units = selection_area.get_overlapping_bodies()
+	for unit in current_selected:
+		unit.deselect()
+	current_selected = []
+	for unit in units:
+		if unit.find_children("", "SelectionUnit", true, false).size() > 0:
+			var su : SelectionUnit = unit.find_children("", "SelectionUnit", true, false)[0]
+			if su.team == self.team:
+				current_selected.append(su)
+				su.select()
 
-func select_units():
+
+
+func select_units_by_rect():
 	var rect = Rect2(select_start, select_end - select_start).abs()
 	# Mindestgröße prüfen
 	if rect.size.length() < 5.0 or selection_units.is_empty():
@@ -268,6 +304,57 @@ func select_unit_by_collision():
 		pos = result.position
 		if result["collider"].find_children("", "SelectionUnit", true, false).size() >= 1:
 			var su = result["collider"].find_children("", "SelectionUnit", true, false)[0]
-			current_selected.append(su)
-			su.select()
+			if su.team == self.team:
+				current_selected.append(su)
+				su.select()
 			
+
+
+
+func update_selection_shape(
+	camera: Camera3D,
+	rect: Rect2,
+	far_distance: float = 1000.0
+) -> void:
+
+	var tl := rect.position
+	var tr := Vector2(rect.end.x, rect.position.y)
+	var br := rect.end
+	var bl := Vector2(rect.position.x, rect.end.y)
+
+	var cam_pos := camera.global_position
+
+	var dir_tl := camera.project_ray_normal(tl)
+	var dir_tr := camera.project_ray_normal(tr)
+	var dir_br := camera.project_ray_normal(br)
+	var dir_bl := camera.project_ray_normal(bl)
+
+	# Near-Ebene
+	var near_distance := camera.near
+
+	var near_tl := cam_pos + dir_tl * near_distance
+	var near_tr := cam_pos + dir_tr * near_distance
+	var near_br := cam_pos + dir_br * near_distance
+	var near_bl := cam_pos + dir_bl * near_distance
+
+	# Far-Ebene
+	var far_tl := cam_pos + dir_tl * far_distance
+	var far_tr := cam_pos + dir_tr * far_distance
+	var far_br := cam_pos + dir_br * far_distance
+	var far_bl := cam_pos + dir_bl * far_distance
+
+	var shape := ConvexPolygonShape3D.new()
+
+	shape.points = PackedVector3Array([
+		near_tl,
+		near_tr,
+		near_br,
+		near_bl,
+
+		far_tl,
+		far_tr,
+		far_br,
+		far_bl
+	])
+	collision_shape.shape = shape 
+	

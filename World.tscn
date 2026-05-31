@@ -149,6 +149,8 @@ uv1_triplanar = true
 material = SubResource("StandardMaterial3D_bcbcq")
 size = Vector2(100, 100)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_p1v5b"]
+
 [node name="World" type="Node3D" unique_id=983696813]
 script = SubResource("GDScript_eu7l1")
 
@@ -196,7 +198,13 @@ script = ExtResource("1_c6gwx")
 camera = NodePath("../RTSCamera")
 team = "blue"
 stroke_color = Color(0, 1, 0, 0)
+use_collision_shapes = true
 metadata/_custom_type_script = "uid://b4sl40in0000r"
+
+[node name="SelectionArea" type="Area3D" parent="DragSelection" unique_id=3867733]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DragSelection/SelectionArea" unique_id=2130756101]
+shape = SubResource("BoxShape3D_p1v5b")
 
 [node name="RTSCamera" type="Camera3D" parent="." unique_id=746180854]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.482632, 0)
