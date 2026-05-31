@@ -14,7 +14,11 @@ enum State {
 	ATTACK
 }
 
-const PLAYER_SYNC_RATE: float = 0.05
+const PLAYER_SYNC_RATE: float = 0.1
+const PLAYER_SYNC_HEARTBEAT: float = 0.5
+const POSITION_SYNC_EPSILON: float = 0.15
+const VELOCITY_SYNC_EPSILON: float = 0.1
+const YAW_SYNC_EPSILON: float = 0.03
 
 var state: int = State.IDLE
 var selected: bool = false
@@ -42,6 +46,11 @@ var _remote_position: Vector3 = Vector3.ZERO
 var _remote_velocity: Vector3 = Vector3.ZERO
 var _remote_yaw: float = 0.0
 var _name_label: Label3D
+var _despawned: bool = false
+var _last_sent_position: Vector3 = Vector3.ZERO
+var _last_sent_velocity: Vector3 = Vector3.ZERO
+var _last_sent_yaw: float = 0.0
+var _last_sent_timer: float = 0.0
 
 
 func configure_player(peer_id: int, slot: int, color: Color) -> void:
@@ -60,6 +69,10 @@ func configure_player(peer_id: int, slot: int, color: Color) -> void:
 			selection_unit.set_team(team)
 		_update_team_color()
 		_setup_name_label()
+		_last_sent_position = global_position
+		_last_sent_velocity = velocity
+		_last_sent_yaw = rotation.y
+		_last_sent_timer = 0.0
 
 
 func get_player_color() -> Color:
@@ -75,6 +88,10 @@ func _ready() -> void:
 		_setup_name_label()
 		_remote_position = global_position
 		_remote_yaw = rotation.y
+		_last_sent_position = global_position
+		_last_sent_velocity = velocity
+		_last_sent_yaw = rotation.y
+		_last_sent_timer = 0.0
 	else:
 		randomize()
 		team = "blue" if randi() % 2 == 0 else "red"
@@ -84,6 +101,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _despawned or is_queued_for_deletion():
+		return
 	if _is_game_paused():
 		velocity = Vector3.ZERO
 		return
@@ -109,6 +128,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _physics_process_player(delta: float) -> void:
+	if _despawned or is_queued_for_deletion():
+		return
 	if not multiplayer.has_multiplayer_peer():
 		if attack_timer > 0.0:
 			attack_timer -= delta
@@ -146,10 +167,26 @@ func _physics_process_player(delta: float) -> void:
 		if velocity.length_squared() > 0.001:
 			look_at(global_position + Vector3(velocity.x, 0.0, velocity.z), Vector3.UP)
 		_network_sync_timer += delta
+		_last_sent_timer += delta
 		if multiplayer.has_multiplayer_peer() and _network_sync_timer >= PLAYER_SYNC_RATE:
 			_network_sync_timer = 0.0
-			_register_packet_sent()
-			rpc("_rpc_sync_player_state", global_position, velocity, rotation.y)
+			var should_sync := false
+			if global_position.distance_to(_last_sent_position) >= POSITION_SYNC_EPSILON:
+				should_sync = true
+			if velocity.distance_to(_last_sent_velocity) >= VELOCITY_SYNC_EPSILON:
+				should_sync = true
+			if absf(wrapf(rotation.y - _last_sent_yaw, -PI, PI)) >= YAW_SYNC_EPSILON:
+				should_sync = true
+			if _last_sent_timer >= PLAYER_SYNC_HEARTBEAT:
+				should_sync = true
+
+			if should_sync:
+				_register_packet_sent()
+				rpc("_rpc_sync_player_state", global_position, velocity, rotation.y)
+				_last_sent_position = global_position
+				_last_sent_velocity = velocity
+				_last_sent_yaw = rotation.y
+				_last_sent_timer = 0.0
 	else:
 		global_position = global_position.lerp(_remote_position, clamp(delta * 12.0, 0.0, 1.0))
 		rotation.y = lerp_angle(rotation.y, _remote_yaw, clamp(delta * 12.0, 0.0, 1.0))
@@ -245,12 +282,38 @@ func move_to_target() -> void:
 
 
 func take_damage(amount: int) -> void:
+	if _despawned:
+		return
+	# Only the authority is allowed to mutate HP for replicated player units.
+	if is_player_controlled and multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
+		return
 	hp -= amount
 	if hp <= 0:
 		die()
 
 
 func die() -> void:
+	if _despawned:
+		return
+	if is_player_controlled and multiplayer.has_multiplayer_peer() and is_multiplayer_authority():
+		_register_packet_sent()
+		rpc("_rpc_force_despawn")
+	_despawn_local()
+
+
+@rpc("authority", "reliable")
+func _rpc_force_despawn() -> void:
+	if _despawned:
+		return
+	_register_packet_received()
+	_despawn_local()
+
+
+func _despawn_local() -> void:
+	if _despawned:
+		return
+	_despawned = true
+	target = null
 	if selection_unit and selection_unit.has_method("unregister"):
 		selection_unit.unregister()
 	queue_free()

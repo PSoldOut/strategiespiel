@@ -11,10 +11,10 @@ signal pause_state_changed(paused: bool)
 const MAX_PLAYERS: int = 4
 const DEFAULT_PORT: int = 4242
 const PLAYER_COLORS: Array[Color] = [
-	Color(0.18, 0.58, 0.98, 1.0),
-	Color(0.98, 0.42, 0.18, 1.0),
-	Color(0.23, 0.78, 0.35, 1.0),
-	Color(0.95, 0.84, 0.2, 1.0)
+	Color(0.12, 0.54, 1.0, 1.0),
+	Color(1.0, 0.24, 0.24, 1.0),
+	Color(0.17, 0.87, 0.36, 1.0),
+	Color(1.0, 0.78, 0.14, 1.0)
 ]
 
 var _match_started: bool = false
