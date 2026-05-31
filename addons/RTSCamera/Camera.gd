@@ -1,22 +1,31 @@
 extends Camera3D
 class_name RTSCamera
 @export var speed := 50.0
-@export var edge_speed := 40.0
-@export var zoom_speed := 5.0
-@export var mouse_sensitivity := 0.003
+@export var edge_speed = 40.0
+@export var zoom_step = 5.0
+@export var mouse_sensitivity = 0.003
 
 
-var zoom := 0.0
-var min_zoom := 10.0
-var max_zoom := 20.0
 
-var min_pitch := deg_to_rad(35) # nah dran (stärker geneigt)
-var max_pitch := deg_to_rad(70) # weit weg (flacher)
+var min_zoom = 5.0
+var max_zoom = 40.0
+var old_zoom = 0
+var new_zoom = 0
+var current_zoom := 0.0
+var forward
+var direction = 1
+var interpolation_speed = 0.8
+
+var min_pitch := -1.2
+var max_pitch := -0.2
 
 var yaw := 0.0
 var pitch := -0.7
 
+var t : float = 0.0
+
 func _ready():
+	forward = -transform.basis.z.normalized()
 	_update_rotation()
 
 func _input(event):
@@ -24,27 +33,40 @@ func _input(event):
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_MIDDLE):
 		yaw -= event.relative.x * mouse_sensitivity
 		pitch -= event.relative.y * mouse_sensitivity
-		pitch = clamp(pitch, -1.2, -0.2)
+		pitch = clamp(pitch, min_pitch, max_pitch)
 		_update_rotation()
 
 	# 🔍 Zoom entlang Blickrichtung
 	if event is InputEventMouseButton and event.pressed:
-		var forward = -transform.basis.z.normalized()
+		forward = -transform.basis.z.normalized()
 		
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			if zoom < max_zoom:
-				zoom += zoom_speed
-				global_translate(forward * zoom_speed)
-				if global_position.y < 20:
-					rotate_object_local(Vector3(1,0,0), 0.05)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			if zoom > 0:
-				zoom -= zoom_speed
-				global_translate(-forward * zoom_speed)
-				if global_position.y < 20:
-					rotate_object_local(Vector3(1,0,0), -0.05)
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP and is_zoom_in_possible():
+			old_zoom = new_zoom
+			new_zoom += zoom_step
+			direction = 1
+			
+			
+			
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and is_zoom_out_possible():
+			old_zoom = new_zoom
+			new_zoom -= zoom_step
+			direction = -1
+			
 
 func _process(delta):
+	if current_zoom < new_zoom - interpolation_speed or current_zoom > new_zoom + interpolation_speed:
+		self.global_position = self.global_position + (forward * interpolation_speed * direction)
+		current_zoom += direction * interpolation_speed
+	
+	
+		if global_position.y < 20:
+			rotate_object_local(Vector3(1,0,0), 0.01 * direction)
+			pitch += 0.01 * direction
+			pitch = clamp(pitch, min_pitch, max_pitch)
+	#var pitch := lerp(min_pitch, max_pitch, t)
+	#pitch_pivot.rotation.x = -pitch
+	
+	
 	var move_dir = Vector3.ZERO
 
 	# 🎮 WASD
@@ -91,10 +113,22 @@ func _update_rotation():
 	var rot = Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch)
 	transform.basis = rot
 	
-func update_camera():
-	var t := inverse_lerp(min_zoom, max_zoom, zoom)
-	var pitch := lerp(min_pitch, max_pitch, t)
-	#pitch_pivot.rotation.x = -pitch
 
-	# Kamera zurückziehen (klassischer RTS Zoom)
-	$PitchPivot/Camera3D.position.z = zoom
+func is_zoom_in_possible():
+	print(global_position.y)
+	return abs(current_zoom - new_zoom) < zoom_step * 2 and global_position.y - zoom_step > min_zoom
+
+
+func is_zoom_out_possible() -> bool:
+	print(global_position.y)
+	return abs(current_zoom - new_zoom) < zoom_step * 2 and global_position.y + zoom_step < max_zoom
+	
+func update_translation():
+	var startpos = self.global_position
+	for t in range(1, 100, 1):
+		current_zoom = inverse_lerp(old_zoom, new_zoom, t/100)
+		self.global_position = startpos + (forward * t)
+		#var pitch := lerp(min_pitch, max_pitch, t)
+		#pitch_pivot.rotation.x = -pitch
+		
+		
