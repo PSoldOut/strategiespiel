@@ -4,6 +4,12 @@ class_name RTSBuildSystem
 const DEFAULT_RAY_LENGTH: float = 10000.0
 const INVALID_GRID: Vector2i = Vector2i(-999999, -999999)
 
+@export var camera : Camera3D
+@export var grid_size : float = 2.0
+@export var height_step : float = 0.5
+@export var valid_build_color : Color = Color(1, 1, 1, 0.3)
+@export var invalid_build_color : Color = Color(1, 0, 0, 0.3)
+
 var obj_scene
 var preview_object = null
 var rts_building : RTSBuilding
@@ -15,12 +21,8 @@ var ground_area4 : Area3D
 var active : bool = false
 var valid_position : bool = false
 
-
-
 signal building_set_command(position : Vector3, scene)
 
-@export var camera : Camera3D
-@export var grid_size : float = 2.0
 
 func set_preview_object(scene):
 	unset_preview_object()
@@ -104,7 +106,7 @@ func _physics_process(delta):
 			var z = int(floor(pos.z / grid_size)) * grid_size
 			
 			pos.x = x+1
-			pos.y = snapped(pos.y + rts_building.depth/2.0, 0.5)
+			pos.y = snapped(pos.y + rts_building.depth/2.0, height_step)
 			pos.z = z+1
 			
 			
@@ -114,56 +116,26 @@ func _physics_process(delta):
 			
 			
 			if main_area.get_overlapping_bodies().size() > 0:
-				set_color(preview_object, Color(1, 0, 0, 0.3))
+				set_color(preview_object, invalid_build_color)
 				valid_position = false
 			else:
 				if ground_area1.get_overlapping_bodies().size() > 0 and ground_area2.get_overlapping_bodies().size() > 0 and ground_area3.get_overlapping_bodies().size() > 0 and ground_area4.get_overlapping_bodies().size() > 0:
-					set_color(preview_object, Color(1, 1, 1, 0.3))
+					set_color(preview_object, valid_build_color)
 					valid_position = true
 				else:
-					set_color(preview_object, Color(1, 0, 0, 0.3))
+					set_color(preview_object, invalid_build_color)
 					valid_position = false
 				
 					
 
-func _process_new(_delta: float) -> void:
-	var tile_size : float = 2.0
-	if active:
-		var hit := _get_mouse_map_hit()
-		if hit.is_empty():
-			return
-		var grid_pos: Vector2i = hit["grid"]
-		var hit_position: Vector3 = hit["position"]
-		hit_position = hit_position.snapped(Vector3(0,0.5,0))
-		var new_pos =Vector3(
-			(float(grid_pos.x) + 0.5) * tile_size,
-			hit_position.y + 0.03,
-			(float(grid_pos.y) + 0.5) * tile_size
-		)
-		preview_object.global_position = new_pos
-		
-		
-		
-			
-		
-		if main_area.get_overlapping_bodies().size() > 0:
-			set_color(preview_object, Color(1, 0, 0, 0.3))
-			valid_position = false
-		else:
-			if ground_area1.get_overlapping_bodies().size() > 0 and ground_area2.get_overlapping_bodies().size() > 0 and ground_area3.get_overlapping_bodies().size() > 0 and ground_area4.get_overlapping_bodies().size() > 0:
-				set_color(preview_object, Color(1, 1, 1, 0.3))
-				valid_position = true
-			else:
-				set_color(preview_object, Color(1, 0, 0, 0.3))
-				valid_position = false
+
 
 func _get_grid_under_mouse() -> Vector2i:
 	var hit := _get_mouse_map_hit()
-
 	if hit.is_empty():
 		return INVALID_GRID
-
 	return hit["grid"]
+
 
 
 func _get_mouse_map_hit() -> Dictionary:
@@ -175,6 +147,7 @@ func _get_mouse_map_hit() -> Dictionary:
 		DEFAULT_RAY_LENGTH,
 		grid_size
 	)
+
 
 
 static func get_mouse_map_hit(
@@ -223,10 +196,12 @@ static func get_mouse_map_hit(
 	}
 
 
+
 static func world_position_to_grid(pos: Vector3, tile_size: int = 2) -> Vector2i:
 	var grid_x := int(floor(pos.x / tile_size))
 	var grid_y := int(floor(pos.z / tile_size))
 	return Vector2i(grid_x, grid_y)
+
 
 
 static func get_snapped_mouse_position(
