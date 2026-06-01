@@ -104,11 +104,13 @@ func _physics_process(delta):
 			var z = int(floor(pos.z / grid_size)) * grid_size
 			
 			pos.x = x+1
-			pos.y = floor(pos.y) + (rts_building.depth/2)
+			pos.y = snapped(pos.y + rts_building.depth/2.0, 0.5)
 			pos.z = z+1
 			
-			pos.y += 0.01
+			
+			#pos.y += 0.01
 			preview_object.global_position = pos
+			print(pos)
 			
 			
 			if main_area.get_overlapping_bodies().size() > 0:
@@ -254,7 +256,7 @@ static func get_snapped_mouse_position(
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.exclude = exclude
 	query.collide_with_bodies = true
-	query.collide_with_areas = true
+	query.collide_with_areas = false
 	query.collision_mask = 1
 
 	var result := world_3d.direct_space_state.intersect_ray(query)

@@ -7,7 +7,7 @@
 size = Vector3(4, 3, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ohnmb"]
-size = Vector3(4, 3, 4)
+size = Vector3(4, 2.98, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bgfqr"]
 size = Vector3(4, 3, 4)
