@@ -1,16 +1,22 @@
 extends Control
 class_name DragSelection
 
-#welche Kamera wird in dem Spiel verwendet. Muss von Camera3D erben
+##die Kamera die von dem Spiel verwendet wird.
 @export var camera : Camera3D
-#Die Einheiten die im Spiel anklickbar sind (auch die gegnerischen Einheiten und Gebäude)
+##Die DragSelection kann aktiviert und deaktiviert werden
 @export var active : bool = true
-#Das Team das ausgewählt und gesteuert werden kann
+##Das Team das ausgewählt und gesteuert werden kann
 @export var team : String = ""
+##Die Farbe des Auswahlrahmens
 @export var stroke_color : Color = Color(0, 1, 0, 0.2)
+##Die Dicke des Auswahlrahmens
 @export var stroke_width : float = 1.0
+##Die Farbe der Auswahlfläche
 @export var fill_color : Color = Color(0.787, 0.813, 1.0, 1.0)
+##Wenn die Agenten eine Kollisionsshape haben kann diese auch für die Auswahl verwendet werden
 @export var use_collision_shapes : bool = false
+##Das interval in dem die Auswahlbox aktualisiert wird
+@export var update_time : float = 0.2
 @onready var timer : Timer = Timer.new()
 
 var is_selecting = false
@@ -19,6 +25,7 @@ var select_end = Vector2.ZERO
 var selection_units : Array = []
 var half : bool = false
 var current_selected : Array = []
+##Die Einheiten die im Spiel anklickbar sind (auch die gegnerischen Einheiten und Gebäude)
 var units : Array = []
 
 var selection_area : Area3D
@@ -35,14 +42,16 @@ func _ready() -> void:
 		collision_shape = CollisionShape3D.new()
 		self.add_child(selection_area)
 		selection_area.add_child(collision_shape)
-	timer.wait_time = 0.2
+	self.add_child(timer)
+	timer.wait_time = update_time
+	timer.one_shot = true
 	timer.start()
+	
 
 func _physics_process(delta):
 	if is_selecting:
 		queue_redraw()
-		
-		if timer.is_stopped():
+		if timer.time_left == 0.0:
 			timer.start()
 			if use_collision_shapes:
 				select_units_by_collision()
@@ -298,6 +307,7 @@ func select_unit_by_collision():
 	var to = from + camera.project_ray_normal(mouse_pos) * 10000
 	var space_state = camera.get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
+	query.collide_with_areas = false
 	var result = space_state.intersect_ray(query)
 	var pos
 	if result:

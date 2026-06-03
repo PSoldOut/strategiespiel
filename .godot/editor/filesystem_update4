@@ -2,3 +2,4 @@ res://World.tscn
 res://testmap/mepmash.tres
 res://addons/RTSCamera/Camera.gd
 res://addons/rtsbuildingsystem/RTS_building_system.gd
+res://addons/dragselection/selection.gd

@@ -4,6 +4,7 @@ class_name RTSBuildSystem
 const DEFAULT_RAY_LENGTH: float = 10000.0
 const INVALID_GRID: Vector2i = Vector2i(-999999, -999999)
 
+##Die Kamera die verwendet wird
 @export var camera : Camera3D
 @export var grid_size : float = 2.0
 @export var height_step : float = 0.5

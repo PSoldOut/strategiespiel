@@ -1,18 +1,29 @@
 extends Camera3D
 class_name RTSCamera
 
+##Die Bewegungsgeschwindigkeit der Kamera 
 @export var speed := 50.0
+##Die Maussensitivität 
 @export var mouse_sensitivity = 0.003
-@export var min_zoom = 5.0
-@export var max_zoom = 40.0
+##Der Minimale Zoom. Sollte ein negativer Wert sein. Beschränkt die y koordinate der kamera
+@export var max_zoom_out = 80.0
+##Der Maximale Zoom. Beschränkt die y koordinate der kamera
+@export var max_zoom_in = 5
+##Die Veränderung im Zoom Pro Mausradumdrehung
 @export var zoom_step = 5.0
+##Die Zoomschritte interpolieren
 @export var use_smooth_zoom : bool = true
+##Wenn aktiv wird die Neigung der Kamera in der nähe des Maximal Zooms automatisch angepasst
+@export var use_pitch_correction : bool = true
+##Die interpolationsgeschwindigkeit für weichen Zoom
 @export var interpolation_speed = 0.8
+##Die Minimale Neigung der Kamera in radiant
 @export var min_pitch := -1.2
+##Die Maximale Neigung der Kamera in radiant
 @export var max_pitch := -0.2
-var old_zoom = 0
+
 var new_zoom = 0
-var current_zoom := 0.0
+
 var forward
 var direction = 1
 var yaw := 0.0
@@ -21,19 +32,26 @@ var pitch := -0.7
 
 func _ready():
 	forward = -transform.basis.z.normalized()
+	new_zoom = global_position.y
+	if not use_smooth_zoom:
+		interpolation_speed = zoom_step
 	_update_rotation()
 
 
 
 func _process(delta):
-	if current_zoom < new_zoom - interpolation_speed or current_zoom > new_zoom + interpolation_speed:
-		self.global_position = self.global_position + (forward * interpolation_speed * direction)
-		current_zoom += direction * interpolation_speed
+	if abs(self.global_position.y - new_zoom) >= interpolation_speed * delta * 60:
+		self.global_position = self.global_position + (forward * interpolation_speed * delta * 60 * direction)
+		global_position.y = clamp(global_position.y, max_zoom_in, max_zoom_out)
 	
-		if global_position.y < 20:
+		if use_pitch_correction and global_position.y + max_zoom_in < 20:
 			rotate_object_local(Vector3(1,0,0), 0.01 * direction)
 			pitch += 0.01 * direction
 			pitch = clamp(pitch, min_pitch, max_pitch)
+		print("current zoom:", self.global_position)
+		print("new zoom", new_zoom)
+	else:
+		new_zoom = self.global_position.y
 	
 	
 	
@@ -95,15 +113,15 @@ func _input(event):
 		forward = -transform.basis.z.normalized()
 		
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and is_zoom_in_possible():
-			old_zoom = new_zoom
-			new_zoom += zoom_step
+			new_zoom -= zoom_step
+			new_zoom = clamp(new_zoom, max_zoom_in, max_zoom_out)
 			direction = 1
 			
 			
 			
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and is_zoom_out_possible():
-			old_zoom = new_zoom
-			new_zoom -= zoom_step
+			new_zoom += zoom_step
+			new_zoom = clamp(new_zoom, max_zoom_in, max_zoom_out)
 			direction = -1
 
 
@@ -117,12 +135,12 @@ func _update_rotation():
 
 func is_zoom_in_possible():
 	print(global_position.y)
-	return abs(current_zoom - new_zoom) < zoom_step * 2 and global_position.y - zoom_step > min_zoom
+	return abs(global_position.y - new_zoom) < zoom_step * 2 and global_position.y - zoom_step > max_zoom_in
 
 
 func is_zoom_out_possible() -> bool:
 	print(global_position.y)
-	return abs(current_zoom - new_zoom) < zoom_step * 2 and global_position.y + zoom_step < max_zoom
+	return abs(global_position.y - new_zoom) < zoom_step * 2 and global_position.y + zoom_step < max_zoom_out
 	
 
 		
