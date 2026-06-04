@@ -2,13 +2,16 @@ extends Camera3D
 class_name RTSCamera
 
 ##Die Bewegungsgeschwindigkeit der Kamera 
-@export var speed := 50.0
+@export var movement_speed := 50.0
+@export var additional_speed = 30
+@export var use_smooth_movement : bool = true
+@export var move_smoothness : float = 0.2
 ##Die Maussensitivität 
 @export var mouse_sensitivity = 0.003
 ##Der Minimale Zoom. Sollte ein negativer Wert sein. Beschränkt die y koordinate der kamera
 @export var max_zoom_out = 80.0
 ##Der Maximale Zoom. Beschränkt die y koordinate der kamera
-@export var max_zoom_in = 5
+@export var max_zoom_in = 0
 ##Die Veränderung im Zoom Pro Mausradumdrehung
 @export var zoom_step = 5.0
 ##Die Zoomschritte interpolieren
@@ -28,7 +31,8 @@ var forward
 var direction = 1
 var yaw := 0.0
 var pitch := -0.7
-
+var movement : Vector3 = Vector3.ZERO
+var current_speed = movement_speed
 
 func _ready():
 	forward = -transform.basis.z.normalized()
@@ -62,7 +66,8 @@ func _process(delta):
 	if Input.is_key_pressed(KEY_S): move_dir.z -= 1
 	if Input.is_key_pressed(KEY_A): move_dir.x -= 1
 	if Input.is_key_pressed(KEY_D): move_dir.x += 1
-
+	if Input.is_key_pressed(KEY_SHIFT) : current_speed = movement_speed + additional_speed
+	else: current_speed = movement_speed
 	# 🖱️ Edge Scrolling
 	var mouse_pos = get_viewport().get_mouse_position()
 	var screen_size = get_viewport().get_visible_rect().size
@@ -78,7 +83,7 @@ func _process(delta):
 	elif mouse_pos.y > screen_size.y - edge:
 		move_dir.z -= 1
 
-	if move_dir != Vector3.ZERO:
+	if move_dir != Vector3.ZERO or use_smooth_movement:
 		move_dir = move_dir.normalized()
 
 		# 🔥 LOKALE Richtungen aus Matrix (FIX!)
@@ -94,7 +99,8 @@ func _process(delta):
 		forward = forward.normalized()
 		right = right.normalized()
 
-		var movement = (forward * move_dir.z + right * move_dir.x) * speed * delta
+		var target_movement = (forward * move_dir.z + right * move_dir.x) * current_speed * delta
+		movement = movement.lerp(target_movement, move_smoothness)
 		global_translate(movement)
 
 
