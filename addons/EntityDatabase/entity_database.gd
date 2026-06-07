@@ -75,24 +75,16 @@ func _get_color_from_entry(entry: Dictionary, fallback: Color = Color.WHITE) -> 
 	return Color(color_string)
 
 
-func _orientation_swaps_size(orientation: int) -> bool:
-	# Preferred enum order:
-	# NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3
-	return orientation == 1 or orientation == 3
-
+#Resource
 
 func get_resource_def(resource_type: int) -> Dictionary:
-	return _get_entry("resources", resource_type)
+	var enum_name := resource_id_to_enum_name(resource_type)
+	return _definitions.get("resources", {}).get(enum_name, {})
 
 
 func get_resource_name(resource_type: int) -> String:
 	var entry := get_resource_def(resource_type)
 	return str(entry.get("name", "Unknown Resource"))
-
-
-func get_resource_enum_name(resource_type: int) -> String:
-	var entry := get_resource_def(resource_type)
-	return str(entry.get("enum_name", "UNKNOWN"))
 
 
 func get_resource_color(resource_type: int) -> Color:
@@ -123,24 +115,19 @@ func get_all_resource_defs(include_none: bool = false) -> Array[Dictionary]:
 	return result
 
 
-func get_building_def(building_type: int) -> Dictionary:
-	return _get_entry("buildings", building_type)
+#Buildings
 
+func get_building_def(building_type: int) -> Dictionary:
+	var enum_name := building_id_to_enum_name(building_type)
+	return _definitions.get("buildings", {}).get(enum_name, {})
 
 func get_building_name(building_type: int) -> String:
 	var entry := get_building_def(building_type)
 	return str(entry.get("name", "Unknown Building"))
 
-
-func get_building_enum_name(building_type: int) -> String:
-	var entry := get_building_def(building_type)
-	return str(entry.get("enum_name", "UNKNOWN"))
-
-
 func get_building_color(building_type: int) -> Color:
 	var entry := get_building_def(building_type)
 	return _get_color_from_entry(entry, Color.WHITE)
-
 
 func get_building_size(building_type: int, orientation: int = 0) -> Vector2i:
 	var entry := get_building_def(building_type)
@@ -154,9 +141,6 @@ func get_building_size(building_type: int, orientation: int = 0) -> Vector2i:
 		int(size_data.get("x", 1)),
 		int(size_data.get("y", 1))
 	)
-
-	if _orientation_swaps_size(orientation):
-		return Vector2i(size.y, size.x)
 
 	return size
 
@@ -179,21 +163,18 @@ func get_all_building_defs(include_none: bool = false) -> Array[Dictionary]:
 	return result
 
 
-func get_entity_color(resource_type: int, building_type: int) -> Color:
-	if building_type != 0:
-		return get_building_color(building_type)
-
-	if resource_type != 0:
-		return get_resource_color(resource_type)
-
-	return Color.WHITE
-
-
-func get_entity_display_name(resource_type: int, building_type: int) -> String:
-	if building_type != 0:
-		return get_building_name(building_type)
-
-	if resource_type != 0:
-		return get_resource_name(resource_type)
-
-	return "None"
+#ID Mapping Helper
+func resource_enum_name_to_id(enum_name: String) -> int:
+	return EnumMappings.ResourceType.get(enum_name, EnumMappings.ResourceType.NONE)
+func building_enum_name_to_id(enum_name: String) -> int:
+	return EnumMappings.BuildingType.get(enum_name, EnumMappings.BuildingType.NONE)
+func resource_id_to_enum_name(resource_type: int) -> String:
+	for key in EnumMappings.ResourceType.keys():
+		if EnumMappings.ResourceType[key] == resource_type:
+			return key
+	return "NONE"
+func building_id_to_enum_name(building_type: int) -> String:
+	for key in EnumMappings.BuildingType.keys():
+		if EnumMappings.BuildingType[key] == building_type:
+			return key
+	return "NONE"
