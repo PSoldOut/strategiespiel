@@ -267,6 +267,15 @@ _data = {
 &"attack": SubResource("Animation_y8jal")
 }
 
+[sub_resource type="Gradient" id="Gradient_c810y"]
+interpolation_mode = 1
+colors = PackedColorArray(0.1254902, 0.25490198, 1, 1, 0.1254902, 0.25490198, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_y8jal"]
+gradient = SubResource("Gradient_c810y")
+width = 1
+height = 1
+
 [node name="Agent" type="CharacterBody3D" unique_id=901319167 groups=["units"]]
 collision_mask = 0
 script = SubResource("GDScript_fvag4")
@@ -303,6 +312,13 @@ autostart = true
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=534584478]
 libraries/ = SubResource("AnimationLibrary_ebcwy")
+
+[node name="Sprite3D" type="Sprite3D" parent="." unique_id=1190847193]
+transform = Transform3D(600, 0, 0, 0, -2.6226833e-05, 600, 0, -600, -2.6226833e-05, 0, 1.4011054, 0)
+layers = 524288
+double_sided = false
+no_depth_test = true
+texture = SubResource("GradientTexture2D_y8jal")
 
 [connection signal="deselected" from="DragSelectionUnit" to="." method="_on_drag_selection_unit_deselected"]
 [connection signal="selected" from="DragSelectionUnit" to="." method="_on_drag_selection_unit_selected"]

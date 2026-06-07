@@ -149,6 +149,23 @@ uv1_triplanar = true
 material = SubResource("StandardMaterial3D_bcbcq")
 size = Vector2(100, 100)
 
+[sub_resource type="Gradient" id="Gradient_p1v5b"]
+offsets = PackedFloat32Array(0.9230769, 0.9444444)
+colors = PackedColorArray(0, 0, 0, 0, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_wygdx"]
+gradient = SubResource("Gradient_p1v5b")
+width = 1152
+height = 648
+fill = 2
+fill_from = Vector2(0.5, 0.5)
+
+[sub_resource type="Environment" id="Environment_p1v5b"]
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.5
+reflected_light_source = 1
+
 [node name="World" type="Node3D" unique_id=983696813]
 script = SubResource("GDScript_eu7l1")
 
@@ -162,7 +179,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.001, 0)
 shape = ExtResource("1_p1v5b")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Ground" unique_id=1743773351]
-visible = false
+layers = 524289
 mesh = ExtResource("2_wygdx")
 surface_material_override/0 = SubResource("StandardMaterial3D_js7pq")
 
@@ -203,19 +220,39 @@ metadata/_custom_type_script = "uid://b4sl40in0000r"
 
 [node name="RTSCamera" type="Camera3D" parent="." unique_id=746180854]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.482632, 0)
+cull_mask = 524287
 script = ExtResource("2_2dftf")
 metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
+
+[node name="Sprite3D" type="Sprite3D" parent="RTSCamera" unique_id=180169864]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
+layers = 524288
+double_sided = false
+no_depth_test = true
+texture = SubResource("GradientTexture2D_wygdx")
 
 [node name="RTSBuildSystem" type="Node3D" parent="." unique_id=1307062194 node_paths=PackedStringArray("camera")]
 script = ExtResource("5_eu7l1")
 camera = NodePath("../RTSCamera")
 metadata/_custom_type_script = "uid://bxlx015maqnwf"
 
-[node name="UI" parent="." unique_id=785861755 instance=ExtResource("6_p1v5b")]
+[node name="UI" parent="." unique_id=785861755 node_paths=PackedStringArray("subviewport") instance=ExtResource("6_p1v5b")]
 anchors_preset = -1
 anchor_top = 0.75200003
 offset_top = -482.29602
 grow_vertical = 0
+subviewport = NodePath("../SubViewport")
+
+[node name="SubViewport" type="SubViewport" parent="." unique_id=1452621930]
+size = Vector2i(200, 200)
+
+[node name="Camera3D" type="Camera3D" parent="SubViewport" unique_id=1401035997]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 256, 350, 256)
+cull_mask = 524288
+environment = SubResource("Environment_p1v5b")
+projection = 1
+current = true
+size = 512.0
 
 [connection signal="interact_command" from="DragSelection" to="." method="_on_drag_selection_interact_command"]
 [connection signal="move_command" from="DragSelection" to="." method="_on_drag_selection_move_command"]
