@@ -20,7 +20,7 @@ const SAVE_VERSION: float = 0.2
 
 const MAP_WIDTH: int = 128
 const MAP_HEIGHT: int = 128
-const EDITOR_JUNKS: int = 16
+const EDITOR_JUNKS: int = 2
 const TILE_SIZE: float = 2.0
 
 const HEIGHT_STEP: float = 0.5
@@ -80,23 +80,145 @@ func _emit_map_spawned() -> void:
 
 
 func build_visual_map() -> void:
+	# Editor view: keep the map split into chunks so editing/rebuilding stays cheaper.
+	# The complete one-piece bake is only done in save_map_as_scene().
+	build_visual_chunks()
+
+
+func build_visual_chunks() -> void:
 	if map_data.is_empty():
 		return
 
-	map_baker = MapBaker.new()
-	map_baker.name = "MapBaker"
-	map_baker.tile_size = TILE_SIZE
-	map_baker.build_collision = bake_collision
-	map_baker.show_tile_lines = show_tile_lines
+	var chunk_count := get_editor_chunk_count()
 
-	visual_root.add_child(map_baker)
-	map_baker.bake_map(map_data)
+	for chunk_y in range(chunk_count):
+		for chunk_x in range(chunk_count):
+			bake_visual_chunk(chunk_x, chunk_y)
 
 
-# Compatibility wrapper, in case another script still calls the old name.
-# It no longer builds chunks. It bakes the whole map.
-func build_visual_chunks() -> void:
-	build_visual_map()
+func get_editor_chunk_count() -> int:
+	return max(1, EDITOR_JUNKS)
+
+
+func get_editor_chunk_size() -> Vector2i:
+	var chunk_count := get_editor_chunk_count()
+	var map_width := get_map_width()
+	var map_height := get_map_height()
+
+	if map_width <= 0 or map_height <= 0:
+		return Vector2i.ZERO
+
+	return Vector2i(
+		int(ceil(float(map_width) / float(chunk_count))),
+		int(ceil(float(map_height) / float(chunk_count)))
+	)
+
+
+func get_visual_chunk_name(chunk_x: int, chunk_y: int) -> String:
+	return "MapBaker_%02d_%02d" % [chunk_x, chunk_y]
+
+
+func bake_visual_chunk(chunk_x: int, chunk_y: int) -> void:
+	if map_data.is_empty():
+		return
+
+	var chunk_count := get_editor_chunk_count()
+	if chunk_x < 0 or chunk_y < 0 or chunk_x >= chunk_count or chunk_y >= chunk_count:
+		return
+
+	var map_width := get_map_width()
+	var map_height := get_map_height()
+	var chunk_size := get_editor_chunk_size()
+
+	if map_width <= 0 or map_height <= 0 or chunk_size == Vector2i.ZERO:
+		return
+
+	var start_x := chunk_x * chunk_size.x
+	var start_y := chunk_y * chunk_size.y
+
+	if start_x >= map_width or start_y >= map_height:
+		return
+
+	var end_x :int= min(start_x + chunk_size.x, map_width)
+	var end_y :int= min(start_y + chunk_size.y, map_height)
+	var chunk_map := get_terrain_chunk(start_x, start_y, end_x, end_y)
+
+	if chunk_map.is_empty():
+		return
+
+	var chunk_baker := MapBaker.new()
+	chunk_baker.name = get_visual_chunk_name(chunk_x, chunk_y)
+	chunk_baker.tile_size = TILE_SIZE
+	chunk_baker.build_collision = bake_collision
+	chunk_baker.show_tile_lines = show_tile_lines
+	chunk_baker.position = Vector3(
+		float(start_x) * TILE_SIZE,
+		0.0,
+		float(start_y) * TILE_SIZE
+	)
+
+	visual_root.add_child(chunk_baker)
+	chunk_baker.bake_map(chunk_map)
+
+
+func remove_visual_chunk(chunk_x: int, chunk_y: int) -> void:
+	if visual_root == null:
+		return
+
+	var chunk_name := get_visual_chunk_name(chunk_x, chunk_y)
+	var old_chunk := visual_root.get_node_or_null(chunk_name)
+	if old_chunk == null:
+		return
+
+	visual_root.remove_child(old_chunk)
+	old_chunk.queue_free()
+
+
+func rebuild_visual_chunk(chunk_x: int, chunk_y: int) -> void:
+	remove_visual_chunk(chunk_x, chunk_y)
+	bake_visual_chunk(chunk_x, chunk_y)
+
+
+func rebuild_visual_chunks_for_area(origin: Vector2i, size: Vector2i, padding_tiles: int = 0) -> void:
+	if map_data.is_empty():
+		return
+
+	var map_width := get_map_width()
+	var map_height := get_map_height()
+	var chunk_size := get_editor_chunk_size()
+	var chunk_count := get_editor_chunk_count()
+
+	if map_width <= 0 or map_height <= 0 or chunk_size == Vector2i.ZERO:
+		return
+
+	var safe_size := Vector2i(max(1, size.x), max(1, size.y))
+	var start_x :int= clamp(origin.x - padding_tiles, 0, map_width - 1)
+	var start_y :int= clamp(origin.y - padding_tiles, 0, map_height - 1)
+	var end_x :int= clamp(origin.x + safe_size.x - 1 + padding_tiles, 0, map_width - 1)
+	var end_y :int= clamp(origin.y + safe_size.y - 1 + padding_tiles, 0, map_height - 1)
+
+	var start_chunk_x :int= clamp(int(floor(float(start_x) / float(chunk_size.x))), 0, chunk_count - 1)
+	var start_chunk_y :int= clamp(int(floor(float(start_y) / float(chunk_size.y))), 0, chunk_count - 1)
+	var end_chunk_x :int= clamp(int(floor(float(end_x) / float(chunk_size.x))), 0, chunk_count - 1)
+	var end_chunk_y :int= clamp(int(floor(float(end_y) / float(chunk_size.y))), 0, chunk_count - 1)
+
+	for chunk_y in range(start_chunk_y, end_chunk_y + 1):
+		for chunk_x in range(start_chunk_x, end_chunk_x + 1):
+			rebuild_visual_chunk(chunk_x, chunk_y)
+
+
+func get_terrain_chunk(start_x: int, start_y: int, end_x: int, end_y: int) -> Array:
+	var chunk: Array = []
+
+	for y in range(start_y, end_y):
+		var row: Array = []
+
+		for x in range(start_x, end_x):
+			row.append(map_data[y][x])
+
+		chunk.append(row)
+
+	return chunk
 
 
 func get_map_json_path() -> String:
@@ -634,30 +756,52 @@ func change_tile(grid_x: int, grid_y: int) -> void:
 	var selected_orientation: int = int(tile_palette.selected_orientation)
 
 	if selected_building_type != EnumMappings.BuildingType.NONE:
+		var footprint := get_building_footprint(selected_building_type, selected_orientation)
 		if place_building_at(grid_pos, selected_building_type, selected_player, selected_orientation):
-			_commit_editor_change(false)
+			_commit_editor_change_for_area(grid_pos, footprint, false, true)
 		return
 
 	if selected_resource_type != EnumMappings.ResourceType.NONE:
 		if place_resource_at(grid_pos, selected_resource_type, selected_orientation):
-			_commit_editor_change(false)
+			_commit_editor_change_for_area(grid_pos, Vector2i.ONE, false, true)
 		return
 
 	if selected_height_action != EnumMappings.HeightMapping.HEIGHT_NONE:
 		if change_height_at(grid_pos, selected_height_action, selected_ground_type):
-			_commit_editor_change(true)
+			_commit_editor_change_for_area(grid_pos, Vector2i.ONE, true, false)
 		return
 
 	if change_ground_at(grid_pos, selected_ground_type):
-		_commit_editor_change(false)
+		_commit_editor_change_for_area(grid_pos, Vector2i.ONE, false, false)
 
 
 func _commit_editor_change(recalculate_ramps: bool) -> void:
+	# Fallback for older callers: rebuild all editor chunks without using the full one-piece bake.
+	_commit_editor_change_for_area(
+		Vector2i.ZERO,
+		Vector2i(max(1, get_map_width()), max(1, get_map_height())),
+		recalculate_ramps,
+		true
+	)
+
+
+func _commit_editor_change_for_area(
+	origin: Vector2i,
+	size: Vector2i,
+	recalculate_ramps: bool,
+	refresh_outlines: bool
+) -> void:
 	if recalculate_ramps and auto_ramp_enabled:
 		recalculate_auto_ramps()
 
 	map_data_changed.emit()
-	rebuild_map()
+
+	# Height/ramp changes can affect the visual shape of neighbouring cells.
+	var padding_tiles := 1 if recalculate_ramps and auto_ramp_enabled else 0
+	rebuild_visual_chunks_for_area(origin, size, padding_tiles)
+
+	if refresh_outlines:
+		refresh_entity_outlines()
 
 
 func change_ground_at(grid_pos: Vector2i, selected_ground_type: int) -> bool:
