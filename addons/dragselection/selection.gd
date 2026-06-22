@@ -35,6 +35,7 @@ signal move_command(positions : Array)
 signal interact_command(target : SelectionUnit)
 signal left_click(pos : Vector3, obj)
 signal right_click(pos : Vector3, obj)
+signal selected(units : Array)
 
 func _ready() -> void:
 	if use_collision_shapes:
@@ -63,6 +64,8 @@ func _draw():
 		var rect = Rect2(select_start, select_end - select_start).abs()
 		draw_rect(rect, stroke_color, true)
 		draw_rect(rect, fill_color, false, stroke_width)
+		
+		
 		
 		
 func register_units(arr : Array):
@@ -107,6 +110,7 @@ func _input(event):
 			else:
 				is_selecting = false
 				queue_redraw()
+				selected.emit(current_selected)
 				
 				
 		elif event.button_index == MOUSE_BUTTON_RIGHT:

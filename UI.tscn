@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dcnfebmxreiui"]
 
 [ext_resource type="Theme" uid="uid://d0j8m3ckoat3u" path="res://main_theme.tres" id="1_b3bc3"]
+[ext_resource type="Texture2D" uid="uid://q1eboy171l3g" path="res://icon2.svg" id="2_3b2b5"]
 
 [sub_resource type="GDScript" id="GDScript_wusub"]
 script/source = "extends Control
@@ -21,8 +22,21 @@ func _ready() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	$Panel/MinimapContainer/Minimap.texture = subviewport.get_texture()
+	$Panel/MinimapContainer/VBoxContainer/Minimap.texture = subviewport.get_texture()
 
+
+func activate_units_container(types : Array, counts : Array):
+	$Panel/UnitsContainer/VBoxContainer/Label.text = str(counts[0]) +\"x \" + types[0]
+	$Panel/UnitsContainer.visible = true
+	
+func deactivate_units_container():
+	$Panel/UnitsContainer.visible = false
+	
+func activate_abilities_container(abilities : Array):
+	$Panel/AbilitiesContainer.visible = true
+
+func deactivate_abilities_container():
+	$Panel/AbilitiesContainer.visible = false
 
 func _on_button_build_pressed() -> void:
 	$Panel/Build.visible = true
@@ -52,6 +66,11 @@ func _on_panel_mouse_exited() -> void:
 		mouse_exited_panel.emit()
 "
 
+[sub_resource type="Gradient" id="Gradient_b3bc3"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_3b2b5"]
+gradient = SubResource("Gradient_b3bc3")
+
 [node name="UI" type="Control" unique_id=785861755]
 layout_mode = 3
 anchors_preset = 15
@@ -67,77 +86,92 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -230.0
+offset_top = -234.0
 grow_horizontal = 2
 grow_vertical = 0
 theme = ExtResource("1_b3bc3")
 
-[node name="FunctionsContainer" type="VBoxContainer" parent="Panel" unique_id=583475393]
+[node name="AbilitiesContainer" type="MarginContainer" parent="Panel" unique_id=884888620]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_top = -33.0
-offset_right = 54.0
-offset_bottom = 33.0
+offset_top = -58.5
+offset_right = 103.0
+offset_bottom = 58.5
 grow_vertical = 2
+theme = ExtResource("1_b3bc3")
 
-[node name="ButtonBuild" type="Button" parent="Panel/FunctionsContainer" unique_id=906982479]
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/AbilitiesContainer" unique_id=1637130129]
 layout_mode = 2
-text = "Build"
+theme = ExtResource("1_b3bc3")
 
-[node name="ButtonSelection" type="Button" parent="Panel/FunctionsContainer" unique_id=433659831]
+[node name="ButtonHouse" type="Button" parent="Panel/AbilitiesContainer/VBoxContainer" unique_id=194353205]
 layout_mode = 2
-text = "Select"
+theme = ExtResource("1_b3bc3")
+text = "house"
 
-[node name="MinimapContainer" type="VBoxContainer" parent="Panel" unique_id=1060052320]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Minimap" type="TextureRect" parent="Panel/MinimapContainer" unique_id=1095289714]
-custom_minimum_size = Vector2(200, 200)
+[node name="ButtonKaserne" type="Button" parent="Panel/AbilitiesContainer/VBoxContainer" unique_id=427888597]
 layout_mode = 2
-expand_mode = 3
+theme = ExtResource("1_b3bc3")
+text = "Kaserne"
 
-[node name="BuildContainer" type="VBoxContainer" parent="Panel" unique_id=1637130129]
+[node name="ButtonMil" type="Button" parent="Panel/AbilitiesContainer/VBoxContainer" unique_id=386394074]
+layout_mode = 2
+theme = ExtResource("1_b3bc3")
+text = "Mühle"
+
+[node name="MinimapContainer" type="MarginContainer" parent="Panel" unique_id=1345960803]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -71.0
-offset_top = -50.5
-offset_bottom = 50.5
+offset_left = -220.0
+offset_top = -110.0
+offset_bottom = 110.0
 grow_horizontal = 0
 grow_vertical = 2
+theme = ExtResource("1_b3bc3")
 
-[node name="ButtonHouse" type="Button" parent="Panel/BuildContainer" unique_id=194353205]
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MinimapContainer" unique_id=1060052320]
 layout_mode = 2
-text = "house"
 
-[node name="ButtonKaserne" type="Button" parent="Panel/BuildContainer" unique_id=427888597]
+[node name="Minimap" type="TextureRect" parent="Panel/MinimapContainer/VBoxContainer" unique_id=1095289714]
+custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
-text = "Kaserne"
+texture = SubResource("GradientTexture2D_3b2b5")
+expand_mode = 3
 
-[node name="ButtonMil" type="Button" parent="Panel/BuildContainer" unique_id=386394074]
+[node name="UnitsContainer" type="MarginContainer" parent="Panel" unique_id=1267918395]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -84.0
+offset_top = -97.5
+offset_right = 84.0
+offset_bottom = 97.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/UnitsContainer" unique_id=679270622]
 layout_mode = 2
-text = "Mühle"
+
+[node name="TextureRect" type="TextureRect" parent="Panel/UnitsContainer/VBoxContainer" unique_id=2076905688]
+layout_mode = 2
+texture = ExtResource("2_3b2b5")
+
+[node name="Label" type="Label" parent="Panel/UnitsContainer/VBoxContainer" unique_id=1981367083]
+layout_mode = 2
+text = "x0"
 
 [connection signal="mouse_entered" from="Panel" to="." method="_on_panel_mouse_entered"]
 [connection signal="mouse_exited" from="Panel" to="." method="_on_panel_mouse_exited"]
-[connection signal="pressed" from="Panel/FunctionsContainer/ButtonBuild" to="." method="_on_button_build_pressed"]
-[connection signal="pressed" from="Panel/FunctionsContainer/ButtonSelection" to="." method="_on_button_selection_pressed"]
-[connection signal="pressed" from="Panel/BuildContainer/ButtonHouse" to="." method="_on_button_house_pressed"]
-[connection signal="pressed" from="Panel/BuildContainer/ButtonKaserne" to="." method="_on_button_kaserne_pressed"]
-[connection signal="pressed" from="Panel/BuildContainer/ButtonMil" to="." method="_on_button_mil_pressed"]
+[connection signal="pressed" from="Panel/AbilitiesContainer/VBoxContainer/ButtonHouse" to="." method="_on_button_house_pressed"]
+[connection signal="pressed" from="Panel/AbilitiesContainer/VBoxContainer/ButtonKaserne" to="." method="_on_button_kaserne_pressed"]
+[connection signal="pressed" from="Panel/AbilitiesContainer/VBoxContainer/ButtonMil" to="." method="_on_button_mil_pressed"]

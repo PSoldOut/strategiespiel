@@ -1,70 +1,28 @@
 [gd_scene format=3 uid="uid://cg7fd0xjmmwdh"]
 
-[ext_resource type="Script" uid="uid://cvt0q65feqdc6" path="res://addons/rtsbuildingsystem/rts_building.gd" id="1_dcouy"]
-[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="2_pvl8o"]
+[ext_resource type="PackedScene" uid="uid://bjlpm178vwatj" path="res://Building.tscn" id="1_dcouy"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_pvl8o"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_pvl8o"]
+size = Vector3(3.99, 2.99, 3.99)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dcouy"]
 size = Vector3(4, 3, 4)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_ohnmb"]
-size = Vector3(4, 2.98, 4)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_bgfqr"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_dcouy"]
 size = Vector3(4, 3, 4)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_heh1b"]
+[node name="Mil" unique_id=1970737323 instance=ExtResource("1_dcouy")]
 
-[node name="Mil" type="StaticBody3D" unique_id=1745382759]
+[node name="CollisionShape3D" parent="." index="0" unique_id=450661025]
+shape = SubResource("BoxShape3D_pvl8o")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1607875121]
-mesh = SubResource("BoxMesh_pvl8o")
+[node name="MeshInstance3D" parent="." index="1" unique_id=2126260075]
+mesh = SubResource("BoxMesh_dcouy")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1516807661]
-shape = SubResource("BoxShape3D_ohnmb")
+[node name="CollisionShape3D" parent="Main" parent_id_path=PackedInt32Array(18434608) index="0" unique_id=1578217557]
+shape = SubResource("BoxShape3D_dcouy")
 
-[node name="Main" type="Area3D" parent="." unique_id=1983738281]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Main" unique_id=1118642549]
-shape = SubResource("BoxShape3D_bgfqr")
-
-[node name="Area3D2" type="Area3D" parent="." unique_id=869572698]
-
-[node name="CollisionShape3D4" type="CollisionShape3D" parent="Area3D2" unique_id=296021457]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.8683711, -1.4715786, 1.8440628)
-shape = SubResource("BoxShape3D_heh1b")
-
-[node name="Area3D3" type="Area3D" parent="." unique_id=1091599201]
-
-[node name="CollisionShape3D3" type="CollisionShape3D" parent="Area3D3" unique_id=1100008827]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.8683711, -1.4715786, -1.8520663)
-shape = SubResource("BoxShape3D_heh1b")
-
-[node name="Area3D4" type="Area3D" parent="." unique_id=1122294793]
-
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="Area3D4" unique_id=454356243]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.8495001, -1.4715786, -1.8520663)
-shape = SubResource("BoxShape3D_heh1b")
-
-[node name="Area3D5" type="Area3D" parent="." unique_id=1851566856]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D5" unique_id=1267324086]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.8495001, -1.4715786, 1.87236)
-shape = SubResource("BoxShape3D_heh1b")
-
-[node name="RTSBuilding" type="Node3D" parent="." unique_id=1819285493 node_paths=PackedStringArray("collision_body", "main_area", "ground_area1", "ground_area2", "ground_area3", "ground_area4")]
-script = ExtResource("1_dcouy")
-collision_body = NodePath("..")
-main_area = NodePath("../Main")
-ground_area1 = NodePath("../Area3D2")
-ground_area2 = NodePath("../Area3D3")
-ground_area3 = NodePath("../Area3D4")
-ground_area4 = NodePath("../Area3D5")
+[node name="RTSBuilding" parent="." index="7" unique_id=452273638]
 width = 4.0
-height = 4.0
-depth = 3.0
-metadata/_custom_type_script = "uid://cvt0q65feqdc6"
-
-[node name="SelectionUnit" type="Node3D" parent="." unique_id=370600845 node_paths=PackedStringArray("unit")]
-script = ExtResource("2_pvl8o")
-unit = NodePath("..")
-metadata/_custom_type_script = "uid://bnpexxmljtv8g"
+height = 3.0
+depth = 4.0

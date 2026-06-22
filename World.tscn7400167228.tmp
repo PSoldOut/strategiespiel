@@ -59,19 +59,11 @@ func _on_drag_selection_move_command(positions: Array) -> void:
 
 
 func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
-	
-	if $DragSelection.current_selected.size() > 0 and target.team == $DragSelection.current_selected[0].team:
-		for i in range($DragSelection.current_selected.size()):
-			var unit = $DragSelection.current_selected[i]
-			if is_instance_valid(unit):
-				unit.get_unit().target = target.get_unit()
-				unit.get_unit().state = unit.get_unit().State.CHASE_TO_INTERACT
-	else:
-		for i in range($DragSelection.current_selected.size()):
-			var unit = $DragSelection.current_selected[i]
-			if is_instance_valid(unit):
-				unit.get_unit().target = target.get_unit()
-				unit.get_unit().state = unit.get_unit().State.CHASE
+	for i in range($DragSelection.current_selected.size()):
+		var unit = $DragSelection.current_selected[i]
+		if is_instance_valid(unit):
+			unit.get_unit().target = target.get_unit()
+			unit.get_unit().state = unit.get_unit().State.CHASE
 		
 
 
@@ -110,15 +102,12 @@ func _on_ui_button_mil_pressed() -> void:
 func _on_ui_mouse_entered_panel() -> void:
 	print(\"entered\")
 	$RTSBuildSystem.active = false
-	$DragSelection.active = false
 
 
 func _on_ui_mouse_exited_panel() -> void:
 	print(\"exited\")
 	if state == states.BUILD:
 		$RTSBuildSystem.active = true
-	elif state == states.SELECT:
-		$DragSelection.active = true
 
 
 func _on_rts_build_system_building_set_command(position: Vector3, scene: Variant) -> void:
@@ -131,12 +120,6 @@ func _on_rts_build_system_building_set_command(position: Vector3, scene: Variant
 	$RTSBuildSystem.unset_preview_object()
 	obj.place()
 	$RTSBuildSystem.active = false
-	for su : SelectionUnit in $DragSelection.current_selected:
-		print(\"----------------------\"+str(su))
-		var unit = su.get_unit()
-		su.get_unit().target = obj
-		su.get_unit().state = su.get_unit().State.CHASE_TO_INTERACT
-	await get_tree().process_frame
 	$DragSelection.active = true
 
 
@@ -147,7 +130,6 @@ func _on_drag_selection_selected(units: Array) -> void:
 				$UI.activate_abilities_container(units[0].get_unit().abilities)
 	else:
 		$UI.deactivate_units_container()
-		$UI.deactivate_abilities_container()
 		
 "
 
