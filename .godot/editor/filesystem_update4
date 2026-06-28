@@ -1,0 +1,14 @@
+res://scenes/game.tscn
+res://scripts/game_setup.gd
+res://network/scripts/network_manager.gd
+res://network/scenes/network_manager.tscn
+res://scripts/rts_controller.gd
+res://scripts/modules/module_registry.gd
+res://scripts/cam_rig.gd
+res://scripts/unit.gd
+res://scripts/world_controller.gd
+res://scripts/modules/game_module.gd
+res://scripts/modules/pve_module.gd
+res://scripts/modules/pvp_module.gd
+res://scripts/modules/td_module.gd
+res://scenes/world.tscn

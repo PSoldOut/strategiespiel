@@ -1,0 +1,73 @@
+[gd_scene format=3 uid="uid://d616u3rk6l33"]
+
+[sub_resource type="GDScript" id="GDScript_jadnh"]
+resource_name = "rts_unit_simple"
+script/source = "class_name RtsUnitSimple extends CharacterBody3D
+
+@export var move_speed: float = 6.0
+@export var team_id: int = 0
+
+@onready var nav: NavigationAgent3D = $NavigationAgent3D
+@onready var selection_decal: Node3D = $SelectionDecal
+
+var is_selected: bool = false
+var _target_position: Vector3 = Vector3.ZERO
+var _has_target: bool = false
+
+func _ready() -> void:
+	add_to_group(\"selectable_units\")
+	_set_selected(false)
+
+func _physics_process(_delta: float) -> void:
+	if not _has_target and nav.is_navigation_finished():
+		velocity = Vector3.ZERO
+		move_and_slide()
+		return
+
+	var next_pos := _target_position
+	if not nav.is_navigation_finished():
+		next_pos = nav.get_next_path_position()
+
+	var dir := next_pos - global_position
+	dir.y = 0.0
+
+	if dir.length() > 0.08:
+		dir = dir.normalized()
+		velocity = Vector3(dir.x * move_speed, velocity.y, dir.z * move_speed)
+		move_and_slide()
+		look_at(Vector3(next_pos.x, global_position.y, next_pos.z), Vector3.UP)
+	else:
+		velocity = Vector3.ZERO
+		move_and_slide()
+		_has_target = false
+		
+func set_move_target(target: Vector3) -> void:
+	_target_position = target
+	_has_target = true
+	nav.target_position = target
+
+func _set_selected(v: bool) -> void:
+	is_selected = v
+	if selection_decal:
+		selection_decal.visible = v
+"
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jadnh"]
+albedo_color = Color(1, 0, 0, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_lf63s"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xbrdk"]
+
+[node name="RtsUnitSimple" type="CharacterBody3D" unique_id=1317322086]
+script = SubResource("GDScript_jadnh")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1862637444]
+
+[node name="SelectionDecal" type="MeshInstance3D" parent="." unique_id=1986507886]
+material_override = SubResource("StandardMaterial3D_jadnh")
+mesh = SubResource("CapsuleMesh_lf63s")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=9844118]
+visible = false
+shape = SubResource("CapsuleShape3D_xbrdk")

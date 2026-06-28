@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://d1vjv0yw5oton"]
+
+[ext_resource type="Script" uid="uid://c8ik3ovwbfrcv" path="res://scripts/rts_controller.gd" id="1_rts"]
+
+[node name="RtsController" type="Node" unique_id=1362628718]
+script = ExtResource("1_rts")
+camera_path = NodePath("../CamRig/CamPivot/Camera3D")
+
+[node name="SelectionOverlay" type="Control" parent="." unique_id=152444574]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

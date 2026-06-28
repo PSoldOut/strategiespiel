@@ -1,0 +1,162 @@
+[gd_scene format=3 uid="uid://dcm06xgj4dg31"]
+
+[ext_resource type="Script" uid="uid://dchow1b15r6hp" path="res://scripts/game_setup.gd" id="1_yqjtg"]
+[ext_resource type="PackedScene" uid="uid://fkumpw1oln21" path="res://network/scenes/network_manager.tscn" id="2_lbhrr"]
+[ext_resource type="PackedScene" uid="uid://dv2lkjffypyan" path="res://scenes/world.tscn" id="2_lnu2h"]
+[ext_resource type="PackedScene" uid="uid://dsptdt4np47c5" path="res://scenes/cam_rig.tscn" id="3_dri8k"]
+[ext_resource type="Script" uid="uid://b7itwb45whkov" path="res://scripts/modules/module_registry.gd" id="3_lnu2h"]
+[ext_resource type="PackedScene" uid="uid://0t1n5qpxrjno" path="res://scenes/spawner_unit_simple.tscn" id="6_p57ef"]
+[ext_resource type="PackedScene" uid="uid://d1vjv0yw5oton" path="res://scenes/rts_controller.tscn" id="7_1a1lf"]
+
+[sub_resource type="PackedScene" id="PackedScene_u5sy4"]
+
+[node name="Game" type="Node" unique_id=337104932]
+script = ExtResource("1_yqjtg")
+
+[node name="NetworkManager" parent="." unique_id=1146012871 instance=ExtResource("2_lbhrr")]
+
+[node name="GameRegistry" type="Node" parent="." unique_id=1299582585]
+script = ExtResource("3_lnu2h")
+
+[node name="World" parent="." unique_id=1097947438 instance=ExtResource("2_lnu2h")]
+
+[node name="CamRig" parent="." unique_id=200884730 instance=ExtResource("3_dri8k")]
+
+[node name="RtsController" parent="." unique_id=176543210 instance=ExtResource("7_1a1lf")]
+
+[node name="SetupUI" type="CenterContainer" parent="." unique_id=1736377927]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SetupSectionUI" type="HBoxContainer" parent="SetupUI" unique_id=629076261]
+layout_mode = 2
+
+[node name="WorldContainer" type="VBoxContainer" parent="SetupUI/SetupSectionUI" unique_id=1513427734]
+layout_mode = 2
+alignment = 1
+
+[node name="WorldGeneration" type="Label" parent="SetupUI/SetupSectionUI/WorldContainer" unique_id=1029244089]
+layout_mode = 2
+text = "World Generation"
+horizontal_alignment = 1
+
+[node name="TileXContainer" type="HBoxContainer" parent="SetupUI/SetupSectionUI/WorldContainer" unique_id=1337746512]
+layout_mode = 2
+
+[node name="Label_TileX" type="Label" parent="SetupUI/SetupSectionUI/WorldContainer/TileXContainer" unique_id=845495569]
+layout_mode = 2
+text = "TileX     "
+
+[node name="TileX" type="SpinBox" parent="SetupUI/SetupSectionUI/WorldContainer/TileXContainer" unique_id=764314000]
+layout_mode = 2
+
+[node name="TileYContainer" type="HBoxContainer" parent="SetupUI/SetupSectionUI/WorldContainer" unique_id=1032149569]
+layout_mode = 2
+
+[node name="Label_TileY" type="Label" parent="SetupUI/SetupSectionUI/WorldContainer/TileYContainer" unique_id=621097809]
+layout_mode = 2
+text = "TileY     "
+
+[node name="TileY" type="SpinBox" parent="SetupUI/SetupSectionUI/WorldContainer/TileYContainer" unique_id=340056942]
+layout_mode = 2
+
+[node name="TileSizeContainer" type="HBoxContainer" parent="SetupUI/SetupSectionUI/WorldContainer" unique_id=1959150018]
+layout_mode = 2
+
+[node name="Label_TileSize" type="Label" parent="SetupUI/SetupSectionUI/WorldContainer/TileSizeContainer" unique_id=975491841]
+layout_mode = 2
+text = "TileSize"
+
+[node name="TileSize" type="SpinBox" parent="SetupUI/SetupSectionUI/WorldContainer/TileSizeContainer" unique_id=2116766788]
+layout_mode = 2
+
+[node name="WSeparator1" type="HSeparator" parent="SetupUI/SetupSectionUI/WorldContainer" unique_id=785772913]
+layout_mode = 2
+
+[node name="ModeContainer" type="HBoxContainer" parent="SetupUI/SetupSectionUI/WorldContainer" unique_id=1232239254]
+layout_mode = 2
+
+[node name="ModeLabel" type="Label" parent="SetupUI/SetupSectionUI/WorldContainer/ModeContainer" unique_id=587995245]
+layout_mode = 2
+text = "Select Mode"
+
+[node name="ModeSelect" type="OptionButton" parent="SetupUI/SetupSectionUI/WorldContainer/ModeContainer" unique_id=625729056]
+layout_mode = 2
+
+[node name="WSeparator2" type="HSeparator" parent="SetupUI/SetupSectionUI/WorldContainer" unique_id=608984346]
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="SetupUI/SetupSectionUI/WorldContainer" unique_id=1061740327]
+layout_mode = 2
+text = "Generate"
+
+[node name="WorldSeparator" type="VSeparator" parent="SetupUI/SetupSectionUI" unique_id=135418406]
+layout_mode = 2
+
+[node name="NetworkContainer" type="VBoxContainer" parent="SetupUI/SetupSectionUI" unique_id=1692895958]
+layout_mode = 2
+
+[node name="WorldGeneration2" type="Label" parent="SetupUI/SetupSectionUI/NetworkContainer" unique_id=313627399]
+layout_mode = 2
+text = "Network Configuration"
+horizontal_alignment = 1
+
+[node name="NSeparator1" type="HSeparator" parent="SetupUI/SetupSectionUI/NetworkContainer" unique_id=1716684278]
+layout_mode = 2
+
+[node name="RoleContainer" type="HBoxContainer" parent="SetupUI/SetupSectionUI/NetworkContainer" unique_id=1798447389]
+layout_mode = 2
+
+[node name="Label_Role" type="Label" parent="SetupUI/SetupSectionUI/NetworkContainer/RoleContainer" unique_id=2014316785]
+custom_minimum_size = Vector2(40, 40)
+layout_direction = 2
+layout_mode = 2
+text = "Role"
+
+[node name="Role" type="OptionButton" parent="SetupUI/SetupSectionUI/NetworkContainer/RoleContainer" unique_id=1623147057]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+
+[node name="IPContainer" type="HBoxContainer" parent="SetupUI/SetupSectionUI/NetworkContainer" unique_id=772947964]
+layout_mode = 2
+
+[node name="Label_IP" type="Label" parent="SetupUI/SetupSectionUI/NetworkContainer/IPContainer" unique_id=753098634]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+text = "IP"
+
+[node name="IP" type="LineEdit" parent="SetupUI/SetupSectionUI/NetworkContainer/IPContainer" unique_id=1075803771]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "127.0.0.1"
+placeholder_text = "127.0.0.1"
+
+[node name="PortContainer" type="HBoxContainer" parent="SetupUI/SetupSectionUI/NetworkContainer" unique_id=1323298638]
+layout_mode = 2
+
+[node name="Label_Port" type="Label" parent="SetupUI/SetupSectionUI/NetworkContainer/PortContainer" unique_id=1040911409]
+custom_minimum_size = Vector2(40, 40)
+layout_direction = 2
+layout_mode = 2
+text = "Port"
+
+[node name="Port" type="LineEdit" parent="SetupUI/SetupSectionUI/NetworkContainer/PortContainer" unique_id=2092929187]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "24570"
+placeholder_text = "24570"
+
+[node name="LocalCheckBox" type="CheckBox" parent="SetupUI/SetupSectionUI/NetworkContainer" unique_id=1856365219]
+layout_mode = 2
+button_pressed = true
+text = "Localhost"
+
+[node name="SpawnerUnitSimple" parent="." unique_id=2053083968 instance=ExtResource("6_p57ef")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.056285, 0.43697977, 0)
+unit_scene = SubResource("PackedScene_u5sy4")

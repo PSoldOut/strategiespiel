@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://fkumpw1oln21"]
+
+[ext_resource type="Script" uid="uid://cxhuo3po8p7bq" path="res://network/scripts/network_manager.gd" id="1_ftth4"]
+
+[node name="NetworkManager" type="Node" unique_id=1146012871]
+script = ExtResource("1_ftth4")

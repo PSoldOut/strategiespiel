@@ -1,0 +1,74 @@
+[gd_scene format=3 uid="uid://dc2a4xctl6ot0"]
+
+[sub_resource type="GDScript" id="GDScript_wefki"]
+resource_name = "service_spawner_unit_simple"
+script/source = "class_name UnitSpawnService extends Node
+
+@export var unit_scene: PackedScene
+@export var unit_root_path: NodePath
+
+var _next_spawn_id: int = 1
+
+func _unit_root() -> Node:
+	return get_node(unit_root_path)
+
+func server_spawn(team_id: int, spawn_pos: Vector3) -> void:
+	if not multiplayer.is_server():
+		return
+	
+	var spawn_id := _next_spawn_id
+	_next_spawn_id += 1
+	rpc(\"_rpc_spawn_unit\", spawn_id, team_id, spawn_pos)
+
+func _validate_spawn_request(peer_id: int, team_id: int, spawn_pos: Vector3) -> bool:
+	if peer_id <= 0:
+		return false
+	if team_id < 0:
+		return false
+	if abs(spawn_pos.x) > 10000.0 or abs(spawn_pos.z) > 10000.0:
+		return false
+	return true
+
+@rpc(\"any_peer\", \"reliable\")
+func request_spawn(team_id: int, spawn_pos: Vector3) -> void:
+	if not multiplayer.is_server():
+		return
+	
+	var sender := multiplayer.get_remote_sender_id()
+	if not _validate_spawn_request(sender, team_id, spawn_pos):
+		return
+	
+	var spawn_id := _next_spawn_id
+	_next_spawn_id += 1
+	
+	rpc(\"_rpc_spawn_unit\", spawn_id, team_id, spawn_pos)
+
+@rpc(\"authority\", \"call_local\", \"reliable\")
+func _rpc_spawn_unit(spawn_id: int, team_id: int, spawn_pos: Vector3) -> void:
+	var root := _unit_root()
+	var unit := unit_scene.instantiate()
+	unit.name = \"unit_\" + str(spawn_id)
+	unit.team_id = team_id
+	root.add_child(unit)
+	unit.global_position = spawn_pos
+
+func sync_unit_to_peer(peer_id: int, unit_name: String, team_id: int, spawn_pos: Vector3) -> void:
+	if not multiplayer.is_server():
+		return
+	rpc_id(peer_id, \"_rpc_spawn_unit_named\", unit_name, team_id, spawn_pos)
+
+@rpc(\"authority\", \"reliable\")
+func _rpc_spawn_unit_named(unit_name: String, team_id: int, spawn_pos: Vector3) -> void:
+	var root := _unit_root()
+	if root.get_node_or_null(unit_name) != null:
+		return
+
+	var unit := unit_scene.instantiate()
+	unit.name = unit_name
+	unit.team_id = team_id
+	root.add_child(unit)
+	unit.global_position = spawn_pos
+"
+
+[node name="ServiceSpawnerUnitSimple" type="Node" unique_id=902753961]
+script = SubResource("GDScript_wefki")
