@@ -14,6 +14,15 @@ static func recalculate_auto_ramps(map_data: Array) -> void:
 	AutoRampBuilderAvg.recalculate_auto_ramps(map_data)
 
 
+static func recalculate_auto_ramps_for_area(
+	map_data: Array,
+	origin: Vector2i,
+	size: Vector2i,
+	padding_tiles: int = 2
+) -> void:
+	AutoRampBuilderAvg.recalculate_auto_ramps_for_area(map_data, origin, size, padding_tiles)
+
+
 static func is_cell_flat(cell: Dictionary) -> bool:
 	var height: float = float(cell.get("height", 0.0))
 	var corners: Dictionary = cell.get("corners", make_flat_corners(height))

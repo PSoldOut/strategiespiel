@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://qohnerc578uf"]
 
-[ext_resource type="Script" uid="uid://su7i5i3igdbb" path="res://MapEditor/map_editor.gd" id="1_k3j5l"]
-[ext_resource type="Script" uid="uid://h5cxapeptxkp" path="res://MapEditor/tile_palette.gd" id="2_a65gw"]
-[ext_resource type="Script" uid="uid://bqy2qipechej1" path="res://MapSpawner/MapSpawner.gd" id="3_k3j5l"]
+[ext_resource type="Script" uid="uid://bm5kjpiq25rhh" path="res://MapEditor/map_editor.gd" id="1_k3j5l"]
+[ext_resource type="Script" uid="uid://doxx24nd8f024" path="res://MapEditor/tile_palette.gd" id="2_a65gw"]
+[ext_resource type="Script" uid="uid://bhw6jtwmy4tbg" path="res://MapSpawner/MapSpawner.gd" id="3_k3j5l"]
 [ext_resource type="Script" uid="uid://b31fwwrpgckym" path="res://addons/RTSCamera/Camera.gd" id="4_wy1kg"]
 
 [sub_resource type="Sky" id="Sky_r0du0"]

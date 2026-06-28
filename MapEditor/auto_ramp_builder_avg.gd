@@ -34,9 +34,52 @@ static func recalculate_auto_ramps(map_data: Array) -> void:
 			_apply_average_height_to_shared_vertex(map_data, vertex_x, vertex_y)
 
 
+static func recalculate_auto_ramps_for_area(
+	map_data: Array,
+	origin: Vector2i,
+	size: Vector2i,
+	padding_tiles: int = 2
+) -> void:
+	if map_data.is_empty():
+		return
+
+	var map_h: int = map_data.size()
+	var map_w: int = map_data[0].size()
+
+	if map_w <= 0 or map_h <= 0:
+		return
+
+	var safe_size := Vector2i(max(1, size.x), max(1, size.y))
+	var start_x: int = clamp(origin.x - padding_tiles, 0, map_w - 1)
+	var start_y: int = clamp(origin.y - padding_tiles, 0, map_h - 1)
+	var end_x: int = clamp(origin.x + safe_size.x - 1 + padding_tiles, 0, map_w - 1)
+	var end_y: int = clamp(origin.y + safe_size.y - 1 + padding_tiles, 0, map_h - 1)
+
+	_reset_corners_to_base_height_for_area(map_data, start_x, start_y, end_x, end_y)
+
+	for vertex_y in range(start_y, end_y + 2):
+		for vertex_x in range(start_x, end_x + 2):
+			_apply_average_height_to_shared_vertex(map_data, vertex_x, vertex_y)
+
+
 static func _reset_all_corners_to_base_height(map_data: Array) -> void:
 	for y in range(map_data.size()):
 		for x in range(map_data[y].size()):
+			var cell: Dictionary = map_data[y][x]
+			var h: float = float(cell.get("height", 0.0))
+			cell["corners"] = _make_flat_corners(h)
+			map_data[y][x] = cell
+
+
+static func _reset_corners_to_base_height_for_area(
+	map_data: Array,
+	start_x: int,
+	start_y: int,
+	end_x: int,
+	end_y: int
+) -> void:
+	for y in range(start_y, end_y + 1):
+		for x in range(start_x, end_x + 1):
 			var cell: Dictionary = map_data[y][x]
 			var h: float = float(cell.get("height", 0.0))
 			cell["corners"] = _make_flat_corners(h)

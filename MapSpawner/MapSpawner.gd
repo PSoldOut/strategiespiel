@@ -15,14 +15,15 @@ class_name MapSpawner
 @export var entity_outline_height: float = 0.15
 @export var entity_outline_y_offset: float = 0.04
 
-const MAP_WIDTH: int = 32
-const MAP_HEIGHT: int = 32
+const MAP_WIDTH: int = 128
+const MAP_HEIGHT: int = 128
 const EDITOR_JUNKS: int = 16
 const TILE_SIZE: float = 2.0
 
 const HEIGHT_STEP: float = 0.5
 const MIN_HEIGHT: float = -2.0
 const MAX_HEIGHT: float = 2.0
+const AUTO_RAMP_EDIT_PADDING_TILES: int = 2
 
 # Terrain data. Compatible with MapBaker.
 # map_data[y][x] = { "type", "height", "corners" }
@@ -316,11 +317,11 @@ func _commit_editor_change_for_area(
 	refresh_outlines: bool
 ) -> void:
 	if recalculate_ramps and auto_ramp_enabled:
-		MapCornerService.recalculate_auto_ramps(map_data)
+		MapCornerService.recalculate_auto_ramps_for_area(map_data, origin, size, AUTO_RAMP_EDIT_PADDING_TILES)
 
 	map_data_changed.emit()
 
-	var padding_tiles := 1 if recalculate_ramps and auto_ramp_enabled else 0
+	var padding_tiles := AUTO_RAMP_EDIT_PADDING_TILES if recalculate_ramps and auto_ramp_enabled else 0
 	rebuild_visual_chunks_for_area(origin, size, padding_tiles)
 
 	if refresh_outlines:
