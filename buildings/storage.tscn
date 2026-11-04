@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://gameplay/buildings/storage.gd" id="1_6x1v6"]
+[ext_resource type="Script" path="res://gameplay/entities/health_component.gd" id="2_health"]
+[ext_resource type="PackedScene" path="res://gameplay/ui/world_progress_bar_3d.tscn" id="3_bar"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tycuo"]
+albedo_color = Color(0.72, 0.48, 0.12, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_6x1v6"]
+material = SubResource("StandardMaterial3D_tycuo")
+size = Vector3(3.6, 1.3, 1.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gwqbw"]
+size = Vector3(3.6, 1.3, 1.6)
+
+[node name="Storage" type="Node3D" unique_id=1208305675]
+script = ExtResource("1_6x1v6")
+max_life = 180.0
+target_radius = 1.8
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=2056552518]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
+mesh = SubResource("BoxMesh_6x1v6")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=905773032]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1033147020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
+shape = SubResource("BoxShape3D_gwqbw")
+
+[node name="DepositPoint" type="Marker3D" parent="." unique_id=621412618]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.2)
+
+[node name="HealthComponent" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_health")
+max_life = 180.0
+current_life = 180.0
+
+[node name="HealthBar" parent="." instance=ExtResource("3_bar")]
+unique_name_in_owner = true
+position = Vector3(0, 1.95, 0)
+width = 3.0

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PlaceableBuildingDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://buildings/barracks.tscn" id="1_yfs8h"]
+[ext_resource type="Script" path="res://addons/place_pickup_building/placeable_building_definition.gd" id="2_p3rpw"]
+
+[resource]
+script = ExtResource("2_p3rpw")
+building_id = &"barracks"
+scene = ExtResource("1_yfs8h")
+footprint = Vector2i(2, 2)

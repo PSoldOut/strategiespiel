@@ -1,0 +1,37 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://gameplay/entities/ranged_enemy.gd" id="1_ranged"]
+[ext_resource type="Script" path="res://gameplay/entities/health_component.gd" id="2_health"]
+[ext_resource type="PackedScene" path="res://gameplay/combat/combat_projectile.tscn" id="3_projectile"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ranged"]
+albedo_color = Color(0.65, 0.15, 0.85, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ranged"]
+material = SubResource("StandardMaterial3D_ranged")
+size = Vector3(0.9, 1.4, 0.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape_ranged"]
+size = Vector3(0.9, 1.4, 0.9)
+
+[node name="RangedEnemy" type="CharacterBody3D" groups=["enemies"]]
+script = ExtResource("1_ranged")
+base_max_life = 30.0
+base_speed = 2.4
+base_attack_damage = 6.0
+attack_range = 8.0
+attack_cooldown = 1.4
+projectile_scene = ExtResource("3_projectile")
+projectile_speed = 12.0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_ranged")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape_ranged")
+
+[node name="HealthComponent" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_health")
+max_life = 30.0
+current_life = 30.0

@@ -1,8 +1,0 @@
-[gd_scene format=3 uid="uid://oxkxk0kifedg"]
-
-[ext_resource type="Script" path="res://MapEditor/map_tile.gd" id="1_s8ube"]
-
-[node name="MapTile" type="Node3D" unique_id=275152167]
-script = ExtResource("1_s8ube")
-
-[node name="Selector" type="MeshInstance3D" parent="." unique_id=2058750844]

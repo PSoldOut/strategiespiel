@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PlaceableBuildingDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://buildings/storage.tscn" id="1_ltvk7"]
+[ext_resource type="Script" path="res://addons/place_pickup_building/placeable_building_definition.gd" id="2_y5cii"]
+
+[resource]
+script = ExtResource("2_y5cii")
+building_id = &"storage"
+scene = ExtResource("1_ltvk7")
+footprint = Vector2i(2, 1)

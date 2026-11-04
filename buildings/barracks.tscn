@@ -1,0 +1,53 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://gameplay/buildings/barracks.gd" id="1_06xfp"]
+[ext_resource type="Script" path="res://gameplay/entities/health_component.gd" id="2_health"]
+[ext_resource type="PackedScene" path="res://gameplay/ui/world_progress_bar_3d.tscn" id="3_bar"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0xswc"]
+albedo_color = Color(0.55, 0.25, 0.15, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_06xfp"]
+material = SubResource("StandardMaterial3D_0xswc")
+size = Vector3(3.6, 1.5, 3.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_p1778"]
+size = Vector3(3.6, 1.5, 3.6)
+
+[node name="Barracks" type="Node3D" unique_id=450302941]
+script = ExtResource("1_06xfp")
+max_life = 220.0
+target_radius = 1.8
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=439354855]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+mesh = SubResource("BoxMesh_06xfp")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=458247506]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=535859158]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+shape = SubResource("BoxShape3D_p1778")
+
+[node name="UnitSpawnPoint" type="Marker3D" parent="." unique_id=1957776542]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.2)
+
+[node name="HealthComponent" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_health")
+max_life = 220.0
+current_life = 220.0
+
+[node name="HealthBar" parent="." instance=ExtResource("3_bar")]
+unique_name_in_owner = true
+position = Vector3(0, 2.15, 0)
+width = 3.0
+
+[node name="SpawnProgressBar" parent="." instance=ExtResource("3_bar")]
+unique_name_in_owner = true
+position = Vector3(0, 1.85, 0)
+visible = false
+width = 3.0
+height = 0.12
+fill_color = Color(0.2, 0.55, 1, 1)

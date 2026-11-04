@@ -1,0 +1,51 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://gameplay/buildings/tower.gd" id="1_04jx3"]
+[ext_resource type="Script" path="res://gameplay/entities/health_component.gd" id="2_health"]
+[ext_resource type="PackedScene" path="res://gameplay/ui/world_progress_bar_3d.tscn" id="3_bar"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_arxi4"]
+albedo_color = Color(0.32, 0.38, 0.46, 1)
+roughness = 0.85
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_04jx3"]
+material = SubResource("StandardMaterial3D_arxi4")
+top_radius = 0.65
+bottom_radius = 0.85
+height = 3.0
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_5auh8"]
+height = 3.0
+radius = 0.85
+
+[node name="Tower" type="Node3D" unique_id=1433728887]
+script = ExtResource("1_04jx3")
+max_life = 160.0
+target_radius = 0.85
+
+[node name="RangeIndicator" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.04, 0)
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=1143610588]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+mesh = SubResource("CylinderMesh_04jx3")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1786182432]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1790267709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CylinderShape3D_5auh8")
+
+[node name="AttackOrigin" type="Marker3D" parent="." unique_id=95948110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+
+[node name="HealthComponent" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_health")
+max_life = 160.0
+current_life = 160.0
+
+[node name="HealthBar" parent="." instance=ExtResource("3_bar")]
+unique_name_in_owner = true
+position = Vector3(0, 3.35, 0)
+width = 1.8

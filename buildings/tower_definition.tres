@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="PlaceableBuildingDefinition" format=3]
+
+[ext_resource type="PackedScene" path="res://buildings/tower.tscn" id="1_u0ts5"]
+[ext_resource type="Script" path="res://addons/place_pickup_building/placeable_building_definition.gd" id="2_0xop8"]
+
+[resource]
+script = ExtResource("2_0xop8")
+building_id = &"tower"
+scene = ExtResource("1_u0ts5")

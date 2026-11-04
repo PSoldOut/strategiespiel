@@ -1,0 +1,168 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://gameplay/game_run.gd" id="1_cy102"]
+[ext_resource type="Script" path="res://MapSpawner/MapSpawner.gd" id="2_w5tl4"]
+[ext_resource type="PackedScene" path="res://gameplay/entities/player.tscn" id="3_7sbvq"]
+[ext_resource type="Script" path="res://gameplay/entities/player.gd" id="4_nmugi"]
+[ext_resource type="Script" path="res://gameplay/entities/health_component.gd" id="5_q4680"]
+[ext_resource type="Script" path="res://addons/follow_camera/follow_camera_3d.gd" id="6_vbymr"]
+[ext_resource type="Script" path="res://addons/follow_camera/follow_camera_config.gd" id="7_gie0l"]
+[ext_resource type="Script" path="res://addons/entity_spawner/entity_spawner.gd" id="8_inwf2"]
+[ext_resource type="Script" path="res://gameplay/wave_controller.gd" id="9_5txks"]
+[ext_resource type="PackedScene" path="res://buildings/building_placement.tscn" id="10_iwcwy"]
+[ext_resource type="Script" path="res://addons/place_pickup_building/place_pickup_building_system.gd" id="11_n28yf"]
+[ext_resource type="Resource" path="res://buildings/building_placement_config.tres" id="12_gy3xb"]
+[ext_resource type="Script" path="res://addons/place_pickup_building/placeable_building_definition.gd" id="13_yato7"]
+[ext_resource type="Resource" path="res://buildings/tower_definition.tres" id="14_1iuwe"]
+[ext_resource type="Resource" path="res://buildings/barracks_definition.tres" id="15_hcea2"]
+[ext_resource type="Resource" path="res://buildings/storage_definition.tres" id="16_f756c"]
+[ext_resource type="Script" path="res://gameplay/building_placement_controller.gd" id="17_xrewq"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
+radius = 0.45
+height = 1.8
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
+radius = 0.45
+height = 1.8
+
+[sub_resource type="Resource" id="Resource_yyem8"]
+script = ExtResource("7_gie0l")
+offset = Vector3(0, 18, 14)
+look_at_offset = Vector3(0, 0.5, 0)
+position_smoothing_speed = 7.0
+rotation_smoothing_speed = 9.0
+
+[sub_resource type="Environment" id="Environment_6g64k"]
+background_mode = 1
+background_color = Color(0.08, 0.1, 0.14, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.75, 0.8, 0.9, 1)
+ambient_light_energy = 0.7
+
+[node name="GameRun" type="Node3D" unique_id=238904303]
+script = ExtResource("1_cy102")
+
+[node name="MapSpawner" type="Node3D" parent="." unique_id=1086954581]
+script = ExtResource("2_w5tl4")
+show_tile_lines = false
+visual_chunk_count = 4
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1935909693 groups=["player"] instance=ExtResource("3_7sbvq")]
+script = ExtResource("4_nmugi")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player" unique_id=350914885]
+mesh = SubResource("CapsuleMesh_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=608774763]
+shape = SubResource("CapsuleShape_player")
+
+[node name="HealthComponent" type="Node" parent="Player" unique_id=1094678527]
+unique_name_in_owner = true
+script = ExtResource("5_q4680")
+
+[node name="FollowCamera3D" type="Camera3D" parent="." unique_id=746238447 node_paths=PackedStringArray("target")]
+current = true
+script = ExtResource("6_vbymr")
+target = NodePath("../Player")
+config = SubResource("Resource_yyem8")
+
+[node name="EnemyRoot" type="Node3D" parent="." unique_id=181238473]
+
+[node name="EnemySpawner" type="Node3D" parent="." unique_id=728670281 node_paths=PackedStringArray("spawn_parent")]
+script = ExtResource("8_inwf2")
+spawn_parent = NodePath("../EnemyRoot")
+
+[node name="WaveController" type="Node" parent="." unique_id=1023193358 node_paths=PackedStringArray("enemy_spawner")]
+script = ExtResource("9_5txks")
+enemy_spawner = NodePath("../EnemySpawner")
+
+[node name="BuildingPlacement" type="Node3D" parent="." unique_id=521034280 node_paths=PackedStringArray("building_parent") instance=ExtResource("10_iwcwy")]
+script = ExtResource("11_n28yf")
+config = ExtResource("12_gy3xb")
+building_parent = NodePath("PlacedBuildings")
+definitions = Array[ExtResource("13_yato7")]([ExtResource("14_1iuwe"), ExtResource("15_hcea2"), ExtResource("16_f756c")])
+
+[node name="PlacedBuildings" type="Node3D" parent="BuildingPlacement" unique_id=1338081674]
+
+[node name="BuildingPlacementController" type="Node" parent="." unique_id=941393935 node_paths=PackedStringArray("placement_system", "map_spawner", "camera")]
+script = ExtResource("17_xrewq")
+placement_system = NodePath("../BuildingPlacement")
+map_spawner = NodePath("../MapSpawner")
+camera = NodePath("../FollowCamera3D")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1919355534]
+transform = Transform3D(0.8660254, 0.40957603, -0.28678823, 0, 0.57357645, 0.81915206, 0.5, -0.7094065, 0.49673176, 0, 0, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1092665335]
+environment = SubResource("Environment_6g64k")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1596431564]
+
+[node name="Margin" type="MarginContainer" parent="HUD" unique_id=1820701493]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 260.0
+offset_bottom = 220.0
+
+[node name="VBox" type="VBoxContainer" parent="HUD/Margin" unique_id=1504421524]
+layout_mode = 2
+
+[node name="HealthLabel" type="Label" parent="HUD/Margin/VBox" unique_id=1644411427]
+layout_mode = 2
+text = "Life: 100 / 100"
+
+[node name="WaveLabel" type="Label" parent="HUD/Margin/VBox" unique_id=194139607]
+layout_mode = 2
+text = "Wave: 0"
+
+[node name="EnemiesLabel" type="Label" parent="HUD/Margin/VBox" unique_id=1188791153]
+layout_mode = 2
+text = "Enemies: 0"
+
+[node name="TimeLabel" type="Label" parent="HUD/Margin/VBox" unique_id=1251862288]
+layout_mode = 2
+text = "Time: 00:00"
+
+[node name="GoldLabel" type="Label" parent="HUD/Margin/VBox" unique_id=826138623]
+layout_mode = 2
+text = "Gold: 0"
+
+[node name="BuildingLabel" type="Label" parent="HUD/Margin/VBox" unique_id=698503222]
+layout_mode = 2
+text = "Building: Tower"
+
+[node name="ControlsLabel" type="Label" parent="HUD" unique_id=2013237694]
+offset_left = 18.0
+offset_top = 620.0
+offset_right = 900.0
+offset_bottom = 660.0
+
+[node name="GameOverPanel" type="PanelContainer" parent="HUD" unique_id=416855815]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -90.0
+offset_right = 140.0
+offset_bottom = 90.0
+
+[node name="VBox" type="VBoxContainer" parent="HUD/GameOverPanel" unique_id=774454544]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="HUD/GameOverPanel/VBox" unique_id=21557719]
+layout_mode = 2
+text = "Run Over"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="HUD/GameOverPanel/VBox" unique_id=385393717]
+layout_mode = 2
+text = "Restart"
+
+[node name="MenuButton" type="Button" parent="HUD/GameOverPanel/VBox" unique_id=523086572]
+layout_mode = 2
+text = "Main Menu"

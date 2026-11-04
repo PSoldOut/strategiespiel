@@ -1,5 +1,5 @@
-extends RefCounted
 class_name MapCollisionBaker
+extends RefCounted
 
 
 static func make_trimesh_shape(mesh: Mesh) -> Shape3D:
@@ -9,7 +9,10 @@ static func make_trimesh_shape(mesh: Mesh) -> Shape3D:
 	return mesh.create_trimesh_shape()
 
 
-static func make_static_body_from_mesh(mesh: Mesh, body_name: String = "StaticBody3D") -> StaticBody3D:
+static func make_static_body_from_mesh(
+	mesh: Mesh,
+	body_name: String = "StaticBody3D",
+) -> StaticBody3D:
 	var shape := make_trimesh_shape(mesh)
 	if shape == null:
 		return null
@@ -17,7 +20,10 @@ static func make_static_body_from_mesh(mesh: Mesh, body_name: String = "StaticBo
 	return make_static_body_from_shape(shape, body_name)
 
 
-static func make_static_body_from_shape(shape: Shape3D, body_name: String = "StaticBody3D") -> StaticBody3D:
+static func make_static_body_from_shape(
+	shape: Shape3D,
+	body_name: String = "StaticBody3D",
+) -> StaticBody3D:
 	if shape == null:
 		return null
 

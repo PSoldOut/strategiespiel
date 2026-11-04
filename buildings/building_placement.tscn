@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://addons/place_pickup_building/place_pickup_building_system.gd" id="1_5pljd"]
+[ext_resource type="Resource" path="res://buildings/building_placement_config.tres" id="2_npqyb"]
+[ext_resource type="Script" path="res://addons/place_pickup_building/placeable_building_definition.gd" id="3_i24gy"]
+[ext_resource type="Resource" path="res://buildings/tower_definition.tres" id="4_20gmk"]
+[ext_resource type="Resource" path="res://buildings/barracks_definition.tres" id="5_6b6nk"]
+[ext_resource type="Resource" path="res://buildings/storage_definition.tres" id="6_dbvg3"]
+
+[node name="BuildingPlacement" type="Node3D" unique_id=521034280 node_paths=PackedStringArray("building_parent")]
+script = ExtResource("1_5pljd")
+config = ExtResource("2_npqyb")
+building_parent = NodePath("PlacedBuildings")
+definitions = Array[ExtResource("3_i24gy")]([ExtResource("4_20gmk"), ExtResource("5_6b6nk"), ExtResource("6_dbvg3")])
+
+[node name="PlacedBuildings" type="Node3D" parent="." unique_id=1338081674]

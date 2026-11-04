@@ -16,7 +16,16 @@ static func build_visual_chunks(
 
 	for chunk_y in range(chunk_count):
 		for chunk_x in range(chunk_count):
-			bake_visual_chunk(visual_root, map_data, chunk_count_value, chunk_x, chunk_y, tile_size, bake_collision, show_tile_lines)
+			bake_visual_chunk(
+				visual_root,
+				map_data,
+				chunk_count_value,
+				chunk_x,
+				chunk_y,
+				tile_size,
+				bake_collision,
+				show_tile_lines,
+			)
 
 
 static func get_editor_chunk_count(chunk_count_value: int) -> int:
@@ -71,18 +80,17 @@ static func bake_visual_chunk(
 	if start_x >= map_width or start_y >= map_height:
 		return
 
-	var end_x :int= min(start_x + chunk_size.x, map_width)
-	var end_y :int= min(start_y + chunk_size.y, map_height)
-	var chunk_map := get_terrain_chunk(map_data, start_x, start_y, end_x, end_y)
-
-	if chunk_map.is_empty():
-		return
+	var end_x: int = min(start_x + chunk_size.x, map_width)
+	var end_y: int = min(start_y + chunk_size.y, map_height)
+	var bake_bounds := Rect2i(start_x, start_y, end_x - start_x, end_y - start_y)
 
 	var chunk_baker := MapBaker.new()
 	chunk_baker.name = get_visual_chunk_name(chunk_x, chunk_y)
-	chunk_baker.tile_size = tile_size
-	chunk_baker.build_collision = bake_collision
-	chunk_baker.show_tile_lines = show_tile_lines
+	chunk_baker.config = GameMapBakerConfig.create(
+		tile_size,
+		bake_collision,
+		show_tile_lines,
+	)
 	chunk_baker.position = Vector3(
 		float(start_x) * tile_size,
 		0.0,
@@ -90,7 +98,7 @@ static func bake_visual_chunk(
 	)
 
 	visual_root.add_child(chunk_baker)
-	chunk_baker.bake_map(chunk_map)
+	chunk_baker.bake_map(map_data, bake_bounds)
 
 
 static func remove_visual_chunk(visual_root: Node3D, chunk_x: int, chunk_y: int) -> void:
@@ -117,7 +125,16 @@ static func rebuild_visual_chunk(
 	show_tile_lines: bool
 ) -> void:
 	remove_visual_chunk(visual_root, chunk_x, chunk_y)
-	bake_visual_chunk(visual_root, map_data, chunk_count_value, chunk_x, chunk_y, tile_size, bake_collision, show_tile_lines)
+	bake_visual_chunk(
+		visual_root,
+		map_data,
+		chunk_count_value,
+		chunk_x,
+		chunk_y,
+		tile_size,
+		bake_collision,
+		show_tile_lines,
+	)
 
 
 static func rebuild_visual_chunks_for_area(
@@ -143,30 +160,41 @@ static func rebuild_visual_chunks_for_area(
 		return
 
 	var safe_size := Vector2i(max(1, size.x), max(1, size.y))
-	var start_x :int= clamp(origin.x - padding_tiles, 0, map_width - 1)
-	var start_y :int= clamp(origin.y - padding_tiles, 0, map_height - 1)
-	var end_x :int= clamp(origin.x + safe_size.x - 1 + padding_tiles, 0, map_width - 1)
-	var end_y :int= clamp(origin.y + safe_size.y - 1 + padding_tiles, 0, map_height - 1)
+	var start_x: int = clamp(origin.x - padding_tiles, 0, map_width - 1)
+	var start_y: int = clamp(origin.y - padding_tiles, 0, map_height - 1)
+	var end_x: int = clamp(origin.x + safe_size.x - 1 + padding_tiles, 0, map_width - 1)
+	var end_y: int = clamp(origin.y + safe_size.y - 1 + padding_tiles, 0, map_height - 1)
 
-	var start_chunk_x :int= clamp(int(floor(float(start_x) / float(chunk_size.x))), 0, chunk_count - 1)
-	var start_chunk_y :int= clamp(int(floor(float(start_y) / float(chunk_size.y))), 0, chunk_count - 1)
-	var end_chunk_x :int= clamp(int(floor(float(end_x) / float(chunk_size.x))), 0, chunk_count - 1)
-	var end_chunk_y :int= clamp(int(floor(float(end_y) / float(chunk_size.y))), 0, chunk_count - 1)
+	var start_chunk_x: int = clamp(
+		int(floor(float(start_x) / float(chunk_size.x))),
+		0,
+		chunk_count - 1,
+	)
+	var start_chunk_y: int = clamp(
+		int(floor(float(start_y) / float(chunk_size.y))),
+		0,
+		chunk_count - 1,
+	)
+	var end_chunk_x: int = clamp(
+		int(floor(float(end_x) / float(chunk_size.x))),
+		0,
+		chunk_count - 1,
+	)
+	var end_chunk_y: int = clamp(
+		int(floor(float(end_y) / float(chunk_size.y))),
+		0,
+		chunk_count - 1,
+	)
 
 	for chunk_y in range(start_chunk_y, end_chunk_y + 1):
 		for chunk_x in range(start_chunk_x, end_chunk_x + 1):
-			rebuild_visual_chunk(visual_root, map_data, chunk_count_value, chunk_x, chunk_y, tile_size, bake_collision, show_tile_lines)
-
-
-static func get_terrain_chunk(map_data: Array, start_x: int, start_y: int, end_x: int, end_y: int) -> Array:
-	var chunk: Array = []
-
-	for y in range(start_y, end_y):
-		var row: Array = []
-
-		for x in range(start_x, end_x):
-			row.append(map_data[y][x])
-
-		chunk.append(row)
-
-	return chunk
+			rebuild_visual_chunk(
+				visual_root,
+				map_data,
+				chunk_count_value,
+				chunk_x,
+				chunk_y,
+				tile_size,
+				bake_collision,
+				show_tile_lines,
+			)

@@ -1,6 +1,9 @@
 extends RefCounted
 class_name MapCornerService
 
+const AUTO_RAMP_BUILDER := preload("res://MapSpawner/auto_ramp_builder_avg.gd")
+
+
 static func make_flat_corners(height: float) -> Dictionary:
 	return {
 		"sw": float(height),
@@ -11,7 +14,7 @@ static func make_flat_corners(height: float) -> Dictionary:
 
 
 static func recalculate_auto_ramps(map_data: Array) -> void:
-	AutoRampBuilderAvg.recalculate_auto_ramps(map_data)
+	AUTO_RAMP_BUILDER.recalculate_auto_ramps(map_data)
 
 
 static func recalculate_auto_ramps_for_area(
@@ -20,7 +23,7 @@ static func recalculate_auto_ramps_for_area(
 	size: Vector2i,
 	padding_tiles: int = 2
 ) -> void:
-	AutoRampBuilderAvg.recalculate_auto_ramps_for_area(map_data, origin, size, padding_tiles)
+	AUTO_RAMP_BUILDER.recalculate_auto_ramps_for_area(map_data, origin, size, padding_tiles)
 
 
 static func is_cell_flat(cell: Dictionary) -> bool:

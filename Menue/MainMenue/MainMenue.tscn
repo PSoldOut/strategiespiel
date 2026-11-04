@@ -19,13 +19,12 @@ alignment = 1
 
 [node name="Label" type="Label" parent="VBoxContainer" unique_id=1302614059]
 layout_mode = 2
-text = "Hello"
+text = "Horde Bastion"
 horizontal_alignment = 1
 
-[node name="MapEditorButton" type="Button" parent="VBoxContainer" unique_id=1860407046]
+[node name="PlayButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
-text = "Map Editor
-"
+text = "Start Run"
 
 [node name="QuitButton" type="Button" parent="VBoxContainer" unique_id=1640130638]
 layout_mode = 2

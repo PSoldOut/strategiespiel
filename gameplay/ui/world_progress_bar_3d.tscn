@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://gameplay/ui/world_progress_bar_3d.gd" id="1_progress"]
+
+[node name="WorldProgressBar3D" type="Node3D"]
+script = ExtResource("1_progress")
+
+[node name="Background" type="MeshInstance3D" parent="."]
+
+[node name="Fill" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0.01)

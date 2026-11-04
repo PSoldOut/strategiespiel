@@ -1,47 +1,180 @@
 {
-	"version": 0.2,
-
+	"version": 1,
 	"resources": {
-		"NONE": {
-			"name": "None",
-			"color": "#00000000",
-			"value": 0
-		},
-		"GOLD": {
+		"gold": {
 			"name": "Gold",
-			"color": "#FFD700",
-			"value": 100
+			"color": "#FFD700"
 		},
-		"STONE": {
-			"name": "Stone",
-			"color": "#808080",
-			"value": 50
+		"silver": {
+			"name": "Silver",
+			"color": "#C0C0C0"
 		}
 	},
-
 	"buildings": {
-		"NONE": {
-			"name": "None",
-			"color": "#00000000",
+		"tower": {
+			"name": "Tower",
+			"color": "#708090",
 			"size": {
-				"x": 0,
-				"y": 0
+				"x": 1,
+				"y": 1
 			}
 		},
-		"HOUSE": {
-			"name": "House",
-			"color": "#8B4513",
+		"barracks": {
+			"name": "Barracks",
+			"color": "#9A4D2F",
 			"size": {
 				"x": 2,
 				"y": 2
 			}
 		},
-		"KASERNE": {
-			"name": "Kaserne",
-			"color": "#9A4D2F",
+		"storage": {
+			"name": "Storage",
+			"color": "#B8860B",
 			"size": {
-				"x": 3,
-				"y": 2
+				"x": 2,
+				"y": 1
+			}
+		}
+	},
+	"units": {
+		"enemy_crawler": {
+			"name": "Crawler",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "LOW",
+				"speed": "NORMAL",
+				"life": "LOW",
+				"damage": "LOW"
+			}
+		},
+		"enemy_runner": {
+			"name": "Runner",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "LOW",
+				"speed": "HIGH",
+				"life": "LOW",
+				"damage": "NORMAL"
+			}
+		},
+		"enemy_brute": {
+			"name": "Brute",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "LOW",
+				"speed": "LOW",
+				"life": "HIGH",
+				"damage": "HIGH"
+			}
+		},
+		"enemy_spitter": {
+			"name": "Spitter",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "HIGH",
+				"speed": "NORMAL",
+				"life": "LOW",
+				"damage": "NORMAL"
+			}
+		},
+		"enemy_stalker": {
+			"name": "Stalker",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "LOW",
+				"speed": "HIGH",
+				"life": "NORMAL",
+				"damage": "HIGH"
+			}
+		},
+		"enemy_armored": {
+			"name": "Armored",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "LOW",
+				"speed": "LOW",
+				"life": "HIGH",
+				"damage": "NORMAL"
+			}
+		},
+		"enemy_charger": {
+			"name": "Charger",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "LOW",
+				"speed": "HIGH",
+				"life": "HIGH",
+				"damage": "HIGH"
+			}
+		},
+		"enemy_summoner": {
+			"name": "Summoner",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "HIGH",
+				"speed": "LOW",
+				"life": "NORMAL",
+				"damage": "LOW"
+			}
+		},
+		"enemy_sharpshooter": {
+			"name": "Sharpshooter",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "HIGH",
+				"speed": "NORMAL",
+				"life": "LOW",
+				"damage": "HIGH"
+			}
+		},
+		"enemy_juggernaut": {
+			"name": "Juggernaut",
+			"faction": "ENEMY",
+			"stats": {
+				"range": "NORMAL",
+				"speed": "LOW",
+				"life": "HIGH",
+				"damage": "HIGH"
+			}
+		},
+		"friendly_militia": {
+			"name": "Militia",
+			"faction": "FRIENDLY",
+			"stats": {
+				"range": "LOW",
+				"speed": "NORMAL",
+				"life": "NORMAL",
+				"damage": "NORMAL"
+			}
+		},
+		"friendly_archer": {
+			"name": "Archer",
+			"faction": "FRIENDLY",
+			"stats": {
+				"range": "HIGH",
+				"speed": "NORMAL",
+				"life": "LOW",
+				"damage": "NORMAL"
+			}
+		},
+		"friendly_guardian": {
+			"name": "Guardian",
+			"faction": "FRIENDLY",
+			"stats": {
+				"range": "LOW",
+				"speed": "LOW",
+				"life": "HIGH",
+				"damage": "NORMAL"
+			}
+		},
+		"friendly_ranger": {
+			"name": "Ranger",
+			"faction": "FRIENDLY",
+			"stats": {
+				"range": "HIGH",
+				"speed": "HIGH",
+				"life": "LOW",
+				"damage": "HIGH"
 			}
 		}
 	}

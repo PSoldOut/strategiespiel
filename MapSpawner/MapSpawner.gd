@@ -4,20 +4,14 @@ class_name MapSpawner
 @export var auto_ramp_enabled: bool = true
 @export var show_tile_lines: bool = true
 @export var bake_collision: bool = true
+@export_range(1, 64, 1) var visual_chunk_count: int = 16
 
-@export var map_name: String = "Map001"
-@export var map_save_directory: String = "res://GeneratedMaps"
-@export var map_json_extension: String = ".json"
-@export var baked_scene_extension: String = ".tscn"
 @export var tile_palette: Control
 @export_file("*.json") var entity_definitions_path: String = "res://entity_definitions.json"
 @export var show_entity_outlines: bool = true
 @export var entity_outline_height: float = 0.15
 @export var entity_outline_y_offset: float = 0.04
 
-const MAP_WIDTH: int = 128
-const MAP_HEIGHT: int = 128
-const EDITOR_JUNKS: int = 16
 const TILE_SIZE: float = 2.0
 
 const HEIGHT_STEP: float = 0.5
@@ -28,6 +22,7 @@ const AUTO_RAMP_EDIT_PADDING_TILES: int = 2
 # Terrain data. Compatible with MapBaker.
 # map_data[y][x] = { "type", "height", "corners" }
 var map_data: Array = []
+var generated_map_result: MapGenerationResult
 
 # Entity/editor data.
 # resource_data[y][x] = { "resource_type", "orientation", "count" }
@@ -57,12 +52,8 @@ func _ready() -> void:
 	visual_root.name = "VisualMap"
 	add_child(visual_root)
 
-	load_map_from_json()
-	rebuild_map()
-
-
 # -------------------------------------------------------------------------
-# High-level rebuild / editor rendering
+# High-level rebuild / runtime rendering
 # -------------------------------------------------------------------------
 
 func rebuild_map() -> void:
@@ -81,12 +72,10 @@ func _emit_map_spawned() -> void:
 
 
 func build_visual_map() -> void:
-	# Editor view: chunked bake only.
-	# Full one-piece bake happens only in save_map_as_scene().
 	MapChunkRenderer.build_visual_chunks(
 		visual_root,
 		map_data,
-		EDITOR_JUNKS,
+		visual_chunk_count,
 		TILE_SIZE,
 		bake_collision,
 		show_tile_lines
@@ -97,7 +86,7 @@ func rebuild_visual_chunks_for_area(origin: Vector2i, size: Vector2i, padding_ti
 	MapChunkRenderer.rebuild_visual_chunks_for_area(
 		visual_root,
 		map_data,
-		EDITOR_JUNKS,
+		visual_chunk_count,
 		origin,
 		size,
 		padding_tiles,
@@ -116,114 +105,28 @@ func load_entity_definitions() -> void:
 
 
 # -------------------------------------------------------------------------
-# Loading / saving
+# Runtime map generation
 # -------------------------------------------------------------------------
 
-func get_map_json_path() -> String:
-	return MapSaveLoadService.get_map_json_path(map_save_directory, map_name, map_json_extension)
+func generate_new_run_map(config: MapGeneratorConfig, seed: int) -> MapGenerationResult:
+	var generator := SeededMapGenerator.new()
+	var result := generator.generate(config, seed)
+	if result == null:
+		return null
 
-
-func get_baked_scene_path() -> String:
-	return MapSaveLoadService.get_baked_scene_path(map_save_directory, map_name, baked_scene_extension)
-
-
-func set_selected_map_name(new_map_name: String, load_immediately: bool = true) -> void:
-	var cleaned := new_map_name.strip_edges()
-	if cleaned.is_empty():
-		cleaned = "Map001"
-
-	map_name = cleaned
-
-	if load_immediately:
-		load_map_from_json()
-		rebuild_map()
-
-
-func load_map_from_json() -> void:
-	var json_path := get_map_json_path()
-	var loaded := MapSaveLoadService.load_map_from_json(json_path, MAP_WIDTH, MAP_HEIGHT)
-
-	map_data = loaded.get("map_data", [])
-	resource_data = loaded.get("resource_data", [])
-	building_data = loaded.get("building_data", [])
-
-	if not FileAccess.file_exists(json_path):
-		save_map_to_json()
-
-
-func save_map_to_json() -> void:
-	MapSaveLoadService.save_map_to_json(
-		get_map_json_path(),
-		map_save_directory,
-		map_name,
-		map_data,
-		resource_data,
-		building_data
-	)
-
-
-func save_map() -> void:
-	var json_path := get_map_json_path()
-	var scene_path := get_baked_scene_path()
-	print("Saving map as JSON: ", json_path)
-	print("Saving baked scene: ", scene_path)
-	save_map_to_json()
-	save_map_as_scene(scene_path)
-
-
-func save_map_as_scene(path: String) -> void:
-	MapSaveLoadService.save_map_as_scene(
-		path,
-		map_save_directory,
-		map_data,
-		map_name,
-		TILE_SIZE,
-		bake_collision,
-		show_tile_lines
-	)
-
-
-# -------------------------------------------------------------------------
-# Map creation / reset
-# -------------------------------------------------------------------------
-
-func create_new_empty_map(width: int, height: int) -> void:
-	var empty_map := MapSaveLoadService.create_new_empty_map(width, height)
-	map_data = empty_map.get("map_data", [])
-	resource_data = empty_map.get("resource_data", [])
-	building_data = empty_map.get("building_data", [])
-
-
-func reset_map(
-	width: int = MAP_WIDTH,
-	height: int = MAP_HEIGHT,
-	default_type: int = EnumMappings.GroundType.GRAS_TILE,
-	default_height: float = 0.0,
-) -> void:
-	print("Resetting map...")
-
-	map_data.clear()
-	resource_data.clear()
-	building_data.clear()
-
-	for y in range(height):
-		var terrain_row: Array = []
-		var resource_row: Array = []
-		var building_row: Array = []
-
-		for x in range(width):
-			terrain_row.append(MapTerrainService.make_cell(default_type, default_height))
-			resource_row.append(MapResourceService.make_empty_resource_cell())
-			building_row.append(MapBuildingService.make_empty_building_cell())
-
-		map_data.append(terrain_row)
-		resource_data.append(resource_row)
-		building_data.append(building_row)
-
-	save_map_to_json()
+	generated_map_result = result
+	map_data = result.map_data.duplicate(true)
+	var width := MapGridService.get_map_width(map_data)
+	var height := MapGridService.get_map_height(map_data)
+	resource_data = MapResourceService.create_empty_resource_map(width, height)
+	building_data = MapBuildingService.create_empty_building_map(width, height)
 	rebuild_map()
+	map_data_changed.emit()
+	return result
 
-	print("Map reset complete")
+
+func spawn_generated_decorations(spawner: EntitySpawner) -> Array[Node3D]:
+	return MapDecorationSpawner.spawn_all(generated_map_result, spawner, TILE_SIZE)
 
 
 # -------------------------------------------------------------------------
