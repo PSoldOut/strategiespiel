@@ -1,10 +1,14 @@
 extends StaticBody3D
 class_name Building
 
+## Emitted once the construction site is finished.
+signal construction_completed
+
 @export var type : String = "x"
 @export var abilities : Array[String] = []
 var build_progress = 0
 var build_end = 100
+var constructed : bool = false
 
 func _ready() -> void:
 	$SelectionUnit.team = "blue"
@@ -21,12 +25,20 @@ func place():
 	
 
 func interaction() -> bool:
+	if constructed:
+		return true
 	build_progress += 25
 	if build_progress >= build_end:
+		constructed = true
 		$ContructionMesh.visible = false
 		$MeshInstance3D.visible = true
+		construction_completed.emit()
 		return true
 	return false
+
+
+func is_constructed() -> bool:
+	return constructed
 
 
 func _on_selection_unit_selected() -> void:

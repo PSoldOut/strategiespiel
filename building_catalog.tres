@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://b15whnog2yv32" path="res://kaserne.tscn" id="3_gty5u"]
 [ext_resource type="PackedScene" uid="uid://cg7fd0xjmmwdh" path="res://mil.tscn" id="4_y8fj5"]
 [ext_resource type="Script" uid="uid://by3pkdcemid77" path="res://BuildingCatalog.gd" id="5_xlqk8"]
+[ext_resource type="PackedScene" path="res://store.tscn" id="6_store"]
+[ext_resource type="PackedScene" path="res://tower.tscn" id="7_tower"]
 
 [sub_resource type="Resource" id="Resource_owt4p"]
 script = ExtResource("1_v4xse")
@@ -29,6 +31,22 @@ scene = ExtResource("4_y8fj5")
 description = "Benötigt ein Haus und eine Kaserne."
 requires = Array[StringName]([&"house", &"kaserne"])
 
+[sub_resource type="Resource" id="Resource_store"]
+script = ExtResource("1_v4xse")
+id = &"store"
+label = "Store"
+scene = ExtResource("6_store")
+description = "Lagerhaus. Benötigt ein Haus."
+requires = Array[StringName]([&"house"])
+
+[sub_resource type="Resource" id="Resource_tower"]
+script = ExtResource("1_v4xse")
+id = &"tower"
+label = "Tower"
+scene = ExtResource("7_tower")
+description = "Turm. Beschiesst gegnerische Einheiten mit Projektilen."
+requires = Array[StringName]([&"kaserne"])
+
 [resource]
 script = ExtResource("5_xlqk8")
-buildings = Array[ExtResource("1_v4xse")]([SubResource("Resource_owt4p"), SubResource("Resource_218pk"), SubResource("Resource_s0epw")])
+buildings = Array[ExtResource("1_v4xse")]([SubResource("Resource_owt4p"), SubResource("Resource_218pk"), SubResource("Resource_s0epw"), SubResource("Resource_store"), SubResource("Resource_tower")])

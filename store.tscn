@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://bjlpm178vwatj" path="res://Building.tscn" id="1_store"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(2.99, 1.99, 1.99)
+
+[sub_resource type="BoxMesh" id="BoxMesh_store"]
+size = Vector3(3, 2, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_main"]
+size = Vector3(3, 2, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_construction"]
+size = Vector3(3, 0.1, 2)
+
+[node name="Store" unique_id=1970737323 instance=ExtResource("1_store")]
+type = "store"
+
+[node name="CollisionShape3D" parent="." index="0" unique_id=450661025]
+shape = SubResource("BoxShape3D_body")
+
+[node name="MeshInstance3D" parent="." index="1" unique_id=2126260075]
+mesh = SubResource("BoxMesh_store")
+
+[node name="CollisionShape3D" parent="Area3D" parent_id_path=PackedInt32Array(459930434) index="0" unique_id=2020451994]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.29, -1.0, -0.87)
+
+[node name="CollisionShape3D2" parent="Area3D2" parent_id_path=PackedInt32Array(544393703) index="0" unique_id=2072541606]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.29, -1.0, -0.87)
+
+[node name="CollisionShape3D3" parent="Area3D3" parent_id_path=PackedInt32Array(310322025) index="0" unique_id=1000480841]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.29, -1.0, 0.87)
+
+[node name="CollisionShape3D4" parent="Area3D4" parent_id_path=PackedInt32Array(634384424) index="0" unique_id=625224810]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.29, -1.0, 0.87)
+
+[node name="CollisionShape3D" parent="Main" parent_id_path=PackedInt32Array(18434608) index="0" unique_id=1578217557]
+shape = SubResource("BoxShape3D_main")
+
+[node name="RTSBuilding" parent="." index="7" unique_id=452273638]
+width = 3.0
+height = 2.0
+depth = 2.0
+
+[node name="ContructionMesh" parent="." index="9" unique_id=640917398]
+mesh = SubResource("BoxMesh_construction")

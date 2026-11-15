@@ -158,8 +158,9 @@ func handle_chase_to_interact():
 		target = null
 		state = State.IDLE
 		return
-	navigation_agent_3d.set_target_position(target.global_position)
-	var distance = global_position.distance_to(target.global_position)
+	var target_position = Vector3(target.global_position.x, global_position.y, target.global_position.z)
+	navigation_agent_3d.set_target_position(target_position)
+	var distance = Vector2(target.global_position.x - global_position.x, target.global_position.z - global_position.z).length()
 	if distance <= interaction_range:
 		state = State.INTERACT
 		return
@@ -188,11 +189,13 @@ func handle_interact() -> bool:
 		target = null
 		state = State.IDLE
 		return false
-	var distance = global_position.distance_to(target.global_position)
+	var distance = Vector2(target.global_position.x - global_position.x, target.global_position.z - global_position.z).length()
 	if distance > interaction_range:
 		state = State.CHASE_TO_INTERACT
 		return false
-	look_at(target.global_position)
+	var look_target = Vector3(target.global_position.x, global_position.y, target.global_position.z)
+	if look_target.distance_squared_to(global_position) > 0.0001:
+		look_at(look_target)
 	velocity = Vector3.ZERO
 	if interaction_timer > 0:
 		return false

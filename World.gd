@@ -98,12 +98,13 @@ func _refresh_build_options() -> void:
 func _owned_building_ids(team: String) -> Array[StringName]:
 	var ids: Array[StringName] = []
 	for child in $NavigationRegion3D/Buildings.get_children():
-		var selection_unit = child.get_node_or_null("SelectionUnit")
+		var building := child as Building
+		if building == null or not building.is_constructed():
+			continue
+		var selection_unit = building.get_node_or_null("SelectionUnit")
 		if selection_unit == null or selection_unit.team != team:
 			continue
-		var type = child.get("type")
-		if type != null:
-			ids.append(StringName(str(type)))
+		ids.append(StringName(str(building.type)))
 	return ids
 
 
@@ -223,10 +224,16 @@ func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
 				unit.get_unit().state = unit.get_unit().State.CHASE
 
 
+func _on_building_construction_completed() -> void:
+	_refresh_build_options()
+
+
 func _on_rts_build_system_building_set_command(position: Vector3, scene: Variant) -> void:
 	var obj = scene.instantiate()
 	obj.global_position = position
 	$NavigationRegion3D/Buildings.add_child(obj)
+	if obj.has_signal("construction_completed"):
+		obj.construction_completed.connect(_on_building_construction_completed)
 	drag_selection.register_unit(obj)
 	navRegion.bake_navigation_mesh()
 	state = states.SELECT
