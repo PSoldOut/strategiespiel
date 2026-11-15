@@ -8,5 +8,5 @@ script/source = "extends Building
 
 [node name="House" unique_id=1970737323 instance=ExtResource("1_xm50o")]
 script = SubResource("GDScript_xm50o")
-type = "x"
+type = "house"
 abilities = Array[String]([])

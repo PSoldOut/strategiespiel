@@ -5,151 +5,9 @@
 [ext_resource type="Script" uid="uid://c56qcrxfpx0oo" path="res://addons/RTSCamera/Camera.gd" id="2_2dftf"]
 [ext_resource type="ArrayMesh" uid="uid://c7pm7yc8w1xwt" path="res://testmap/mepmash.tres" id="2_wygdx"]
 [ext_resource type="Script" uid="uid://bxlx015maqnwf" path="res://addons/rtsbuildingsystem/RTS_building_system.gd" id="5_eu7l1"]
-[ext_resource type="PackedScene" uid="uid://dcnfebmxreiui" path="res://UI.tscn" id="6_p1v5b"]
-
-[sub_resource type="GDScript" id="GDScript_eu7l1"]
-resource_name = "World"
-script/source = "extends Node3D
-
-var obstacle = preload(\"res://Obstacle.tscn\")
-var AgentScene = preload(\"res://Agent.tscn\")
-var preview_obj = null
-
-
-enum states {
-	BUILD,
-	SELECT
-}
-
-var state = states.SELECT
-
-@onready var camera = $Camera3D
-@onready var navRegion = $NavigationRegion3D
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	navRegion.bake_navigation_mesh()
-	
-	var arr : Array = []
-	for i in range(200):  
-		var file = get_node(\"Agents\")
-		var agent = AgentScene.instantiate()
-		agent.position = Vector3( randf_range(0, 256), 1,  randf_range(0, 256))
-		file.add_child(agent)
-		arr.append(agent)
-	$DragSelection.register_units(arr)
-	#get_tree().get_nodes_in_group(\"units\")
-	
-	navRegion.bake_navigation_mesh()
-	pass # Replace with function body.
-
-
-
-	
-	
-			
-	
-
-
-func _on_drag_selection_move_command(positions: Array) -> void:
-	for i in range($DragSelection.current_selected.size()):
-		var unit = $DragSelection.current_selected[i]
-		if is_instance_valid(unit):
-			unit.get_unit().navigation_agent_3d.set_target_position(positions[i])
-			unit.get_unit().state = unit.get_unit().State.MOVE_STRAIGHT
-
-
-func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
-	
-	if $DragSelection.current_selected.size() > 0 and target.team == $DragSelection.current_selected[0].team:
-		for i in range($DragSelection.current_selected.size()):
-			var unit = $DragSelection.current_selected[i]
-			if is_instance_valid(unit):
-				unit.get_unit().target = target.get_unit()
-				unit.get_unit().state = unit.get_unit().State.CHASE_TO_INTERACT
-	else:
-		for i in range($DragSelection.current_selected.size()):
-			var unit = $DragSelection.current_selected[i]
-			if is_instance_valid(unit):
-				unit.get_unit().target = target.get_unit()
-				unit.get_unit().state = unit.get_unit().State.CHASE
-		
-
-
-
-	
-
-
-func _on_ui_button_selection_pressed() -> void:
-	$RTSBuildSystem.unset_preview_object()
-	$RTSBuildSystem.active = false
-	$DragSelection.active = true
-	state = states.SELECT
-
-
-func _on_ui_button_house_pressed() -> void:
-	$DragSelection.active = false
-	$RTSBuildSystem.active = true
-	$RTSBuildSystem.set_preview_object(preload(\"res://house.tscn\"))
-	state = states.BUILD
-
-func _on_ui_button_kaserne_pressed() -> void:
-	$DragSelection.active = false
-	$RTSBuildSystem.active = true
-	$RTSBuildSystem.set_preview_object(preload(\"res://kaserne.tscn\"))
-	state = states.BUILD
-
-func _on_ui_button_mil_pressed() -> void:
-	$DragSelection.active = false
-	$RTSBuildSystem.active = true
-	$RTSBuildSystem.set_preview_object(preload(\"res://mil.tscn\"))
-	state = states.BUILD
-
-
-
-
-func _on_ui_mouse_entered_panel() -> void:
-	print(\"entered\")
-	$RTSBuildSystem.active = false
-	$DragSelection.active = false
-
-
-func _on_ui_mouse_exited_panel() -> void:
-	print(\"exited\")
-	if state == states.BUILD:
-		$RTSBuildSystem.active = true
-	elif state == states.SELECT:
-		$DragSelection.active = true
-
-
-func _on_rts_build_system_building_set_command(position: Vector3, scene: Variant) -> void:
-	var obj = scene.instantiate()
-	obj.global_position = position
-	$NavigationRegion3D/Buildings.add_child(obj)
-	$DragSelection.register_unit(obj)
-	navRegion.bake_navigation_mesh()
-	state = states.SELECT
-	$RTSBuildSystem.unset_preview_object()
-	obj.place()
-	$RTSBuildSystem.active = false
-	for su : SelectionUnit in $DragSelection.current_selected:
-		print(\"----------------------\"+str(su))
-		var unit = su.get_unit()
-		su.get_unit().target = obj
-		su.get_unit().state = su.get_unit().State.CHASE_TO_INTERACT
-	await get_tree().process_frame
-	$DragSelection.active = true
-
-
-func _on_drag_selection_selected(units: Array) -> void:
-	if units.size() > 0:
-		$UI.activate_units_container([units[0].get_unit().type],[units.size()])
-		if units[0].get_unit().abilities.size() > 0:
-				$UI.activate_abilities_container(units[0].get_unit().abilities)
-	else:
-		$UI.deactivate_units_container()
-		$UI.deactivate_abilities_container()
-		
-"
+[ext_resource type="PackedScene" uid="uid://dcnfebmxreiui" path="res://addons/rtsuserinterface/ui.tscn" id="6_p1v5b"]
+[ext_resource type="Script" path="res://World.gd" id="7_world"]
+[ext_resource type="Resource" path="res://building_catalog.tres" id="8_catalog"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_js7pq"]
 vertices = PackedVector3Array(0.5, 0.45, 0.5, 0.5, 0.45, 511.5, 511.5, 0.45, 511.5, 511.5, 0.45, 0.5, 388.4786, 1.7, 100.509995, 385.51678, 0.45, 103.50924, 100.51778, 1.7, 122.984634, 176.987, 0.45, 117.00253, 410.9907, 1.7, 388.51212, 390.0169, 0.45, 119.983925, 408.01248, 0.45, 385.51892, 122.97987, 1.7, 410.98676, 115.49251, 0.45, 315.00272, 334.52148, 0.45, 394.4942, 412.51343, 0.45, 384.01627, 384.0236, 0.45, 100.477036, 127.48491, 0.45, 411.0197, 100.48007, 0.45, 127.49147, 118.48303, 0.45, 413.975, 414.02304, 0.45, 392.9909, 410.9948, 1.7, 389.9977, 97.48546, 0.45, 118.50583, 395.98727, 0.45, 94.522484, 405.00476, 0.45, 390.00375, 123.01347, 0.45, 404.9943, 106.50782, 0.45, 122.978584, 122.98397, 1.45, 412.52237, 115.4753, 0.45, 418.50986, 388.52042, 1.2, 97.48877, 97.49365, 1.2, 121.47705, 414.01074, 1.2, 388.48407, 122.98807, 1.2, 414.00797, 385.5004, 0.45, 97.5168, 96.00454, 0.45, 119.98045, 97.49775, 1.2, 123.012665, 97.50595, 0.45, 125.98389, 103.4837, 1.2, 121.520996, 388.495, 0.45, 106.50243, 390.01773, 1.7, 102.00659, 389.98, 0.45, 106.51343, 139.5191, 0.45, 412.49323, 121.49076, 1.45, 409.49014, 420.02127, 0.45, 396.00607, 106.50372, 0.45, 121.49297, 102.00689, 1.45, 124.48123, 126.008095, 0.45, 413.97995, 392.97546, 0.45, 97.521736, 391.50275, 0.95, 102.01758, 103.4796, 0.95, 119.98539, 407.97888, 0.95, 391.51135, 121.486664, 0.95, 408.00455, 124.51078, 1.45, 409.51212, 101.9864, 0.45, 117.00318, 405.00885, 0.45, 391.48938, 121.47846, 0.45, 404.9833, 120.005745, 0.95, 409.47916, 120.02214, 0.45, 415.5216, 390.0136, 1.7, 100.52098, 97.489555, 0.45, 119.99144, 412.48392, 0.7, 391.49432, 98.97867, 1.45, 121.48804, 391.51093, 0.45, 104.9888, 415.50394, 0.45, 391.5163, 408.02478, 1.2, 389.97574, 99.02457, 0.7, 120.002426, 414.01483, 1.2, 390.01968, 118.478935, 0.45, 412.4894, 121.498955, 1.45, 412.51138, 388.4827, 1.7, 101.995605, 414.00662, 0.95, 386.99847, 415.47525, 0.45, 381.017, 414.00253, 0.45, 385.51285, 120.01395, 0.7, 412.5004, 393.02136, 0.45, 95.98612)
@@ -190,14 +48,10 @@ height = 648
 fill = 2
 fill_from = Vector2(0.5, 0.5)
 
-[sub_resource type="Environment" id="Environment_p1v5b"]
-ambient_light_source = 2
-ambient_light_color = Color(1, 1, 1, 1)
-ambient_light_energy = 0.5
-reflected_light_source = 1
 
 [node name="World" type="Node3D" unique_id=983696813]
-script = SubResource("GDScript_eu7l1")
+script = ExtResource("7_world")
+building_catalog = ExtResource("8_catalog")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1603754618]
 navigation_mesh = SubResource("NavigationMesh_js7pq")
@@ -254,43 +108,19 @@ cull_mask = 524287
 script = ExtResource("2_2dftf")
 metadata/_custom_type_script = "uid://c56qcrxfpx0oo"
 
-[node name="Sprite3D" type="Sprite3D" parent="RTSCamera" unique_id=180169864]
-transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
-layers = 524288
-double_sided = false
-no_depth_test = true
-texture = SubResource("GradientTexture2D_wygdx")
-
 [node name="RTSBuildSystem" type="Node3D" parent="." unique_id=1307062194 node_paths=PackedStringArray("camera")]
 script = ExtResource("5_eu7l1")
 camera = NodePath("../RTSCamera")
 metadata/_custom_type_script = "uid://bxlx015maqnwf"
 
-[node name="UI" parent="." unique_id=785861755 node_paths=PackedStringArray("subviewport") instance=ExtResource("6_p1v5b")]
-anchors_preset = -1
-anchor_top = 0.75200003
-offset_top = -482.29602
-grow_vertical = 0
-subviewport = NodePath("../SubViewport")
+[node name="UI" parent="." unique_id=785861755 instance=ExtResource("6_p1v5b")]
 
-[node name="SubViewport" type="SubViewport" parent="." unique_id=1452621930]
-size = Vector2i(200, 200)
-
-[node name="Camera3D" type="Camera3D" parent="SubViewport" unique_id=1401035997]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 256, 350, 256)
-cull_mask = 524288
-environment = SubResource("Environment_p1v5b")
-projection = 1
-current = true
-size = 512.0
 
 [connection signal="interact_command" from="DragSelection" to="." method="_on_drag_selection_interact_command"]
 [connection signal="move_command" from="DragSelection" to="." method="_on_drag_selection_move_command"]
 [connection signal="selected" from="DragSelection" to="." method="_on_drag_selection_selected"]
 [connection signal="building_set_command" from="RTSBuildSystem" to="." method="_on_rts_build_system_building_set_command"]
-[connection signal="button_house_pressed" from="UI" to="." method="_on_ui_button_house_pressed"]
-[connection signal="button_kaserne_pressed" from="UI" to="." method="_on_ui_button_kaserne_pressed"]
-[connection signal="button_mil_pressed" from="UI" to="." method="_on_ui_button_mil_pressed"]
-[connection signal="button_selection_pressed" from="UI" to="." method="_on_ui_button_selection_pressed"]
+[connection signal="build_option_pressed" from="UI" to="." method="_on_ui_build_option_pressed"]
+[connection signal="ability_pressed" from="UI" to="." method="_on_ui_ability_pressed"]
 [connection signal="mouse_entered_panel" from="UI" to="." method="_on_ui_mouse_entered_panel"]
 [connection signal="mouse_exited_panel" from="UI" to="." method="_on_ui_mouse_exited_panel"]

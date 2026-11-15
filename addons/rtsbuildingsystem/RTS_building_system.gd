@@ -53,6 +53,8 @@ func set_collision(building : RTSBuilding, state : bool):
 
 
 func unset_preview_object():
+	if preview_object == null:
+		return
 	self.remove_child(preview_object)
 	obj_scene = null
 	preview_object = null
@@ -107,7 +109,7 @@ func _physics_process(delta):
 			var z = int(floor(pos.z / grid_size)) * grid_size
 			
 			pos.x = x+1
-			pos.y = snapped(pos.y + rts_building.depth/2.0, height_step)
+			pos.y = snapped(pos.y + rts_building.height/2.0, height_step)
 			pos.z = z+1
 			
 			

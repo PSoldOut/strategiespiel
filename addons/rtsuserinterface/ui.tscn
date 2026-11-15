@@ -1,0 +1,142 @@
+[gd_scene load_steps=8 format=3 uid="uid://dcnfebmxreiui"]
+
+[ext_resource type="Script" path="res://addons/rtsuserinterface/ui.gd" id="1_ui"]
+[ext_resource type="Theme" path="res://addons/rtsuserinterface/theme/main_theme.tres" id="2_theme"]
+[ext_resource type="Texture2D" path="res://addons/rtsuserinterface/assets/icon2.svg" id="3_icon"]
+[ext_resource type="Script" path="res://addons/rtsuserinterface/minimap_camera_marker.gd" id="4_marker"]
+
+[sub_resource type="Gradient" id="Gradient_minimap"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_minimap"]
+gradient = SubResource("Gradient_minimap")
+
+[sub_resource type="Environment" id="Environment_minimap"]
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.5
+reflected_light_source = 1
+
+[node name="UI" type="Control" unique_id=785861755]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ui")
+
+[node name="Panel" type="Panel" parent="." unique_id=864546948]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -234.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("2_theme")
+
+[node name="BuildContainer" type="MarginContainer" parent="Panel"]
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -58.5
+offset_right = 103.0
+offset_bottom = 58.5
+grow_vertical = 2
+theme = ExtResource("2_theme")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/BuildContainer"]
+layout_mode = 2
+theme = ExtResource("2_theme")
+
+[node name="AbilitiesContainer" type="MarginContainer" parent="Panel"]
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 110.0
+offset_top = -58.5
+offset_right = 213.0
+offset_bottom = 58.5
+grow_vertical = 2
+theme = ExtResource("2_theme")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/AbilitiesContainer"]
+layout_mode = 2
+theme = ExtResource("2_theme")
+
+[node name="MinimapContainer" type="MarginContainer" parent="Panel" unique_id=1345960803]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -110.0
+offset_bottom = 110.0
+grow_horizontal = 0
+grow_vertical = 2
+theme = ExtResource("2_theme")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MinimapContainer" unique_id=1060052320]
+layout_mode = 2
+
+[node name="Minimap" type="TextureRect" parent="Panel/MinimapContainer/VBoxContainer" unique_id=1095289714]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+texture = SubResource("GradientTexture2D_minimap")
+expand_mode = 3
+
+[node name="CameraMarker" type="Control" parent="Panel/MinimapContainer/VBoxContainer/Minimap"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_marker")
+
+[node name="UnitsContainer" type="MarginContainer" parent="Panel" unique_id=1267918395]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -84.0
+offset_top = -97.5
+offset_right = 84.0
+offset_bottom = 97.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/UnitsContainer" unique_id=679270622]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="Panel/UnitsContainer/VBoxContainer" unique_id=2076905688]
+layout_mode = 2
+texture = ExtResource("3_icon")
+
+[node name="List" type="VBoxContainer" parent="Panel/UnitsContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="MinimapViewport" type="SubViewport" parent="."]
+size = Vector2i(200, 200)
+
+[node name="MinimapCamera" type="Camera3D" parent="MinimapViewport"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 256, 350, 256)
+cull_mask = 524288
+environment = SubResource("Environment_minimap")
+projection = 1
+current = true
+size = 512.0
+
+[connection signal="mouse_entered" from="Panel" to="." method="_on_panel_mouse_entered"]
+[connection signal="mouse_exited" from="Panel" to="." method="_on_panel_mouse_exited"]
