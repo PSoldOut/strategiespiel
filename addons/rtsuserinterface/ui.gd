@@ -19,11 +19,11 @@ signal mouse_exited_panel
 
 @export_group("Minimap")
 @export var minimap_enabled := true
-## World position (x, z) the minimap is centered on.
+## Fallback world position (x, z) the minimap is centered on.
 @export var minimap_center := Vector2(256.0, 256.0)
 ## Height of the orthographic minimap camera above the ground.
 @export var minimap_height := 350.0
-## Half of the visible world area of the minimap.
+## Fallback vertical visible world size of the minimap camera.
 @export var minimap_ortho_size := 512.0
 ## Render layers the minimap camera sees. Objects have to be on one of them.
 @export var minimap_cull_mask := 1 << 19
@@ -31,6 +31,8 @@ signal mouse_exited_panel
 @export var ground_y := 0.0
 
 var _resolved_camera: Camera3D
+var _minimap_bounds := Rect2()
+var _has_minimap_bounds := false
 
 @onready var _panel: Panel = $Panel
 @onready var _build_container: MarginContainer = $Panel/BuildContainer
@@ -206,14 +208,43 @@ func _configure_minimap() -> void:
 		return
 
 	_minimap_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	_minimap_camera.size = minimap_ortho_size
 	_minimap_camera.cull_mask = minimap_cull_mask
-	_minimap_camera.position = Vector3(minimap_center.x, minimap_height, minimap_center.y)
 	_minimap_camera.current = true
+	_apply_minimap_camera()
 
 	_camera_marker.minimap_camera = _minimap_camera
 	_camera_marker.minimap_viewport = _minimap_viewport
 	_camera_marker.ground_y = ground_y
+
+
+## Fits the minimap camera to a world-space rectangle on the ground plane.
+## The aspect ratio is preserved, so rectangular maps are letterboxed instead
+## of being stretched.
+func set_minimap_bounds(bounds: Rect2) -> void:
+	if bounds.size.x <= 0.0 or bounds.size.y <= 0.0:
+		return
+	_minimap_bounds = bounds
+	_has_minimap_bounds = true
+	if minimap_enabled:
+		_apply_minimap_camera()
+
+
+func _apply_minimap_camera() -> void:
+	var viewport_size := _minimap_viewport.size
+	var aspect := 1.0
+	if viewport_size.x > 0 and viewport_size.y > 0:
+		aspect = float(viewport_size.x) / float(viewport_size.y)
+
+	var center := minimap_center
+	var ortho_size := minimap_ortho_size
+	if _has_minimap_bounds:
+		center = _minimap_bounds.get_center()
+		ortho_size = maxf(_minimap_bounds.size.y, _minimap_bounds.size.x / aspect)
+		minimap_center = center
+		minimap_ortho_size = ortho_size
+
+	_minimap_camera.size = ortho_size
+	_minimap_camera.position = Vector3(center.x, minimap_height, center.y)
 
 
 func _resolve_view_camera() -> void:
@@ -231,6 +262,7 @@ func _sync_minimap_size() -> void:
 	var target := Vector2i(int(_minimap.size.x), int(_minimap.size.y))
 	if _minimap_viewport.size != target:
 		_minimap_viewport.size = target
+	_apply_minimap_camera()
 
 
 func _on_panel_mouse_entered() -> void:

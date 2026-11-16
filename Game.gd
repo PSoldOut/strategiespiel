@@ -99,6 +99,7 @@ var _map_rect := Rect2(0.0, 0.0, 512.0, 512.0)
 
 func _ready() -> void:
 	_load_generated_map()
+	ui.set_minimap_bounds(_map_rect)
 	navRegion.bake_navigation_mesh()
 
 	_resource_totals[player_team] = START_RESOURCES.duplicate()
@@ -135,6 +136,7 @@ func _load_generated_map() -> void:
 	map_instance.name = "GeneratedMap"
 	_prepare_generated_agents(map_instance)
 	navRegion.add_child(map_instance)
+	_configure_generated_terrain_layers(map_instance)
 
 	var terrain := map_instance.get_node_or_null("Terrain") as Node3D
 	_map_rect = _generated_map_rect(map_instance, terrain)
@@ -163,6 +165,18 @@ func _generated_map_rect(map_instance: Node3D, terrain: Node3D) -> Rect2:
 	if width > 0 and depth > 0:
 		return Rect2(0.0, 0.0, float(width) * cell_size, float(depth) * cell_size)
 	return _map_rect
+
+
+## Generated terrain only uses the default render layer. Like the built-in
+## ground it also has to be visible to the minimap camera.
+func _configure_generated_terrain_layers(map_instance: Node3D) -> void:
+	var terrain := map_instance.get_node_or_null("Terrain") as Node3D
+	if terrain == null:
+		return
+	for node in terrain.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance != null:
+			mesh_instance.layers |= ui.minimap_cull_mask
 
 
 func _configure_camera_for_map() -> void:
