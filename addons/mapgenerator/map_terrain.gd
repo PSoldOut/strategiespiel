@@ -18,6 +18,16 @@ enum GroundType {
 const GROUND_KEYS: Array[String] = ["meadow", "sand", "water"]
 const GROUND_LABELS: Array[String] = ["Wiese", "Sand", "Wasser"]
 const MAX_SIZE: int = 512
+## Cells per chunk edge. Editing only rebuilds the chunks touched by the brush.
+const CHUNK_CELLS: int = 32
+
+
+class TerrainChunk:
+	var coordinate := Vector2i.ZERO
+	var mesh_instance: MeshInstance3D
+	var collision_body: StaticBody3D
+	var collision_shape: CollisionShape3D
+	var grid_instance: MeshInstance3D
 
 ## Size of one grid cell in world units. The game uses 2.0 as well.
 @export var cell_size: float = 2.0
@@ -40,14 +50,15 @@ const MAX_SIZE: int = 512
 var _heights: PackedFloat32Array = PackedFloat32Array()
 var _ground: PackedInt32Array = PackedInt32Array()
 
-var _mesh_instance: MeshInstance3D
-var _collision_body: StaticBody3D
-var _collision_shape: CollisionShape3D
-var _grid_instance: MeshInstance3D
+var _chunks_root: Node3D
+var _chunks: Array[TerrainChunk] = []
+var _chunk_count_x: int = 0
+var _chunk_count_z: int = 0
+var _dirty_chunks: Dictionary = {}
+var _dirty_all: bool = false
 
 var _materials: Array[StandardMaterial3D] = []
 var _grid_material: StandardMaterial3D
-var _dirty: bool = false
 
 
 func _ready() -> void:
@@ -56,33 +67,17 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _dirty:
-		_rebuild()
+	if _dirty_all or not _dirty_chunks.is_empty():
+		_flush_dirty()
 
 
 func _ensure_nodes() -> void:
-	if _mesh_instance != null:
+	if _chunks_root != null:
 		return
 
-	_mesh_instance = MeshInstance3D.new()
-	_mesh_instance.name = "TerrainMesh"
-	add_child(_mesh_instance)
-
-	_collision_body = StaticBody3D.new()
-	_collision_body.name = "TerrainCollision"
-	# Layer 1 for the game, layer 2 so the editor can pick the ground without
-	# hitting placed objects.
-	_collision_body.collision_layer = 3
-	_collision_body.collision_mask = 0
-	add_child(_collision_body)
-
-	_collision_shape = CollisionShape3D.new()
-	_collision_shape.name = "CollisionShape3D"
-	_collision_body.add_child(_collision_shape)
-
-	_grid_instance = MeshInstance3D.new()
-	_grid_instance.name = "Grid"
-	add_child(_grid_instance)
+	_chunks_root = Node3D.new()
+	_chunks_root.name = "Chunks"
+	add_child(_chunks_root)
 
 	_build_materials()
 
@@ -121,7 +116,9 @@ func reset() -> void:
 	_ground.resize(width * depth)
 	_ground.fill(GroundType.MEADOW)
 
-	_dirty = false
+	_dirty_all = false
+	_dirty_chunks.clear()
+	_rebuild_chunk_nodes()
 	_rebuild()
 	changed.emit()
 
@@ -134,38 +131,155 @@ func set_map_size(new_width: int, new_depth: int) -> void:
 
 
 func flush() -> void:
-	if _dirty:
-		_rebuild()
+	if _dirty_all or not _dirty_chunks.is_empty():
+		_flush_dirty()
 
 
 func _mark_dirty() -> void:
-	_dirty = true
+	_dirty_all = true
+	_dirty_chunks.clear()
 
 
-func _rebuild() -> void:
-	_dirty = false
-	_mesh_instance.mesh = build_mesh()
-	_collision_shape.shape = build_collision_shape()
-	_rebuild_grid()
+## Marks every chunk that contains at least one cell in the given cell range.
+func _mark_region_dirty(
+	min_cell_x: int,
+	min_cell_z: int,
+	max_cell_x: int,
+	max_cell_z: int
+) -> void:
+	if _dirty_all:
+		return
+
+	var min_x: int = clampi(min_cell_x, 0, width - 1)
+	var min_z: int = clampi(min_cell_z, 0, depth - 1)
+	var max_x: int = clampi(max_cell_x, 0, width - 1)
+	var max_z: int = clampi(max_cell_z, 0, depth - 1)
+	if min_x > max_x or min_z > max_z:
+		return
+
+	var min_chunk_x: int = _chunk_index(min_x, _chunk_count_x)
+	var max_chunk_x: int = _chunk_index(max_x, _chunk_count_x)
+	var min_chunk_z: int = _chunk_index(min_z, _chunk_count_z)
+	var max_chunk_z: int = _chunk_index(max_z, _chunk_count_z)
+
+	for chunk_z in range(min_chunk_z, max_chunk_z + 1):
+		for chunk_x in range(min_chunk_x, max_chunk_x + 1):
+			_dirty_chunks[Vector2i(chunk_x, chunk_z)] = true
+
+
+func _chunk_index(cell: int, chunk_count: int) -> int:
+	var index: int = int(floorf(float(cell) / float(CHUNK_CELLS)))
+	return clampi(index, 0, maxi(chunk_count - 1, 0))
+
+
+func _flush_dirty() -> void:
+	if _dirty_all:
+		_rebuild()
+		return
+
+	var dirty: Array = _dirty_chunks.keys()
+	_dirty_chunks.clear()
+	for value in dirty:
+		var chunk: Vector2i = value
+		_rebuild_chunk(chunk)
 	changed.emit()
 
 
-func _rebuild_grid() -> void:
-	if not show_grid:
-		_grid_instance.visible = false
+## Rebuilds every chunk. Used after loading or resizing the map.
+func _rebuild() -> void:
+	_dirty_all = false
+	_dirty_chunks.clear()
+	for chunk_z in range(_chunk_count_z):
+		for chunk_x in range(_chunk_count_x):
+			_rebuild_chunk(Vector2i(chunk_x, chunk_z))
+	changed.emit()
+
+
+func _rebuild_chunk_nodes() -> void:
+	for child in _chunks_root.get_children():
+		_chunks_root.remove_child(child)
+		child.free()
+
+	_chunks.clear()
+	_chunk_count_x = maxi(1, ceili(float(width) / float(CHUNK_CELLS)))
+	_chunk_count_z = maxi(1, ceili(float(depth) / float(CHUNK_CELLS)))
+
+	for chunk_z in range(_chunk_count_z):
+		for chunk_x in range(_chunk_count_x):
+			var chunk := TerrainChunk.new()
+			chunk.coordinate = Vector2i(chunk_x, chunk_z)
+
+			chunk.mesh_instance = MeshInstance3D.new()
+			chunk.mesh_instance.name = "ChunkMesh_%d_%d" % [chunk_x, chunk_z]
+			_chunks_root.add_child(chunk.mesh_instance)
+
+			chunk.collision_body = StaticBody3D.new()
+			chunk.collision_body.name = "ChunkCollision_%d_%d" % [chunk_x, chunk_z]
+			# Layer 1 for the game, layer 2 so the editor can pick the ground
+			# without hitting placed objects.
+			chunk.collision_body.collision_layer = 3
+			chunk.collision_body.collision_mask = 0
+			_chunks_root.add_child(chunk.collision_body)
+
+			chunk.collision_shape = CollisionShape3D.new()
+			chunk.collision_shape.name = "CollisionShape3D"
+			chunk.collision_body.add_child(chunk.collision_shape)
+
+			chunk.grid_instance = MeshInstance3D.new()
+			chunk.grid_instance.name = "ChunkGrid_%d_%d" % [chunk_x, chunk_z]
+			_chunks_root.add_child(chunk.grid_instance)
+
+			_chunks.append(chunk)
+
+
+func _rebuild_chunk(coordinate: Vector2i) -> void:
+	if coordinate.x < 0 or coordinate.x >= _chunk_count_x:
+		return
+	if coordinate.y < 0 or coordinate.y >= _chunk_count_z:
 		return
 
-	_grid_instance.visible = true
+	var index: int = coordinate.y * _chunk_count_x + coordinate.x
+	if index < 0 or index >= _chunks.size():
+		return
+
+	var chunk: TerrainChunk = _chunks[index]
+	var start_x: int = coordinate.x * CHUNK_CELLS
+	var start_z: int = coordinate.y * CHUNK_CELLS
+	var end_x: int = mini(start_x + CHUNK_CELLS, width)
+	var end_z: int = mini(start_z + CHUNK_CELLS, depth)
+
+	chunk.mesh_instance.mesh = _build_region_mesh(start_x, start_z, end_x, end_z)
+	chunk.collision_shape.shape = _build_region_collision(start_x, start_z, end_x, end_z)
+	_rebuild_chunk_grid(chunk.grid_instance, start_x, start_z, end_x, end_z)
+
+
+func _rebuild_chunk_grid(
+	grid_instance: MeshInstance3D,
+	start_x: int,
+	start_z: int,
+	end_x: int,
+	end_z: int
+) -> void:
+	if not show_grid:
+		grid_instance.visible = false
+		return
+
+	grid_instance.visible = true
 	var line_vertices := PackedVector3Array()
 	var lift := Vector3.UP * 0.04
 
-	for z in range(depth + 1):
-		for x in range(width):
+	# Lines on chunk borders are drawn by the neighbouring chunk only.
+	for z in range(start_z, end_z + 1):
+		if z == end_z and end_z < depth:
+			continue
+		for x in range(start_x, end_x):
 			line_vertices.append(_corner_position(x, z) + lift)
 			line_vertices.append(_corner_position(x + 1, z) + lift)
 
-	for x in range(width + 1):
-		for z in range(depth):
+	for x in range(start_x, end_x + 1):
+		if x == end_x and end_x < width:
+			continue
+		for z in range(start_z, end_z):
 			line_vertices.append(_corner_position(x, z) + lift)
 			line_vertices.append(_corner_position(x, z + 1) + lift)
 
@@ -176,18 +290,28 @@ func _rebuild_grid() -> void:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_LINES, arrays)
 	mesh.surface_set_material(0, _grid_material)
-	_grid_instance.mesh = mesh
+	grid_instance.mesh = mesh
 
 
 ## Builds the render mesh with one surface per ground type.
 func build_mesh() -> ArrayMesh:
+	return _build_region_mesh(0, 0, width, depth)
+
+
+## Builds the render mesh for a rectangular cell region.
+func _build_region_mesh(
+	start_x: int,
+	start_z: int,
+	end_x: int,
+	end_z: int
+) -> ArrayMesh:
 	var vertices: Array = [[], [], []]
 	var normals: Array = [[], [], []]
 	var uvs: Array = [[], [], []]
 	var indices: Array = [[], [], []]
 
-	for z in range(depth):
-		for x in range(width):
+	for z in range(start_z, end_z):
+		for x in range(start_x, end_x):
 			var type: int = _ground[z * width + x]
 			var p00 := _corner_position(x, z)
 			var p10 := _corner_position(x + 1, z)
@@ -243,10 +367,19 @@ func build_mesh() -> ArrayMesh:
 
 ## Builds the collision shape used by the editor and the exported map.
 func build_collision_shape() -> ConcavePolygonShape3D:
+	return _build_region_collision(0, 0, width, depth)
+
+
+func _build_region_collision(
+	start_x: int,
+	start_z: int,
+	end_x: int,
+	end_z: int
+) -> ConcavePolygonShape3D:
 	var faces := PackedVector3Array()
 
-	for z in range(depth):
-		for x in range(width):
+	for z in range(start_z, end_z):
+		for x in range(start_x, end_x):
 			var p00 := _corner_position(x, z)
 			var p10 := _corner_position(x + 1, z)
 			var p11 := _corner_position(x + 1, z + 1)
@@ -367,7 +500,7 @@ func set_ground_type(cell: Vector2i, type: int) -> void:
 	if _ground[index] == clamped_type:
 		return
 	_ground[index] = clamped_type
-	_mark_dirty()
+	_mark_region_dirty(cell.x, cell.y, cell.x, cell.y)
 
 
 ## Raises or lowers the terrain around a world position.
@@ -404,7 +537,8 @@ func sculpt(world_position: Vector3, radius_cells: float, delta: float) -> void:
 			touched = true
 
 	if touched:
-		_mark_dirty()
+		# A changed corner is shared by the cells around it.
+		_mark_region_dirty(min_x - 1, min_z - 1, max_x, max_z)
 
 
 ## Paints the selected ground type inside the brush circle.
@@ -430,7 +564,12 @@ func paint(world_position: Vector3, radius_cells: float, type: int) -> void:
 				touched = true
 
 	if touched:
-		_mark_dirty()
+		_mark_region_dirty(
+			center.x - range_cells,
+			center.y - range_cells,
+			center.x + range_cells,
+			center.y + range_cells
+		)
 
 
 func serialize_data() -> Dictionary:
@@ -483,7 +622,9 @@ func load_data(data: Dictionary) -> void:
 			var type: int = GROUND_KEYS.find(key)
 			_ground[index] = type if type >= 0 else GroundType.MEADOW
 
-	_dirty = false
+	_dirty_all = false
+	_dirty_chunks.clear()
+	_rebuild_chunk_nodes()
 	_rebuild()
 
 
