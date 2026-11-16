@@ -1,0 +1,95 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://addons/mapgenerator/map_generator.gd" id="1_generator"]
+[ext_resource type="Script" path="res://addons/mapgenerator/map_camera.gd" id="2_camera"]
+[ext_resource type="Script" path="res://addons/mapgenerator/map_placeable.gd" id="3_placeable"]
+[ext_resource type="PackedScene" path="res://wood.tscn" id="4_wood"]
+[ext_resource type="PackedScene" path="res://stone.tscn" id="5_stone"]
+[ext_resource type="PackedScene" path="res://zentrale.tscn" id="6_zentrale"]
+[ext_resource type="PackedScene" path="res://house.tscn" id="7_house"]
+[ext_resource type="PackedScene" path="res://kaserne.tscn" id="8_kaserne"]
+[ext_resource type="PackedScene" path="res://store.tscn" id="9_store"]
+[ext_resource type="PackedScene" path="res://mil.tscn" id="10_mil"]
+[ext_resource type="PackedScene" path="res://tower.tscn" id="11_tower"]
+[ext_resource type="PackedScene" path="res://Agent.tscn" id="12_agent"]
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 1
+background_color = Color(0.09, 0.11, 0.15, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.72, 0.78, 0.9, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+
+[sub_resource type="Resource" id="Placeable_wood"]
+script = ExtResource("3_placeable")
+label = "Holz"
+category = "Ressourcen"
+scene = ExtResource("4_wood")
+
+[sub_resource type="Resource" id="Placeable_stone"]
+script = ExtResource("3_placeable")
+label = "Stein"
+category = "Ressourcen"
+scene = ExtResource("5_stone")
+
+[sub_resource type="Resource" id="Placeable_zentrale"]
+script = ExtResource("3_placeable")
+label = "Zentrale"
+category = "Gebäude"
+scene = ExtResource("6_zentrale")
+
+[sub_resource type="Resource" id="Placeable_house"]
+script = ExtResource("3_placeable")
+label = "Haus"
+category = "Gebäude"
+scene = ExtResource("7_house")
+
+[sub_resource type="Resource" id="Placeable_kaserne"]
+script = ExtResource("3_placeable")
+label = "Kaserne"
+category = "Gebäude"
+scene = ExtResource("8_kaserne")
+
+[sub_resource type="Resource" id="Placeable_store"]
+script = ExtResource("3_placeable")
+label = "Lager"
+category = "Gebäude"
+scene = ExtResource("9_store")
+
+[sub_resource type="Resource" id="Placeable_mil"]
+script = ExtResource("3_placeable")
+label = "Mühle"
+category = "Gebäude"
+scene = ExtResource("10_mil")
+
+[sub_resource type="Resource" id="Placeable_tower"]
+script = ExtResource("3_placeable")
+label = "Turm"
+category = "Gebäude"
+scene = ExtResource("11_tower")
+
+[sub_resource type="Resource" id="Placeable_agent"]
+script = ExtResource("3_placeable")
+label = "Pionier"
+category = "Einheiten"
+scene = ExtResource("12_agent")
+
+[node name="MapGenerator" type="Node3D"]
+script = ExtResource("1_generator")
+placeables = Array[ExtResource("3_placeable")]([SubResource("Placeable_wood"), SubResource("Placeable_stone"), SubResource("Placeable_zentrale"), SubResource("Placeable_house"), SubResource("Placeable_kaserne"), SubResource("Placeable_store"), SubResource("Placeable_mil"), SubResource("Placeable_tower"), SubResource("Placeable_agent")])
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-1.0, -0.6, 0)
+light_energy = 1.15
+shadow_enabled = true
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.581683, 0.813415, 0, -0.813415, 0.581683, 0, 82.833, 103.273)
+current = true
+fov = 60.0
+far = 2000.0
+script = ExtResource("2_camera")

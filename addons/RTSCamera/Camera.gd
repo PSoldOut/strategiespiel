@@ -24,6 +24,9 @@ class_name RTSCamera
 @export var min_pitch := -1.2
 ##Die Maximale Neigung der Kamera in radiant
 @export var max_pitch := -0.2
+##Begrenzt die Kameraposition auf einen Bereich in Weltkoordinaten (x/z).
+@export var use_bounds : bool = false
+@export var bounds : Rect2 = Rect2(0.0, 0.0, 512.0, 512.0)
 
 var new_zoom = 0
 
@@ -102,6 +105,16 @@ func _process(delta):
 		var target_movement = (forward * move_dir.z + right * move_dir.x) * current_speed * delta
 		movement = movement.lerp(target_movement, move_smoothness)
 		global_translate(movement)
+
+	if use_bounds:
+		global_position.x = clampf(global_position.x, bounds.position.x, bounds.end.x)
+		global_position.z = clampf(global_position.z, bounds.position.y, bounds.end.y)
+
+
+## Beschränkt die Kamera auf den angegebenen Weltbereich.
+func set_bounds(area : Rect2) -> void:
+	bounds = area
+	use_bounds = true
 
 
 

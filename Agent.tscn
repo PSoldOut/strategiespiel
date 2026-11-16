@@ -27,7 +27,7 @@ enum State {
 
 var state = State.IDLE
 var selected : bool = false
-var team : String = \"blue\"
+var team : String = \"\"
 var area_is_monitoring : bool = true
 var target = null
 
@@ -59,13 +59,13 @@ var abilities = [\"build\"]
 
 func _ready():
 
-	randomize()
-
-	# Zufälliges Team
-	if randi() % 3 == 0:
-		team = \"red\"
-	else:
-		team = \"blue\"
+	if team.is_empty():
+		randomize()
+		# Zufälliges Team
+		if randi() % 3 == 0:
+			team = \"red\"
+		else:
+			team = \"blue\"
 	$DragSelectionUnit.set_team(team)
 	update_team_color()
 

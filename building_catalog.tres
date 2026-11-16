@@ -9,12 +9,26 @@
 [ext_resource type="PackedScene" path="res://tower.tscn" id="7_tower"]
 [ext_resource type="PackedScene" path="res://zentrale.tscn" id="8_zentrale"]
 
+[sub_resource type="Resource" id="Resource_zentrale"]
+script = ExtResource("1_v4xse")
+id = &"zentrale"
+label = "Zentrale"
+scene = ExtResource("8_zentrale")
+description = "Hauptgebäude. Pioniere liefern hier Ressourcen ab."
+costs = {
+&"stone": 100,
+&"wood": 200
+}
+
 [sub_resource type="Resource" id="Resource_owt4p"]
 script = ExtResource("1_v4xse")
 id = &"house"
 label = "Haus"
 scene = ExtResource("2_qhhgn")
 description = "Wohnhaus. Schaltet die Kaserne frei."
+costs = {
+&"wood": 50
+}
 
 [sub_resource type="Resource" id="Resource_218pk"]
 script = ExtResource("1_v4xse")
@@ -22,6 +36,10 @@ id = &"kaserne"
 label = "Kaserne"
 scene = ExtResource("3_gty5u")
 description = "Benötigt ein Haus."
+costs = {
+&"stone": 40,
+&"wood": 120
+}
 requires = Array[StringName]([&"house"])
 
 [sub_resource type="Resource" id="Resource_s0epw"]
@@ -30,6 +48,10 @@ id = &"mil"
 label = "Mühle"
 scene = ExtResource("4_y8fj5")
 description = "Benötigt ein Haus und eine Kaserne."
+costs = {
+&"stone": 30,
+&"wood": 100
+}
 requires = Array[StringName]([&"house", &"kaserne"])
 
 [sub_resource type="Resource" id="Resource_store"]
@@ -38,6 +60,9 @@ id = &"store"
 label = "Store"
 scene = ExtResource("6_store")
 description = "Lagerhaus. Benötigt ein Haus."
+costs = {
+&"wood": 80
+}
 requires = Array[StringName]([&"house"])
 
 [sub_resource type="Resource" id="Resource_tower"]
@@ -46,14 +71,11 @@ id = &"tower"
 label = "Tower"
 scene = ExtResource("7_tower")
 description = "Turm. Beschiesst gegnerische Einheiten mit Projektilen."
+costs = {
+&"stone": 120,
+&"wood": 150
+}
 requires = Array[StringName]([&"kaserne"])
-
-[sub_resource type="Resource" id="Resource_zentrale"]
-script = ExtResource("1_v4xse")
-id = &"zentrale"
-label = "Zentrale"
-scene = ExtResource("8_zentrale")
-description = "Hauptgebäude. Pioniere liefern hier Ressourcen ab."
 
 [resource]
 script = ExtResource("5_xlqk8")

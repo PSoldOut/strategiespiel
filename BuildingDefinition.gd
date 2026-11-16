@@ -14,6 +14,9 @@ class_name BuildingDefinition
 ## Tooltip shown in the build menu.
 @export_multiline var description: String = ""
 
+## Resources needed to construct the building: [code]{resource_id: amount}[/code].
+@export var costs : Dictionary = {}
+
 ## Ids of buildings that have to exist before this one is available.
 @export var requires: Array[StringName] = []
 

@@ -18,6 +18,12 @@ const UNIT_LABELS := {
 ## Seconds between refreshes of the selection panel.
 const SELECTION_REFRESH_INTERVAL := 0.2
 
+## Resources every team starts with: [code]{resource_id: amount}[/code].
+const START_RESOURCES := {
+	&"wood": 500,
+	&"stone": 200,
+}
+
 ## Resource deposits placed at the start of the game as a rectangular grid.
 ## Each entry needs scene, origin (x, z), count, columns and spacing.
 const RESOURCE_SPAWNS := [
@@ -47,6 +53,13 @@ var state = states.SELECT
 ## Buildings that can be constructed and the prerequisites between them.
 @export var building_catalog: BuildingCatalog
 
+@export_group("Map")
+## Optional scene exported by the map generator. When assigned, the built-in
+## ground is replaced by the generated terrain and the placed buildings and
+## resources become part of the running game.
+@export var generated_map: PackedScene
+@export_group("")
+
 ## Abstract tags that are currently unlocked. Buildings can require them via
 ## [member BuildingDefinition.unlocked_by].
 var unlocked_tags: Array[StringName] = []
@@ -65,26 +78,221 @@ var _selection_refresh := 0.0
 var _active_team := "blue"
 var _can_show_build_options := false
 
-@onready var navRegion: NavigationRegion3D = $NavigationRegion3D
+## Building the player chose in the build menu but has not placed yet.
+var _pending_build : BuildingDefinition = null
+
+## True while the world runs on a scene exported by the map generator.
+var _using_generated_map := false
+## Number of agents that came from the generated map instead of the fallback spawn.
+var _generated_agent_count := 0
+## Playable area in world coordinates, used for spawning and camera limits.
+var _map_rect := Rect2(0.0, 0.0, 512.0, 512.0)
+
+@onready var navRegion: NavigationRegion3D = $Map/NavigationRegion3D
+@onready var buildings: Node3D = $Map/NavigationRegion3D/Buildings
+@onready var agents: Node3D = $Map/Agents
+@onready var resources: Node3D = $Map/Resources
 @onready var ui: RTSUserInterface = $UI
 @onready var drag_selection: DragSelection = $DragSelection
 @onready var build_system: RTSBuildSystem = $RTSBuildSystem
 
 
 func _ready() -> void:
+	_load_generated_map()
 	navRegion.bake_navigation_mesh()
+
+	_resource_totals[player_team] = START_RESOURCES.duplicate()
+	_refresh_build_options()
+	_refresh_resources()
+
+	# Spawning happens after a physics tick so raycasts against a generated
+	# terrain already hit its collision shape.
+	await get_tree().physics_frame
+	if _generated_agent_count == 0:
+		_spawn_agents()
+	if not _using_generated_map:
+		_spawn_resources()
+
+
+## Replaces the built-in ground with a scene exported by the map generator.
+## The generated scene is instanced below the [NavigationRegion3D] so its
+## terrain collision is part of the navigation-visible geometry.
+func _load_generated_map() -> void:
+	if generated_map == null:
+		return
+
+	var map_instance := generated_map.instantiate() as Node3D
+	if map_instance == null:
+		return
+
+	_using_generated_map = true
+
+	var old_ground := navRegion.get_node_or_null("Ground")
+	if old_ground != null:
+		navRegion.remove_child(old_ground)
+		old_ground.queue_free()
+
+	map_instance.name = "GeneratedMap"
+	_prepare_generated_agents(map_instance)
+	navRegion.add_child(map_instance)
+
+	var terrain := map_instance.get_node_or_null("Terrain") as Node3D
+	_map_rect = _generated_map_rect(map_instance, terrain)
+	_configure_camera_for_map()
+
+	var objects := map_instance.get_node_or_null("Objects")
+	if objects != null:
+		_adopt_generated_objects(objects)
+
+
+func _generated_map_rect(map_instance: Node3D, terrain: Node3D) -> Rect2:
+	if terrain != null:
+		var mesh_instance := terrain.get_node_or_null("TerrainMesh") as MeshInstance3D
+		if mesh_instance != null and mesh_instance.mesh != null:
+			var world_box: AABB = mesh_instance.global_transform * mesh_instance.get_aabb()
+			return Rect2(
+				world_box.position.x,
+				world_box.position.z,
+				world_box.size.x,
+				world_box.size.z,
+			)
+
+	var width := int(map_instance.get_meta("map_width", 0))
+	var depth := int(map_instance.get_meta("map_depth", 0))
+	var cell_size := float(map_instance.get_meta("map_cell_size", 2.0))
+	if width > 0 and depth > 0:
+		return Rect2(0.0, 0.0, float(width) * cell_size, float(depth) * cell_size)
+	return _map_rect
+
+
+func _configure_camera_for_map() -> void:
+	var camera := get_node_or_null("RTSCamera") as RTSCamera
+	if camera == null:
+		return
+
+	var center := _map_rect.get_center()
+	var span := maxf(_map_rect.size.x, _map_rect.size.y)
+	camera.set_bounds(_map_rect)
+	camera.global_position.x = center.x
+	camera.global_position.z = center.y
+	camera.global_position.y = clampf(span * 0.4, 24.0, camera.max_zoom_out)
+	camera.new_zoom = camera.global_position.y
+
+
+## Gives generated agents the player's team before they enter the tree, so
+## their [code]_ready[/code] does not assign a random team.
+func _prepare_generated_agents(map_instance: Node) -> void:
+	for node in map_instance.find_children("*", "CharacterBody3D", true, false):
+		var agent := _generated_agent_value(node)
+		if agent != null:
+			agent.set("team", player_team)
+
+
+## Identifies a generated agent without depending on the map generator knowing
+## the game's Agent class.
+func _generated_agent_value(node: Node) -> CharacterBody3D:
+	var body := node as CharacterBody3D
+	if body == null or not body.has_method("update_team_color"):
+		return null
+	if body.get("team") == null:
+		return null
+	return body
+
+
+## Moves generated buildings into the building folder, resources into the
+## resource folder and agents into the agent folder, preserving world transforms.
+func _adopt_generated_objects(objects: Node) -> void:
+	for category in objects.get_children():
+		for entry in category.get_children():
+			if entry is Building:
+				_adopt_generated_building(entry as Building)
+			elif entry is ResourceNode:
+				(entry as ResourceNode).reparent(resources, true)
+			else:
+				var agent := _generated_agent_value(entry)
+				if agent != null:
+					_adopt_generated_agent(agent)
+
+		if category.get_child_count() == 0:
+			objects.remove_child(category)
+			category.queue_free()
+
+
+func _adopt_generated_agent(agent: CharacterBody3D) -> void:
+	agent.reparent(agents, true)
+	agent.set("team", player_team)
+	var selection_unit := agent.get_node_or_null("DragSelectionUnit")
+	if selection_unit != null and selection_unit.has_method("set_team"):
+		selection_unit.call("set_team", player_team)
+	if agent.has_method("update_team_color"):
+		agent.call("update_team_color")
+	_generated_agent_count += 1
+	if not drag_selection.units.has(agent):
+		drag_selection.register_unit(agent)
+
+
+func _adopt_generated_building(building: Building) -> void:
+	building.reparent(buildings, true)
+	building.constructed = true
+	building.build_progress = building.build_end
+
+	var finished_mesh := building.get_node_or_null("MeshInstance3D") as Node3D
+	if finished_mesh != null:
+		finished_mesh.visible = true
+	var construction_mesh := building.get_node_or_null("ContructionMesh") as Node3D
+	if construction_mesh != null:
+		construction_mesh.visible = false
+
+	var completed_handler := Callable(self, "_on_building_construction_completed")
+	if building.has_signal(&"construction_completed") \
+			and not building.is_connected(&"construction_completed", completed_handler):
+		building.connect(&"construction_completed", completed_handler)
+
+	var deposit_handler := Callable(self, "_on_resource_deposited")
+	if building.has_signal(&"resource_deposited") \
+			and not building.is_connected(&"resource_deposited", deposit_handler):
+		building.connect(&"resource_deposited", deposit_handler)
+
+	if not drag_selection.units.has(building):
+		drag_selection.register_unit(building)
+
+
+func _spawn_agents() -> void:
+	var spawn_rect := Rect2(0.0, 0.0, 256.0, 256.0)
+	if _using_generated_map:
+		spawn_rect = _map_rect.grow(-3.0)
+		if spawn_rect.size.x <= 0.0 or spawn_rect.size.y <= 0.0:
+			spawn_rect = _map_rect
 
 	var arr: Array = []
 	for _i in range(200):
 		var agent = AGENT_SCENE.instantiate()
-		agent.position = Vector3(randf_range(0, 256), 1, randf_range(0, 256))
-		$Agents.add_child(agent)
+		var x := randf_range(spawn_rect.position.x, spawn_rect.end.x)
+		var z := randf_range(spawn_rect.position.y, spawn_rect.end.y)
+		var y := 1.0
+		if _using_generated_map:
+			y = _ground_height_at(x, z) + 1.0
+		agent.position = Vector3(x, y, z)
+		agents.add_child(agent)
 		arr.append(agent)
 	drag_selection.register_units(arr)
 
-	_refresh_build_options()
-	_refresh_resources()
-	_spawn_resources()
+
+func _ground_height_at(x: float, z: float) -> float:
+	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(
+		Vector3(x, 200.0, z),
+		Vector3(x, -50.0, z),
+	)
+	query.collision_mask = 1
+	query.collide_with_areas = false
+	var hit: Dictionary = space.intersect_ray(query)
+	if hit.is_empty():
+		return 0.0
+	var position_value: Variant = hit.get("position", Vector3.ZERO)
+	if position_value is Vector3:
+		return (position_value as Vector3).y
+	return 0.0
 
 
 func _process(delta: float) -> void:
@@ -111,6 +319,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _cancel_build() -> void:
+	_pending_build = null
 	if build_system.preview_object != null:
 		build_system.unset_preview_object()
 	build_system.active = false
@@ -147,15 +356,72 @@ func _refresh_build_options() -> void:
 			definition.id,
 			definition.label,
 			definition.icon,
-			false,
-			definition.description,
+			not can_afford(definition.costs, _active_team),
+			_build_tooltip(definition, _active_team),
 		))
 	ui.set_build_options(entries)
 
 
+## Tooltip for a build option: description, resource costs and, when the
+## resources are missing, a hint why the entry is disabled.
+func _build_tooltip(definition: BuildingDefinition, team: String) -> String:
+	var parts: Array[String] = []
+	if not definition.description.is_empty():
+		parts.append(definition.description)
+
+	var costs: Array[String] = []
+	var ordered: Array[StringName] = []
+	for hud_entry in HUD_RESOURCES:
+		var hud_id: StringName = hud_entry["id"]
+		if definition.costs.has(hud_id):
+			ordered.append(hud_id)
+	for resource_id in definition.costs:
+		var id := StringName(str(resource_id))
+		if not ordered.has(id):
+			ordered.append(id)
+	for id in ordered:
+		costs.append("%d %s" % [
+			int(definition.costs[id]),
+			_resource_label(id),
+		])
+	if costs.is_empty():
+		parts.append("Kosten: keine")
+	else:
+		parts.append("Kosten: " + ", ".join(PackedStringArray(costs)))
+
+	if not can_afford(definition.costs, team):
+		parts.append("Nicht genug Ressourcen")
+	return "\n".join(PackedStringArray(parts))
+
+
+## Returns true when [param team] has enough resources for [param costs].
+func can_afford(costs: Dictionary, team: String = "") -> bool:
+	var target_team: String = team if not team.is_empty() else player_team
+	for resource_id in costs:
+		var id := StringName(str(resource_id))
+		if get_resource_amount(id, target_team) < int(costs[resource_id]):
+			return false
+	return true
+
+
+## Deducts [param costs] from the total of [param team]. Returns false and
+## changes nothing when the team cannot afford them.
+func spend_resources(costs: Dictionary, team: String = "") -> bool:
+	if not can_afford(costs, team):
+		return false
+	var target_team: String = team if not team.is_empty() else player_team
+	var totals: Dictionary = _resource_totals.get(target_team, {})
+	for resource_id in costs:
+		var id := StringName(str(resource_id))
+		totals[id] = int(totals.get(id, 0)) - int(costs[resource_id])
+	_resource_totals[target_team] = totals
+	_refresh_resources()
+	return true
+
+
 func _owned_building_ids(team: String) -> Array[StringName]:
 	var ids: Array[StringName] = []
-	for child in $NavigationRegion3D/Buildings.get_children():
+	for child in buildings.get_children():
 		var building := child as Building
 		if building == null or not building.is_constructed():
 			continue
@@ -344,7 +610,10 @@ func _on_ui_build_option_pressed(id: StringName) -> void:
 	var definition := building_catalog.get_definition(id)
 	if definition == null or definition.scene == null:
 		return
+	if not can_afford(definition.costs, _active_team):
+		return
 
+	_pending_build = definition
 	drag_selection.active = false
 	build_system.active = true
 	build_system.set_preview_object(definition.scene)
@@ -413,6 +682,8 @@ func deposit_resource(team: String, resource_type: StringName, amount: int) -> v
 	totals[resource_type] = int(totals.get(resource_type, 0)) + amount
 	_resource_totals[team] = totals
 	_refresh_resources()
+	if team == _active_team:
+		_refresh_build_options()
 
 
 func get_resource_amount(resource_type: StringName, team: String = "") -> int:
@@ -440,7 +711,7 @@ func _spawn_resources() -> void:
 
 	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
 	var ignored: Array[RID] = []
-	for agent in $Agents.get_children():
+	for agent in agents.get_children():
 		if agent is CollisionObject3D:
 			ignored.append((agent as CollisionObject3D).get_rid())
 
@@ -463,7 +734,7 @@ func _spawn_resources() -> void:
 			if not hit.is_empty():
 				y = (hit["position"] as Vector3).y
 			var node: Node3D = scene.instantiate()
-			$Resources.add_child(node)
+			resources.add_child(node)
 			node.global_position = Vector3(x, y, z)
 
 
@@ -472,9 +743,16 @@ func _on_building_construction_completed() -> void:
 
 
 func _on_rts_build_system_building_set_command(position: Vector3, scene: Variant) -> void:
+	var definition := _pending_build
+	_pending_build = null
+
+	if definition != null and not spend_resources(definition.costs, _active_team):
+		_cancel_build()
+		return
+
 	var obj = scene.instantiate()
 	obj.global_position = position
-	$NavigationRegion3D/Buildings.add_child(obj)
+	buildings.add_child(obj)
 	if obj.has_signal("construction_completed"):
 		obj.construction_completed.connect(_on_building_construction_completed)
 	if obj.has_signal("resource_deposited"):
