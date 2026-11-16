@@ -20,7 +20,9 @@ enum State {
 	CHASE,
 	CHASE_TO_INTERACT,
 	ATTACK,
-	INTERACT
+	INTERACT,
+	GATHER,
+	RETURN_RESOURCE
 }
 
 var state = State.IDLE
@@ -40,6 +42,15 @@ var attack_cooldown = 1.0
 var attack_timer = 0.0
 var interaction_cooldown = 1.0
 var interaction_timer = 0.0
+
+var gather_capacity : int = 20
+var gather_per_tick : int = 5
+var gather_interval : float = 0.5
+var gather_timer : float = 0.0
+var carry_amount : int = 0
+var carry_type : StringName = &\"\"
+var gather_target = null
+var resource_reach_range : float = 1.4
 
 var speed = 5.0
 
@@ -98,6 +109,8 @@ func _physics_process(delta: float) -> void:
 		attack_timer -= delta
 	if interaction_timer > 0:
 		interaction_timer -= delta
+	if gather_timer > 0:
+		gather_timer -= delta
 
 	match state:
 
@@ -129,6 +142,14 @@ func _physics_process(delta: float) -> void:
 			
 		State.INTERACT:
 			handle_interact()
+
+		State.GATHER:
+			$Area3D/CollisionShape3D.disabled = true
+			handle_gather()
+
+		State.RETURN_RESOURCE:
+			$Area3D/CollisionShape3D.disabled = true
+			handle_return_resource()
 	move_and_slide()
 
 
@@ -158,10 +179,8 @@ func handle_chase_to_interact():
 		target = null
 		state = State.IDLE
 		return
-	var target_position = Vector3(target.global_position.x, global_position.y, target.global_position.z)
-	navigation_agent_3d.set_target_position(target_position)
-	var distance = Vector2(target.global_position.x - global_position.x, target.global_position.z - global_position.z).length()
-	if distance <= interaction_range:
+	navigation_agent_3d.set_target_position(approach_point(target))
+	if reached(target):
 		state = State.INTERACT
 		return
 	move_to_target()
@@ -189,13 +208,10 @@ func handle_interact() -> bool:
 		target = null
 		state = State.IDLE
 		return false
-	var distance = Vector2(target.global_position.x - global_position.x, target.global_position.z - global_position.z).length()
-	if distance > interaction_range:
+	if !reached(target):
 		state = State.CHASE_TO_INTERACT
 		return false
-	var look_target = Vector3(target.global_position.x, global_position.y, target.global_position.z)
-	if look_target.distance_squared_to(global_position) > 0.0001:
-		look_at(look_target)
+	look_at_flat(target)
 	velocity = Vector3.ZERO
 	if interaction_timer > 0:
 		return false
@@ -206,6 +222,140 @@ func handle_interact() -> bool:
 	return false
 	
 	
+
+func gather_from(resource_node) -> void:
+	if resource_node == null or !is_instance_valid(resource_node):
+		return
+	if !resource_node.has_method(\"harvest\"):
+		return
+	gather_target = resource_node
+	target = resource_node
+	state = State.GATHER
+
+
+func handle_gather() -> void:
+	if carry_amount >= gather_capacity:
+		if start_return():
+			return
+		velocity = Vector3.ZERO
+		return
+	if !is_instance_valid(gather_target):
+		if carry_amount > 0 and start_return():
+			return
+		gather_target = null
+		target = null
+		carry_amount = 0
+		carry_type = &\"\"
+		state = State.IDLE
+		return
+	if !reached(gather_target):
+		navigation_agent_3d.set_target_position(approach_point(gather_target))
+		move_to_target()
+		return
+	velocity = Vector3.ZERO
+	look_at_flat(gather_target)
+	if gather_timer > 0:
+		return
+	var requested : int = mini(gather_per_tick, gather_capacity - carry_amount)
+	var resource_type : StringName = gather_target.resource_id
+	var taken : int = gather_target.harvest(requested)
+	if taken <= 0:
+		return
+	carry_amount += taken
+	carry_type = resource_type
+	gather_timer = gather_interval
+	$AnimationPlayer.play(\"attack\")
+	if carry_amount >= gather_capacity:
+		start_return()
+
+
+func handle_return_resource() -> void:
+	if !is_instance_valid(target):
+		target = null
+		gather_target = null
+		carry_amount = 0
+		carry_type = &\"\"
+		state = State.IDLE
+		return
+	if carry_amount <= 0:
+		continue_gathering()
+		return
+	if !reached(target):
+		navigation_agent_3d.set_target_position(approach_point(target))
+		move_to_target()
+		return
+	velocity = Vector3.ZERO
+	look_at_flat(target)
+	var delivered : int = carry_amount
+	carry_amount = 0
+	if target.has_method(\"deposit\"):
+		target.deposit(carry_type, delivered, team)
+	carry_type = &\"\"
+	continue_gathering()
+
+
+func start_return() -> bool:
+	var dropoff = find_dropoff()
+	if dropoff == null:
+		return false
+	target = dropoff
+	state = State.RETURN_RESOURCE
+	return true
+
+
+func continue_gathering() -> void:
+	if is_instance_valid(gather_target):
+		target = gather_target
+		state = State.GATHER
+		return
+	gather_target = null
+	target = null
+	state = State.IDLE
+
+
+func find_dropoff():
+	var best = null
+	var best_distance : float = INF
+	for node in get_tree().get_nodes_in_group(\"resource_dropoff\"):
+		if !is_instance_valid(node):
+			continue
+		if node.has_method(\"is_constructed\") and !node.is_constructed():
+			continue
+		if node.has_method(\"get_team\") and node.get_team() != team:
+			continue
+		var distance : float = Vector2(node.global_position.x - global_position.x, node.global_position.z - global_position.z).length()
+		if distance < best_distance:
+			best_distance = distance
+			best = node
+	return best
+
+
+func approach_point(node) -> Vector3:
+	var rts = node.get_node_or_null(\"RTSBuilding\")
+	if rts != null:
+		var half_width : float = float(rts.width) * 0.5
+		var half_depth : float = float(rts.depth) * 0.5
+		return Vector3(
+			node.global_position.x + clampf(global_position.x - node.global_position.x, -half_width, half_width),
+			global_position.y,
+			node.global_position.z + clampf(global_position.z - node.global_position.z, -half_depth, half_depth)
+		)
+	return Vector3(node.global_position.x, global_position.y, node.global_position.z)
+
+
+func reached(node) -> bool:
+	var point : Vector3 = approach_point(node)
+	var range_to_use : float = interaction_range
+	if node.get_node_or_null(\"RTSBuilding\") == null:
+		range_to_use = resource_reach_range
+	return Vector2(point.x - global_position.x, point.z - global_position.z).length() <= range_to_use
+
+
+func look_at_flat(node) -> void:
+	var look_target := Vector3(node.global_position.x, global_position.y, node.global_position.z)
+	if look_target.distance_squared_to(global_position) > 0.0001:
+		look_at(look_target)
+
 
 func move_to_target():
 	var destination = navigation_agent_3d.get_next_path_position()

@@ -89,6 +89,8 @@ mesh = SubResource("PlaneMesh_js7pq")
 
 [node name="Agents" type="Node3D" parent="." unique_id=260396588]
 
+[node name="Resources" type="Node3D" parent="." unique_id=819436172]
+
 [node name="DragSelection" type="Control" parent="." unique_id=1408996329 node_paths=PackedStringArray("camera")]
 layout_mode = 3
 anchors_preset = 0
@@ -99,6 +101,7 @@ camera = NodePath("../RTSCamera")
 team = "blue"
 stroke_color = Color(0, 1, 0, 0)
 use_collision_shapes = true
+right_click_group = &"gatherable"
 update_time = 0.1
 metadata/_custom_type_script = "uid://b4sl40in0000r"
 
@@ -117,6 +120,7 @@ metadata/_custom_type_script = "uid://bxlx015maqnwf"
 
 
 [connection signal="interact_command" from="DragSelection" to="." method="_on_drag_selection_interact_command"]
+[connection signal="right_click" from="DragSelection" to="." method="_on_drag_selection_right_click"]
 [connection signal="move_command" from="DragSelection" to="." method="_on_drag_selection_move_command"]
 [connection signal="selected" from="DragSelection" to="." method="_on_drag_selection_selected"]
 [connection signal="building_set_command" from="RTSBuildSystem" to="." method="_on_rts_build_system_building_set_command"]

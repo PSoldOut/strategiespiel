@@ -1,0 +1,73 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ResourceNode.gd" id="1_resource"]
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="2_selection"]
+[ext_resource type="Texture2D" path="res://icons/wood.svg" id="3_icon"]
+
+[sub_resource type="StandardMaterial3D" id="Material_trunk"]
+albedo_color = Color(0.36, 0.22, 0.12, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_trunk"]
+material = SubResource("Material_trunk")
+top_radius = 0.2
+bottom_radius = 0.3
+height = 2.0
+radial_segments = 8
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="Material_leaves"]
+albedo_color = Color(0.16, 0.5, 0.18, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_leaves"]
+material = SubResource("Material_leaves")
+radius = 1.2
+height = 2.4
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_trunk"]
+height = 2.4
+radius = 0.6
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_leaves"]
+radius = 1.3
+
+[sub_resource type="Gradient" id="Gradient_marker"]
+colors = PackedColorArray(0.2, 0.65, 0.2, 1, 0.2, 0.65, 0.2, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_marker"]
+gradient = SubResource("Gradient_marker")
+width = 1
+height = 1
+
+[node name="Wood" type="StaticBody3D" groups=["gatherable"]]
+script = ExtResource("1_resource")
+icon = ExtResource("3_icon")
+
+[node name="SelectionUnit" type="Node3D" parent="." node_paths=PackedStringArray("unit")]
+script = ExtResource("2_selection")
+team = "neutral"
+unit = NodePath("..")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+shape = SubResource("CylinderShape3D_trunk")
+
+[node name="LeavesCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
+shape = SubResource("SphereShape3D_leaves")
+
+[node name="Trunk" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("CylinderMesh_trunk")
+
+[node name="Leaves" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
+mesh = SubResource("SphereMesh_leaves")
+
+[node name="MinimapMarker" type="Sprite3D" parent="."]
+transform = Transform3D(600, 0, 0, 0, -2.6226833e-05, 600, 0, -600, -2.6226833e-05, 0, 0, 0)
+layers = 524288
+double_sided = false
+no_depth_test = true
+texture = SubResource("GradientTexture2D_marker")

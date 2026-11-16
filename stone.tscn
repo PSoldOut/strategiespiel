@@ -1,0 +1,56 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ResourceNode.gd" id="1_resource"]
+[ext_resource type="Script" uid="uid://bnpexxmljtv8g" path="res://addons/dragselection/Unit.gd" id="2_selection"]
+[ext_resource type="Texture2D" path="res://icons/stone.svg" id="3_icon"]
+
+[sub_resource type="StandardMaterial3D" id="Material_rock"]
+albedo_color = Color(0.55, 0.56, 0.6, 1)
+roughness = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_rock"]
+material = SubResource("Material_rock")
+radius = 1.1
+height = 1.6
+radial_segments = 8
+rings = 4
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rock"]
+size = Vector3(2.2, 1.6, 2.2)
+
+[sub_resource type="Gradient" id="Gradient_marker"]
+colors = PackedColorArray(0.62, 0.64, 0.68, 1, 0.62, 0.64, 0.68, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_marker"]
+gradient = SubResource("Gradient_marker")
+width = 1
+height = 1
+
+[node name="Stone" type="StaticBody3D" groups=["gatherable"]]
+script = ExtResource("1_resource")
+resource_id = &"stone"
+icon = ExtResource("3_icon")
+
+[node name="SelectionUnit" type="Node3D" parent="." node_paths=PackedStringArray("unit")]
+script = ExtResource("2_selection")
+team = "neutral"
+unit = NodePath("..")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("BoxShape3D_rock")
+
+[node name="Rock" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.85, 0, 0, 0, 1, 0, 0.7, 0)
+mesh = SubResource("SphereMesh_rock")
+
+[node name="RockSmall" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.45, 0, 0, 0, 0.6, 1.25, 0.35, 0.7)
+mesh = SubResource("SphereMesh_rock")
+
+[node name="MinimapMarker" type="Sprite3D" parent="."]
+transform = Transform3D(600, 0, 0, 0, -2.6226833e-05, 600, 0, -600, -2.6226833e-05, 0, 0, 0)
+layers = 524288
+double_sided = false
+no_depth_test = true
+texture = SubResource("GradientTexture2D_marker")

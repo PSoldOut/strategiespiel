@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://by3pkdcemid77" path="res://BuildingCatalog.gd" id="5_xlqk8"]
 [ext_resource type="PackedScene" path="res://store.tscn" id="6_store"]
 [ext_resource type="PackedScene" path="res://tower.tscn" id="7_tower"]
+[ext_resource type="PackedScene" path="res://zentrale.tscn" id="8_zentrale"]
 
 [sub_resource type="Resource" id="Resource_owt4p"]
 script = ExtResource("1_v4xse")
@@ -47,6 +48,13 @@ scene = ExtResource("7_tower")
 description = "Turm. Beschiesst gegnerische Einheiten mit Projektilen."
 requires = Array[StringName]([&"kaserne"])
 
+[sub_resource type="Resource" id="Resource_zentrale"]
+script = ExtResource("1_v4xse")
+id = &"zentrale"
+label = "Zentrale"
+scene = ExtResource("8_zentrale")
+description = "Hauptgebäude. Pioniere liefern hier Ressourcen ab."
+
 [resource]
 script = ExtResource("5_xlqk8")
-buildings = Array[ExtResource("1_v4xse")]([SubResource("Resource_owt4p"), SubResource("Resource_218pk"), SubResource("Resource_s0epw"), SubResource("Resource_store"), SubResource("Resource_tower")])
+buildings = Array[ExtResource("1_v4xse")]([SubResource("Resource_zentrale"), SubResource("Resource_owt4p"), SubResource("Resource_218pk"), SubResource("Resource_s0epw"), SubResource("Resource_store"), SubResource("Resource_tower")])

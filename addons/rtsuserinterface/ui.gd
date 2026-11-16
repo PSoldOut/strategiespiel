@@ -40,7 +40,10 @@ var _resolved_camera: Camera3D
 @onready var _minimap_container: MarginContainer = $Panel/MinimapContainer
 @onready var _minimap: TextureRect = $Panel/MinimapContainer/VBoxContainer/Minimap
 @onready var _units_container: MarginContainer = $Panel/UnitsContainer
+@onready var _units_icon: TextureRect = $Panel/UnitsContainer/VBoxContainer/Icon
 @onready var _units_list: VBoxContainer = $Panel/UnitsContainer/VBoxContainer/List
+@onready var _resource_panel: PanelContainer = $ResourcePanel
+@onready var _resource_list: HBoxContainer = $ResourcePanel/MarginContainer/HBoxContainer
 @onready var _camera_marker: MinimapCameraMarker = $Panel/MinimapContainer/VBoxContainer/Minimap/CameraMarker
 @onready var _minimap_viewport: SubViewport = $MinimapViewport
 @onready var _minimap_camera: Camera3D = $MinimapViewport/MinimapCamera
@@ -88,19 +91,83 @@ func clear_abilities() -> void:
 	_abilities_container.visible = false
 
 
+## Replaces the selection panel: title, image and detail lines.
+## Accepts a [UISelection] created by the game.
+func set_selection(info: UISelection) -> void:
+	_clear_list(_units_list)
+	if info == null:
+		_units_container.visible = false
+		return
+
+	_units_icon.texture = info.icon
+	_units_icon.visible = info.icon != null
+	_add_units_line(info.title, true)
+	for line in info.details:
+		_add_units_line(str(line), false)
+	_units_container.visible = true
+
+
+func clear_selection() -> void:
+	_clear_list(_units_list)
+	_units_container.visible = false
+
+
 ## Replaces the selection info lines, e.g. ["5x Pionir"].
 func set_units(lines: Array) -> void:
-	_clear_list(_units_list)
+	clear_selection()
 	for line in lines:
-		var label := Label.new()
-		label.text = str(line)
-		_units_list.add_child(label)
+		_add_units_line(str(line), false)
 	_units_container.visible = not lines.is_empty()
 
 
 func clear_units() -> void:
-	_clear_list(_units_list)
-	_units_container.visible = false
+	clear_selection()
+
+
+func _add_units_line(text: String, headline: bool) -> void:
+	if text.is_empty():
+		return
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if headline:
+		label.add_theme_font_size_override("font_size", 18)
+	_units_list.add_child(label)
+
+
+## Replaces the resource amounts shown in the top bar.
+## Accepts an untyped array of [UIResource] resources.
+func set_resources(resources: Array) -> void:
+	_clear_list(_resource_list)
+	for resource in resources:
+		if not (resource is UIResource):
+			continue
+		_resource_list.add_child(_make_resource_entry(resource))
+	_resource_panel.visible = not resources.is_empty()
+
+
+func clear_resources() -> void:
+	_clear_list(_resource_list)
+	_resource_panel.visible = false
+
+
+func _make_resource_entry(resource: UIResource) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+
+	if resource.icon != null:
+		var icon := TextureRect.new()
+		icon.texture = resource.icon
+		icon.custom_minimum_size = Vector2(20.0, 20.0)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(icon)
+
+	var label := Label.new()
+	var text := resource.label if not resource.label.is_empty() else String(resource.id)
+	label.text = "%s: %d" % [text, resource.amount]
+	row.add_child(label)
+	return row
 
 
 func _fill(list: VBoxContainer, entries: Array, handler: Callable) -> void:
@@ -119,7 +186,7 @@ func _fill(list: VBoxContainer, entries: Array, handler: Callable) -> void:
 		list.add_child(button)
 
 
-func _clear_list(list: VBoxContainer) -> void:
+func _clear_list(list: Node) -> void:
 	for child in list.get_children():
 		list.remove_child(child)
 		child.queue_free()

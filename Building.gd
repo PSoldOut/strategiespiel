@@ -41,6 +41,14 @@ func is_constructed() -> bool:
 	return constructed
 
 
+## Team that owns this building, taken from its selection unit.
+func get_team() -> String:
+	var selection_unit = get_node_or_null("SelectionUnit")
+	if selection_unit == null:
+		return ""
+	return str(selection_unit.team)
+
+
 func _on_selection_unit_selected() -> void:
 	print("kaserne selected")
 

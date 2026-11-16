@@ -15,6 +15,9 @@ class_name DragSelection
 @export var fill_color : Color = Color(0.787, 0.813, 1.0, 1.0)
 ##Wenn die Agenten eine Kollisionsshape haben kann diese auch für die Auswahl verwendet werden
 @export var use_collision_shapes : bool = false
+##Wenn gesetzt, löst ein Rechtsklick auf einen Collider dieser Gruppe das Signal
+##[signal right_click] aus, statt eine Bewegungsanweisung zu senden.
+@export var right_click_group : StringName = &""
 ##Das interval in dem die Auswahlbox aktualisiert wird
 @export var update_time : float = 0.2
 @onready var timer : Timer = Timer.new()
@@ -25,6 +28,8 @@ var select_end = Vector2.ZERO
 var selection_units : Array = []
 var half : bool = false
 var current_selected : Array = []
+##Einheiten fremder Teams, die nur angesehen werden. Sie werden nie gesteuert.
+var inspected : Array = []
 ##Die Einheiten die im Spiel anklickbar sind (auch die gegnerischen Einheiten und Gebäude)
 var units : Array = []
 
@@ -92,6 +97,34 @@ func unregister_unit(unit):
 	selection_units.erase(unit)
 	units.erase(unit.get_unit())
 	current_selected.erase(unit)
+	inspected.erase(unit)
+
+
+##Die Einheiten, die in der UI angezeigt werden.
+func get_display_selection() -> Array:
+	if not current_selected.is_empty():
+		return current_selected.duplicate()
+	return inspected.duplicate()
+
+
+func clear_selection() -> void:
+	for unit in current_selected:
+		if is_instance_valid(unit):
+			unit.deselect()
+	for unit in inspected:
+		if is_instance_valid(unit):
+			unit.deselect()
+	current_selected = []
+	inspected = []
+
+
+##Einheiten des eigenen Teams werden gesteuert, alle anderen nur angesehen.
+func add_to_selection(unit : SelectionUnit) -> void:
+	if unit.team == team:
+		current_selected.append(unit)
+	else:
+		inspected.append(unit)
+	unit.select()
 
 
 func _input(event):
@@ -110,7 +143,7 @@ func _input(event):
 			else:
 				is_selecting = false
 				queue_redraw()
-				selected.emit(current_selected)
+				selected.emit(get_display_selection())
 				
 				
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -124,6 +157,9 @@ func _input(event):
 			var pos
 			if result:
 				pos = result.position
+				if right_click_group != &"" and result["collider"].is_in_group(right_click_group):
+					right_click.emit(pos, result["collider"])
+					return
 				if result["collider"].find_children("", "SelectionUnit", true, false).size() >= 1:
 					interact_command.emit(result["collider"].find_children("", "SelectionUnit", true, false)[0])
 					right_click.emit(pos, result["collider"].find_children("", "SelectionUnit", true, false)[0])
@@ -253,15 +289,12 @@ func select_units_by_collision():
 	update_selection_shape(camera, rect)
 	await get_tree().physics_frame
 	var units = selection_area.get_overlapping_bodies()
-	for unit in current_selected:
-		unit.deselect()
-	current_selected = []
+	clear_selection()
 	for unit in units:
 		if unit.find_children("", "SelectionUnit", true, false).size() > 0:
 			var su : SelectionUnit = unit.find_children("", "SelectionUnit", true, false)[0]
 			if su.team == self.team:
-				current_selected.append(su)
-				su.select()
+				add_to_selection(su)
 
 
 
@@ -270,57 +303,53 @@ func select_units_by_rect():
 	# Mindestgröße prüfen
 	if rect.size.length() < 5.0 or selection_units.is_empty():
 		return
-	current_selected = []
+	clear_selection()
 	for unit : SelectionUnit in selection_units:
 		if unit.team != team:
 			continue
 		var screen_pos = camera.unproject_position(unit.global_transform.origin)
 		# Normale Box-Auswahl
 		if rect.has_point(screen_pos):
-			unit.select()
-			current_selected.append(unit)
-		else:
-			unit.deselect()
+			add_to_selection(unit)
 
 func select_unit_by_distance():
 	if selection_units.is_empty():
 		return
-	for u in selection_units:
-		u.deselect()
-	current_selected = []
+	clear_selection()
 	for unit : SelectionUnit in selection_units:
 		if unit.team != team:
 			continue
 		var screen_pos = camera.unproject_position(unit.global_transform.origin)
 		if screen_pos.distance_to(select_start) < 15.0:
-			unit.select()
-			current_selected.append(unit)
+			add_to_selection(unit)
 			return
 		
 		
 
 func select_unit_by_collision():
-	if selection_units.is_empty():
-		return
-	for u in selection_units:
-		u.deselect()
-	current_selected = []
+	select_unit_at(get_viewport().get_mouse_position())
+
+
+##Wählt das Objekt an der Bildschirmposition [param screen_position] aus.
+##Einheiten des eigenen Teams werden gesteuert, alle anderen nur angesehen.
+func select_unit_at(screen_position : Vector2) -> void:
 	var camera = get_viewport().get_camera_3d()
-	var mouse_pos = get_viewport().get_mouse_position()
-	var from = camera.project_ray_origin(mouse_pos)
-	var to = from + camera.project_ray_normal(mouse_pos) * 10000
+	if camera == null:
+		return
+	clear_selection()
+	var from = camera.project_ray_origin(screen_position)
+	var to = from + camera.project_ray_normal(screen_position) * 10000
 	var space_state = camera.get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = false
 	var result = space_state.intersect_ray(query)
-	var pos
-	if result:
-		pos = result.position
-		if result["collider"].find_children("", "SelectionUnit", true, false).size() >= 1:
-			var su = result["collider"].find_children("", "SelectionUnit", true, false)[0]
-			if su.team == self.team:
-				current_selected.append(su)
-				su.select()
+	if result.is_empty():
+		return
+	var found = result["collider"].find_children("", "SelectionUnit", true, false)
+	if found.is_empty():
+		return
+	var su : SelectionUnit = found[0]
+	add_to_selection(su)
 			
 
 
