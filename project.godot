@@ -15,10 +15,6 @@ run/main_scene="uid://duy662vx7mqeq"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
-[autoload]
-
-EnumMappings="*uid://b0m7foljp46dc"
-
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/RTSCamera/plugin.cfg", "res://addons/dragselection/plugin.cfg", "res://addons/rtsbuildingsystem/plugin.cfg", "res://addons/rtsuserinterface/plugin.cfg", "res://addons/mapgenerator/plugin.cfg")
