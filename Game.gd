@@ -49,9 +49,17 @@ enum states {
 }
 
 var state = states.SELECT
+var ability_system: AbilitySystem = null
 
 ## Buildings that can be constructed and the prerequisites between them.
+## The assigned resource is a GameContentCatalog, which also knows units,
+## upgrades and abilities.
 @export var building_catalog: BuildingCatalog
+
+## Typed view of the same exported resource.
+var content: GameContentCatalog:
+	get:
+		return building_catalog as GameContentCatalog
 
 @export_group("Map")
 ## Optional scene exported by the map generator. When assigned, the built-in
@@ -98,6 +106,7 @@ var _map_rect := Rect2(0.0, 0.0, 512.0, 512.0)
 
 
 func _ready() -> void:
+	_setup_ability_system()
 	_load_generated_map()
 	ui.set_minimap_bounds(_map_rect)
 	navRegion.bake_navigation_mesh()
@@ -113,6 +122,21 @@ func _ready() -> void:
 		_spawn_agents()
 	if not _using_generated_map:
 		_spawn_resources()
+
+
+func _setup_ability_system() -> void:
+	if content == null:
+		return
+
+	ability_system = AbilitySystem.new()
+	ability_system.name = "AbilitySystem"
+	add_child(ability_system)
+	ability_system.content = content
+	ability_system.agents_root = agents
+	ability_system.drag_selection = drag_selection
+	ability_system.upgrade_added.connect(_on_upgrade_added)
+	ability_system.ability_used.connect(_on_ability_used)
+	ability_system.tag_unlock_requested.connect(unlock_tag)
 
 
 ## Replaces the built-in ground with a scene exported by the map generator.
@@ -493,7 +517,13 @@ func _unit_display_name(unit) -> String:
 	var type_value = unit.get("type")
 	if type_value == null:
 		return "Objekt"
-	return _type_label(StringName(str(type_value)))
+
+	var unit_id := StringName(str(type_value))
+	if content != null:
+		var unit_definition := content.get_unit(unit_id)
+		if unit_definition != null and not unit_definition.label.is_empty():
+			return unit_definition.label
+	return _type_label(unit_id)
 
 
 func _unit_icon(unit) -> Texture2D:
@@ -506,6 +536,12 @@ func _unit_icon(unit) -> Texture2D:
 			if definition != null and definition.icon != null:
 				return definition.icon
 		return ICON_BUILDING
+
+	var type_value = unit.get("type")
+	if content != null and type_value != null:
+		var unit_definition := content.get_unit(StringName(str(type_value)))
+		if unit_definition != null and unit_definition.icon != null:
+			return unit_definition.icon
 	return ICON_UNIT
 
 
@@ -578,6 +614,30 @@ func _update_selection_panel(force := false) -> void:
 
 func _describe_abilities(unit) -> Array[UIEntry]:
 	var entries: Array[UIEntry] = []
+
+	if unit is Building and content != null:
+		var building := unit as Building
+		var definition := content.get_building(StringName(str(building.type)))
+		if definition != null:
+			var context := _content_context()
+			for ability in definition.abilities:
+				if ability == null:
+					continue
+				var enabled: bool = building.is_constructed() \
+					and ContentRules.can_use(ability, context)
+				var tooltip := _ability_tooltip(ability, context)
+				if not building.is_constructed():
+					tooltip = "Gebäude ist noch im Bau.\n" + tooltip
+				entries.append(UIEntry.make(
+					ability.id,
+					ability.label,
+					ability.icon,
+					not enabled,
+					tooltip
+				))
+			return entries
+
+	# Fallback for units whose abilities are still stored on the scene.
 	var abilities = unit.get("abilities")
 	if abilities == null:
 		return entries
@@ -635,12 +695,113 @@ func _on_ui_build_option_pressed(id: StringName) -> void:
 
 
 func _on_ui_ability_pressed(id: StringName) -> void:
-	## Abilities are still abstract. Forward the id to selected units that
-	## implement [code]use_ability[/code].
+	var ability: AbilityDefinition = null
+	if content != null:
+		ability = content.get_ability(id)
+
+	if ability != null and ability_system != null:
+		if not ability_system.can_execute(ability):
+			return
+
+		var context := _content_context()
+		if not ContentRules.can_use(ability, context):
+			return
+		if not spend_resources(ability.costs, _active_team):
+			return
+
+		var source: Node3D = null
+		if not drag_selection.current_selected.is_empty():
+			var first: SelectionUnit = drag_selection.current_selected[0] as SelectionUnit
+			if first != null:
+				source = first.get_unit() as Node3D
+
+		ability_system.use(
+			ability,
+			source,
+			_active_team,
+			context,
+			_ability_spawn_position(source)
+		)
+		return
+
+	# Fallback for unit abilities that are not part of the content catalog yet.
 	for selection_unit in drag_selection.current_selected:
 		var unit = selection_unit.get_unit()
 		if unit.has_method("use_ability"):
 			unit.use_ability(id)
+
+
+func _content_context() -> ContentContext:
+	var context := ContentContext.new()
+	context.team = _active_team
+	context.owned_buildings = _owned_building_ids(_active_team)
+
+	for tag in unlocked_tags:
+		context.unlocked_tags.append(tag)
+
+	if ability_system != null:
+		context.upgrades = ability_system.get_upgrades(_active_team)
+
+	var totals_value: Variant = _resource_totals.get(_active_team, {})
+	if totals_value is Dictionary:
+		var totals: Dictionary = totals_value
+		for resource_id in totals:
+			context.resources[StringName(str(resource_id))] = int(totals[resource_id])
+	return context
+
+
+func _ability_tooltip(ability: AbilityDefinition, context: ContentContext) -> String:
+	var lines: Array[String] = []
+	if not ability.description.is_empty():
+		lines.append(ability.description)
+
+	if not ability.costs.is_empty():
+		var cost_parts: Array[String] = []
+		for resource_id in ability.costs:
+			cost_parts.append("%s: %d" % [
+				_resource_label(StringName(str(resource_id))),
+				int(ability.costs[resource_id]),
+			])
+		lines.append("Kosten: " + ", ".join(PackedStringArray(cost_parts)))
+
+	for requirement in ability.requirements:
+		lines.append(ContentRules.describe_requirement(requirement, content))
+
+	if ability.duration > 0.0:
+		lines.append("Dauer: %.1f s" % ability.duration)
+	if context != null and not context.can_afford(ability.costs):
+		lines.append("Nicht genug Ressourcen.")
+	return "\n".join(PackedStringArray(lines))
+
+
+func _ability_spawn_position(source: Node3D) -> Vector3:
+	var center := _map_rect.get_center()
+	var position := Vector3(center.x, 0.0, center.y)
+	if source != null:
+		position = source.global_position + Vector3(2.0, 0.0, 2.0)
+	position.y = _ground_height_at(position.x, position.z) + 1.0
+	return position
+
+
+func _on_upgrade_added(_team: String, _upgrade: StringName) -> void:
+	_refresh_ability_entries()
+
+
+func _on_ability_used(_id: StringName) -> void:
+	_refresh_ability_entries()
+
+
+func _refresh_ability_entries() -> void:
+	var units := drag_selection.get_display_selection()
+	if units.is_empty():
+		ui.clear_abilities()
+		return
+
+	var first: SelectionUnit = units[0] as SelectionUnit
+	if first == null or first.team != player_team:
+		ui.clear_abilities()
+		return
+	ui.set_abilities(_describe_abilities(first.get_unit()))
 
 
 func _on_ui_mouse_entered_panel() -> void:

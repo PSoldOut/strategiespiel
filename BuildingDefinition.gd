@@ -23,3 +23,6 @@ class_name BuildingDefinition
 ## Abstract tags that have to be unlocked before this one is available.
 ## The game defines the tags and calls [method Node.unlock_tag] on the world.
 @export var unlocked_by: Array[StringName] = []
+
+## Abilities offered while this building is selected and constructed.
+@export var abilities: Array[AbilityDefinition] = []
