@@ -49,6 +49,25 @@ func set_collision(building : RTSBuilding, state : bool):
 			shapes.append(child)
 	for shape : CollisionShape3D in shapes:
 		shape.disabled = !state
+
+
+## Ground colliders only confirm that the preview touches the terrain. They
+## must not count as obstacles, otherwise tall buildings such as the Zentrale
+## can never be placed.
+func _is_terrain(body: Node) -> bool:
+	if body == null:
+		return true
+	if body.is_in_group(&"terrain"):
+		return true
+
+	var body_name := String(body.name)
+	if body_name == "TerrainCollision" or body_name == "Ground":
+		return true
+	if body_name.begins_with("ChunkCollision_"):
+		return true
+
+	var parent := body.get_parent()
+	return parent != null and parent.name == &"Terrain"
 	
 
 
@@ -118,7 +137,13 @@ func _physics_process(delta):
 			print(pos)
 			
 			
-			if main_area.get_overlapping_bodies().size() > 0:
+			var blocked := false
+			for body in main_area.get_overlapping_bodies():
+				if not _is_terrain(body):
+					blocked = true
+					break
+
+			if blocked:
 				set_color(preview_object, invalid_build_color)
 				valid_position = false
 			else:
