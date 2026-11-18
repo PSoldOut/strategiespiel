@@ -45,7 +45,8 @@ const RESOURCE_SPAWNS := [
 
 enum states {
 	BUILD,
-	SELECT
+	SELECT,
+	RALLY_POINT
 }
 
 var state = states.SELECT
@@ -89,6 +90,13 @@ var _can_show_build_options := false
 ## Building the player chose in the build menu but has not placed yet.
 var _pending_build : BuildingDefinition = null
 
+## Rally-point ability waiting for a right-click on the map.
+var _pending_rally_ability: SetRallyPointAbility = null
+var _pending_rally_source: Node3D = null
+
+## Small marker showing the rally point of the selected building.
+var _rally_marker: MeshInstance3D = null
+
 ## True while the world runs on a scene exported by the map generator.
 var _using_generated_map := false
 ## Number of agents that came from the generated map instead of the fallback spawn.
@@ -99,17 +107,17 @@ var _map_rect := Rect2(0.0, 0.0, 512.0, 512.0)
 @onready var navRegion: NavigationRegion3D = $Map/NavigationRegion3D
 @onready var buildings: Node3D = $Map/NavigationRegion3D/Buildings
 @onready var agents: Node3D = $Map/Agents
-@onready var resources: Node3D = $Map/Resources
+@onready var resources: Node3D = $Map/NavigationRegion3D/Resources
 @onready var ui: RTSUserInterface = $UI
 @onready var drag_selection: DragSelection = $DragSelection
 @onready var build_system: RTSBuildSystem = $RTSBuildSystem
+@onready var wave_system: WaveSystem = $WaveSystem
 
 
 func _ready() -> void:
 	_setup_ability_system()
 	_load_generated_map()
 	ui.set_minimap_bounds(_map_rect)
-	navRegion.bake_navigation_mesh()
 
 	_resource_totals[player_team] = START_RESOURCES.duplicate()
 	_refresh_build_options()
@@ -121,7 +129,42 @@ func _ready() -> void:
 	if _generated_agent_count == 0:
 		_spawn_agents()
 	if not _using_generated_map:
-		_spawn_resources()
+		await _spawn_resources()
+
+	# Bake after resources are inside the region so their StaticBody3D colliders
+	# become obstacles for the navigation mesh.
+	navRegion.bake_navigation_mesh()
+	_setup_wave_system()
+
+
+func _setup_wave_system() -> void:
+	if wave_system == null:
+		return
+	wave_system.wave_started.connect(_on_wave_started)
+	wave_system.wave_cleared.connect(_on_wave_cleared)
+	wave_system.break_started.connect(_on_wave_break_started)
+	wave_system.configure(
+		agents,
+		buildings,
+		drag_selection,
+		player_team,
+		_map_rect,
+		Callable(self, "_ground_height_at")
+	)
+	wave_system.start()
+
+
+func _on_wave_started(wave_number: int, _enemy_count: int) -> void:
+	ui.clear_wave_status()
+	ui.show_wave_banner("Welle %d" % wave_number)
+
+
+func _on_wave_cleared(wave_number: int) -> void:
+	ui.show_wave_banner("Welle %d besiegt" % wave_number)
+
+
+func _on_wave_break_started(seconds: float, next_wave: int) -> void:
+	ui.set_wave_status("Nächste Welle %d in %.0f s" % [next_wave, seconds])
 
 
 func _setup_ability_system() -> void:
@@ -137,6 +180,7 @@ func _setup_ability_system() -> void:
 	ability_system.upgrade_added.connect(_on_upgrade_added)
 	ability_system.ability_used.connect(_on_ability_used)
 	ability_system.tag_unlock_requested.connect(unlock_tag)
+	ability_system.rally_point_changed.connect(_on_rally_point_changed)
 
 
 ## Replaces the built-in ground with a scene exported by the map generator.
@@ -245,7 +289,9 @@ func _adopt_generated_objects(objects: Node) -> void:
 			if entry is Building:
 				_adopt_generated_building(entry as Building)
 			elif entry is ResourceNode:
-				(entry as ResourceNode).reparent(resources, true)
+				var resource_node := entry as ResourceNode
+				resource_node.reparent(resources, true)
+				_watch_resource(resource_node)
 			else:
 				var agent := _generated_agent_value(entry)
 				if agent != null:
@@ -343,6 +389,13 @@ func _process(delta: float) -> void:
 	_update_selection_panel()
 
 
+## Rally targeting is handled before GUI input so a right-click on the map is
+## never swallowed by a Control before the game sees it.
+func _input(event: InputEvent) -> void:
+	if state == states.RALLY_POINT:
+		_handle_rally_input(event)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if state != states.BUILD:
 		return
@@ -364,6 +417,151 @@ func _cancel_build() -> void:
 	drag_selection.active = true
 	state = states.SELECT
 	_refresh_build_options()
+
+
+func _begin_rally_targeting(ability: SetRallyPointAbility, source: Node3D) -> void:
+	if source == null or ability_system == null:
+		return
+
+	_pending_rally_ability = ability
+	_pending_rally_source = source
+	state = states.RALLY_POINT
+	build_system.active = false
+	drag_selection.active = false
+	Input.set_default_cursor_shape(Input.CURSOR_CROSS)
+
+
+func _handle_rally_input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.pressed and key_event.keycode == KEY_ESCAPE:
+			_cancel_rally_targeting()
+			get_viewport().set_input_as_handled()
+		return
+
+	if not (event is InputEventMouseButton):
+		return
+
+	var mouse_event := event as InputEventMouseButton
+	if not mouse_event.pressed or mouse_event.button_index != MOUSE_BUTTON_RIGHT:
+		return
+
+	var target := _pointer_world(mouse_event.position)
+	var ok_value: Variant = target.get("ok", false)
+	if ok_value is bool:
+		var ok: bool = ok_value
+		if ok:
+			var position_value: Variant = target.get("position", Vector3.ZERO)
+			if position_value is Vector3:
+				_confirm_rally_point(position_value as Vector3)
+	get_viewport().set_input_as_handled()
+
+
+func _confirm_rally_point(world_position: Vector3) -> void:
+	var ability := _pending_rally_ability
+	var source := _pending_rally_source
+	if ability == null or source == null or ability_system == null:
+		_cancel_rally_targeting()
+		return
+
+	var x := clampf(world_position.x, _map_rect.position.x, _map_rect.end.x)
+	var z := clampf(world_position.z, _map_rect.position.y, _map_rect.end.y)
+	var spawn_ready_position := Vector3(x, _ground_height_at(x, z) + 1.0, z)
+
+	ability_system.use(
+		ability,
+		source,
+		_active_team,
+		_content_context(),
+		spawn_ready_position
+	)
+	_refresh_ability_entries()
+	_cancel_rally_targeting()
+
+
+func _cancel_rally_targeting() -> void:
+	_pending_rally_ability = null
+	_pending_rally_source = null
+	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+	if state == states.RALLY_POINT:
+		state = states.SELECT
+	drag_selection.active = true
+
+
+## Converts a screen position into a ground position. A raycast is preferred
+## so generated terrain is respected; the y=0 plane is only a fallback.
+func _pointer_world(screen_position: Vector2) -> Dictionary:
+	var camera := get_node_or_null("RTSCamera") as Camera3D
+	if camera == null:
+		camera = get_viewport().get_camera_3d()
+	if camera == null:
+		return {"ok": false, "position": Vector3.ZERO}
+
+	var from := camera.project_ray_origin(screen_position)
+	var direction := camera.project_ray_normal(screen_position)
+	var to := from + direction * 10000.0
+
+	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.collision_mask = 1
+	var hit: Dictionary = space.intersect_ray(query)
+	var hit_position: Variant = hit.get("position", null)
+	if hit_position is Vector3:
+		return {"ok": true, "position": hit_position as Vector3}
+
+	var plane := Plane(Vector3.UP, 0.0)
+	var plane_point: Variant = plane.intersects_ray(from, direction)
+	if plane_point is Vector3:
+		return {"ok": true, "position": plane_point as Vector3}
+	return {"ok": false, "position": Vector3.ZERO}
+
+
+func _on_rally_point_changed(source: Node3D, position: Vector3) -> void:
+	if source == null:
+		return
+	_show_rally_marker(position)
+	_update_selection_panel(true)
+
+
+func _sync_rally_marker(unit) -> void:
+	if ability_system != null and unit is Building:
+		var source := unit as Node3D
+		if ability_system.has_rally_point(source):
+			_show_rally_marker(ability_system.get_rally_point(source))
+			return
+	_hide_rally_marker()
+
+
+func _show_rally_marker(position: Vector3) -> void:
+	if _rally_marker == null:
+		_rally_marker = MeshInstance3D.new()
+		_rally_marker.name = "RallyPointMarker"
+
+		var cylinder := CylinderMesh.new()
+		cylinder.top_radius = 0.8
+		cylinder.bottom_radius = 0.8
+		cylinder.height = 0.15
+		_rally_marker.mesh = cylinder
+
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.2, 1.0, 0.3, 1.0)
+		material.emission_enabled = true
+		material.emission = Color(0.1, 0.6, 0.2, 1.0)
+		_rally_marker.material_override = material
+		_rally_marker.layers |= ui.minimap_cull_mask
+		agents.add_child(_rally_marker)
+
+	_rally_marker.visible = true
+	_rally_marker.global_position = Vector3(
+		position.x,
+		position.y - 0.95,
+		position.z
+	)
+
+
+func _hide_rally_marker() -> void:
+	if _rally_marker != null:
+		_rally_marker.visible = false
 
 
 ## Unlocks an abstract tag that buildings can require.
@@ -551,10 +749,13 @@ func _unit_details(unit) -> Array[String]:
 		details.append("Restmenge: %d" % unit.amount)
 		return details
 	if unit is Building:
-		if unit.is_constructed():
+		var building := unit as Building
+		details.append("Lebenspunkte: %d / %d" % [building.hp, building.max_hp])
+		if building.is_constructed():
 			details.append("Fertig")
 		else:
-			details.append("Im Bau: %d %%" % unit.build_progress)
+			details.append("Im Bau: %d %%" % building.build_progress)
+		_append_building_ability_details(building, details)
 		return details
 
 	var carry = unit.get("carry_amount")
@@ -566,6 +767,32 @@ func _unit_details(unit) -> Array[String]:
 			text += " " + _resource_label(StringName(str(carry_type)))
 		details.append(text)
 	return details
+
+
+## Adds runtime details that come from AbilitySystem rather than the catalog.
+func _append_building_ability_details(building: Building, details: Array[String]) -> void:
+	if ability_system == null:
+		return
+
+	var source: Node3D = building
+	if ability_system.has_rally_point(source):
+		var point := ability_system.get_rally_point(source)
+		details.append("Sammelpunkt: %.0f, %.0f" % [point.x, point.z])
+
+	var queue: Dictionary = ability_system.get_queue_info(source)
+	var count_value: Variant = queue.get("count", 0)
+	var remaining_value: Variant = queue.get("remaining", 0.0)
+	var count: int = 0
+	var remaining: float = 0.0
+	if count_value is int:
+		count = count_value as int
+	if remaining_value is float:
+		remaining = remaining_value as float
+	elif remaining_value is int:
+		remaining = float(remaining_value as int)
+
+	if count > 0:
+		details.append("Ausbildung: %d in Warteschlange (%.1f s)" % [count, remaining])
 
 
 func _building_label(id: StringName) -> String:
@@ -655,6 +882,7 @@ func _on_drag_selection_selected(units: Array) -> void:
 		_active_team = player_team
 		_can_show_build_options = false
 		_selection_signature = ""
+		_hide_rally_marker()
 		ui.clear_selection()
 		ui.clear_abilities()
 		ui.clear_build_options()
@@ -667,6 +895,7 @@ func _on_drag_selection_selected(units: Array) -> void:
 	_can_show_build_options = own and _can_build(unit)
 
 	_update_selection_panel(true)
+	_sync_rally_marker(unit)
 	if own:
 		ui.set_abilities(_describe_abilities(unit))
 	else:
@@ -699,21 +928,38 @@ func _on_ui_ability_pressed(id: StringName) -> void:
 	if content != null:
 		ability = content.get_ability(id)
 
+	var source: Node3D = null
+	var selection_units: Array = drag_selection.get_display_selection()
+	if selection_units.is_empty():
+		selection_units = _display_selection
+	for selection_unit in selection_units:
+		var selection := selection_unit as SelectionUnit
+		if selection == null:
+			continue
+		var unit := selection.get_unit() as Node3D
+		if unit == null:
+			continue
+		if source == null:
+			source = unit
+		# Prefer a building if several units are selected at once.
+		if unit is Building:
+			source = unit
+			break
+
 	if ability != null and ability_system != null:
-		if not ability_system.can_execute(ability):
+		if not ability_system.can_execute(ability, source):
 			return
 
 		var context := _content_context()
 		if not ContentRules.can_use(ability, context):
 			return
-		if not spend_resources(ability.costs, _active_team):
+
+		if ability is SetRallyPointAbility:
+			_begin_rally_targeting(ability as SetRallyPointAbility, source)
 			return
 
-		var source: Node3D = null
-		if not drag_selection.current_selected.is_empty():
-			var first: SelectionUnit = drag_selection.current_selected[0] as SelectionUnit
-			if first != null:
-				source = first.get_unit() as Node3D
+		if not spend_resources(ability.costs, _active_team):
+			return
 
 		ability_system.use(
 			ability,
@@ -819,9 +1065,19 @@ func _on_ui_mouse_exited_panel() -> void:
 func _on_drag_selection_move_command(positions: Array) -> void:
 	for i in range(drag_selection.current_selected.size()):
 		var unit = drag_selection.current_selected[i]
-		if is_instance_valid(unit):
-			unit.get_unit().navigation_agent_3d.set_target_position(positions[i])
-			unit.get_unit().state = unit.get_unit().State.MOVE_STRAIGHT
+		if not is_instance_valid(unit) or i >= positions.size():
+			continue
+
+		var body = unit.get_unit()
+		if not is_instance_valid(body):
+			continue
+
+		# Gebäude erben von StaticBody3D und dürfen keinen Bewegungsbefehl bekommen.
+		if body is StaticBody3D:
+			continue
+
+		body.navigation_agent_3d.set_target_position(positions[i])
+		body.state = body.State.MOVE_STRAIGHT
 
 
 func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
@@ -829,12 +1085,16 @@ func _on_drag_selection_interact_command(target: SelectionUnit) -> void:
 		for i in range(drag_selection.current_selected.size()):
 			var unit = drag_selection.current_selected[i]
 			if is_instance_valid(unit):
+				if unit.get_unit() is StaticBody3D:
+					continue
 				unit.get_unit().target = target.get_unit()
 				unit.get_unit().state = unit.get_unit().State.CHASE_TO_INTERACT
 	else:
 		for i in range(drag_selection.current_selected.size()):
 			var unit = drag_selection.current_selected[i]
 			if is_instance_valid(unit):
+				if unit.get_unit() is StaticBody3D:
+					continue
 				unit.get_unit().target = target.get_unit()
 				unit.get_unit().state = unit.get_unit().State.CHASE
 
@@ -869,6 +1129,20 @@ func get_resource_amount(resource_type: StringName, team: String = "") -> int:
 
 func _on_resource_deposited(resource_type: StringName, amount: int, team: String) -> void:
 	deposit_resource(team, resource_type, amount)
+
+
+## Re-bake after a deposit disappears so its carved hole closes again.
+func _watch_resource(resource_node: ResourceNode) -> void:
+	if not resource_node.depleted.is_connected(_on_resource_depleted):
+		resource_node.depleted.connect(_on_resource_depleted, CONNECT_DEFERRED)
+
+
+func _on_resource_depleted() -> void:
+	# Wait until the depleted node and its obstacle have left the tree.
+	await get_tree().physics_frame
+	while navRegion.is_baking():
+		await get_tree().process_frame
+	navRegion.bake_navigation_mesh()
 
 
 func _refresh_resources() -> void:
@@ -911,6 +1185,8 @@ func _spawn_resources() -> void:
 			var node: Node3D = scene.instantiate()
 			resources.add_child(node)
 			node.global_position = Vector3(x, y, z)
+			if node is ResourceNode:
+				_watch_resource(node as ResourceNode)
 
 
 func _on_building_construction_completed() -> void:
@@ -939,6 +1215,8 @@ func _on_rts_build_system_building_set_command(position: Vector3, scene: Variant
 	obj.place()
 	build_system.active = false
 	for su: SelectionUnit in drag_selection.current_selected:
+		if su.get_unit() is StaticBody3D:
+			continue
 		var unit = su.get_unit()
 		unit.target = obj
 		unit.state = unit.State.CHASE_TO_INTERACT

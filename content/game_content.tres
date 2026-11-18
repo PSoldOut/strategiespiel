@@ -1,12 +1,13 @@
-[gd_resource type="Resource" script_class="GameContentCatalog" format=3]
+[gd_resource type="Resource" script_class="GameContentCatalog" format=3 uid="uid://cg5x1tg1pk3w4"]
 
-[ext_resource type="Script" path="res://content/content_requirement.gd" id="1_req"]
-[ext_resource type="Script" path="res://content/ability_definition.gd" id="2_ability"]
-[ext_resource type="Script" path="res://content/spawn_unit_ability.gd" id="3_spawn"]
-[ext_resource type="Script" path="res://content/upgrade_ability.gd" id="4_upgrade_ability"]
-[ext_resource type="Script" path="res://content/unit_definition.gd" id="5_unit"]
-[ext_resource type="Script" path="res://content/upgrade_definition.gd" id="6_upgrade_def"]
-[ext_resource type="Script" path="res://content/game_content_catalog.gd" id="7_catalog"]
+[ext_resource type="Script" uid="uid://brc605qptlc20" path="res://content/content_requirement.gd" id="1_req"]
+[ext_resource type="Script" uid="uid://bqxm1i2v2f120" path="res://content/ability_definition.gd" id="2_ability"]
+[ext_resource type="Script" uid="uid://j3g2q6lt32g2" path="res://content/spawn_unit_ability.gd" id="3_spawn"]
+[ext_resource type="Script" uid="uid://blhk3028mbyi2" path="res://content/upgrade_ability.gd" id="4_upgrade_ability"]
+[ext_resource type="Script" uid="uid://csg6hfkpfmdcy" path="res://content/unit_definition.gd" id="5_unit"]
+[ext_resource type="Script" uid="uid://couijgtwg1lr2" path="res://content/upgrade_definition.gd" id="6_upgrade_def"]
+[ext_resource type="Script" uid="uid://ktqs12o17bw3" path="res://content/set_rally_point_ability.gd" id="7a_rally"]
+[ext_resource type="Script" uid="uid://cc403k8mkvn7l" path="res://content/game_content_catalog.gd" id="7_catalog"]
 [ext_resource type="Script" uid="uid://dxip8lh0lejqo" path="res://BuildingDefinition.gd" id="8_building_def"]
 [ext_resource type="PackedScene" uid="uid://cup08pke0mlve" path="res://Agent.tscn" id="9_agent"]
 [ext_resource type="PackedScene" uid="uid://cv7gw4r6qg2dx" path="res://house.tscn" id="10_house"]
@@ -16,15 +17,26 @@
 [ext_resource type="PackedScene" path="res://tower.tscn" id="14_tower"]
 [ext_resource type="PackedScene" path="res://zentrale.tscn" id="15_zentrale"]
 
+[sub_resource type="Resource" id="Ability_train_pionir"]
+script = ExtResource("3_spawn")
+unit = &"pionir"
+id = &"train_pionir"
+label = "Pionier ausbilden"
+description = "Bildet einen einzelnen Pionier aus."
+costs = {
+&"wood": 25
+}
+duration = 5.0
+
+[sub_resource type="Resource" id="Ability_set_rally_point"]
+script = ExtResource("7a_rally")
+id = &"set_rally_point"
+label = "Sammelpunkt setzen"
+description = "Rechtsklick auf die Karte legt fest, wo neue Einheiten erscheinen."
+
 [sub_resource type="Resource" id="Requirement_house"]
 script = ExtResource("1_req")
-kind = 0
 id = &"house"
-
-[sub_resource type="Resource" id="Requirement_zentrale_2"]
-script = ExtResource("1_req")
-kind = 2
-id = &"zentrale_2"
 
 [sub_resource type="Resource" id="Requirement_not_zentrale_2"]
 script = ExtResource("1_req")
@@ -32,26 +44,9 @@ kind = 2
 id = &"zentrale_2"
 negated = true
 
-[sub_resource type="Resource" id="Upgrade_zentrale_2"]
-script = ExtResource("6_upgrade_def")
-id = &"zentrale_2"
-label = "Zentrale Stufe 2"
-description = "Schaltet die Ausbildung von Pionier-Gruppen frei."
-
-[sub_resource type="Resource" id="Ability_train_pionir"]
-script = ExtResource("3_spawn")
-id = &"train_pionir"
-label = "Pionier ausbilden"
-description = "Bildet einen einzelnen Pionier aus."
-costs = {
-&"wood": 25
-}
-requirements = Array[ExtResource("1_req")]([])
-unit = &"pionir"
-count = 1
-
 [sub_resource type="Resource" id="Ability_upgrade_zentrale_2"]
 script = ExtResource("4_upgrade_ability")
+upgrade = &"zentrale_2"
 id = &"upgrade_zentrale_2"
 label = "Zentrale ausbauen"
 description = "Baut die Zentrale zur Stufe 2 aus."
@@ -60,10 +55,16 @@ costs = {
 &"wood": 150
 }
 requirements = Array[ExtResource("1_req")]([SubResource("Requirement_house"), SubResource("Requirement_not_zentrale_2")])
-upgrade = &"zentrale_2"
+
+[sub_resource type="Resource" id="Requirement_zentrale_2"]
+script = ExtResource("1_req")
+kind = 2
+id = &"zentrale_2"
 
 [sub_resource type="Resource" id="Ability_train_pionir_squad"]
 script = ExtResource("3_spawn")
+unit = &"pionir"
+count = 3
 id = &"train_pionir_squad"
 label = "Pionier-Gruppe ausbilden"
 description = "Bildet drei Pioniere gleichzeitig aus."
@@ -71,17 +72,8 @@ costs = {
 &"stone": 10,
 &"wood": 60
 }
+duration = 5.0
 requirements = Array[ExtResource("1_req")]([SubResource("Requirement_zentrale_2")])
-unit = &"pionir"
-count = 3
-
-[sub_resource type="Resource" id="Unit_pionir"]
-script = ExtResource("5_unit")
-id = &"pionir"
-label = "Pionier"
-scene = ExtResource("9_agent")
-description = "Sammelt Holz und Stein und kann Gebäude errichten."
-abilities = Array[ExtResource("2_ability")]([])
 
 [sub_resource type="Resource" id="Building_zentrale"]
 script = ExtResource("8_building_def")
@@ -93,7 +85,7 @@ costs = {
 &"stone": 100,
 &"wood": 200
 }
-abilities = Array[ExtResource("2_ability")]([SubResource("Ability_train_pionir"), SubResource("Ability_upgrade_zentrale_2"), SubResource("Ability_train_pionir_squad")])
+abilities = Array[ExtResource("2_ability")]([SubResource("Ability_train_pionir"), SubResource("Ability_set_rally_point"), SubResource("Ability_upgrade_zentrale_2"), SubResource("Ability_train_pionir_squad")])
 
 [sub_resource type="Resource" id="Building_house"]
 script = ExtResource("8_building_def")
@@ -152,8 +144,21 @@ costs = {
 }
 requires = Array[StringName]([&"kaserne"])
 
+[sub_resource type="Resource" id="Unit_pionir"]
+script = ExtResource("5_unit")
+id = &"pionir"
+label = "Pionier"
+scene = ExtResource("9_agent")
+description = "Sammelt Holz und Stein und kann Gebäude errichten."
+
+[sub_resource type="Resource" id="Upgrade_zentrale_2"]
+script = ExtResource("6_upgrade_def")
+id = &"zentrale_2"
+label = "Zentrale Stufe 2"
+description = "Schaltet die Ausbildung von Pionier-Gruppen frei."
+
 [resource]
 script = ExtResource("7_catalog")
-buildings = Array[ExtResource("8_building_def")]([SubResource("Building_zentrale"), SubResource("Building_house"), SubResource("Building_kaserne"), SubResource("Building_mil"), SubResource("Building_store"), SubResource("Building_tower")])
 units = Array[ExtResource("5_unit")]([SubResource("Unit_pionir")])
 upgrades = Array[ExtResource("6_upgrade_def")]([SubResource("Upgrade_zentrale_2")])
+buildings = Array[ExtResource("8_building_def")]([SubResource("Building_zentrale"), SubResource("Building_house"), SubResource("Building_kaserne"), SubResource("Building_mil"), SubResource("Building_store"), SubResource("Building_tower")])

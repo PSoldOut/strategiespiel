@@ -33,6 +33,7 @@ signal mouse_exited_panel
 var _resolved_camera: Camera3D
 var _minimap_bounds := Rect2()
 var _has_minimap_bounds := false
+var _wave_banner_remaining := 0.0
 
 @onready var _panel: Panel = $Panel
 @onready var _build_container: MarginContainer = $Panel/BuildContainer
@@ -49,6 +50,8 @@ var _has_minimap_bounds := false
 @onready var _camera_marker: MinimapCameraMarker = $Panel/MinimapContainer/VBoxContainer/Minimap/CameraMarker
 @onready var _minimap_viewport: SubViewport = $MinimapViewport
 @onready var _minimap_camera: Camera3D = $MinimapViewport/MinimapCamera
+@onready var _wave_banner: Label = $WaveBanner
+@onready var _wave_status: Label = $WaveStatus
 
 
 func _ready() -> void:
@@ -64,9 +67,30 @@ func _ready() -> void:
 	_sync_minimap_size()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not is_instance_valid(view_camera) and not is_instance_valid(_resolved_camera):
 		_resolve_view_camera()
+	if _wave_banner_remaining > 0.0:
+		_wave_banner_remaining = maxf(_wave_banner_remaining - delta, 0.0)
+		if _wave_banner_remaining <= 0.0:
+			_wave_banner.visible = false
+
+
+## Shows a short message in the middle of the screen, e.g. "Welle 2".
+func show_wave_banner(text: String, duration: float = 3.0) -> void:
+	_wave_banner.text = text
+	_wave_banner.visible = true
+	_wave_banner_remaining = duration
+
+
+## Shows the break countdown. An empty string hides it.
+func set_wave_status(text: String) -> void:
+	_wave_status.text = text
+	_wave_status.visible = not text.is_empty()
+
+
+func clear_wave_status() -> void:
+	set_wave_status("")
 
 
 ## Replaces the build options shown to the player.

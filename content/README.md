@@ -10,7 +10,11 @@ Spiel kennt nur IDs und liest die Resources über `GameContentCatalog`.
 - `building_definition.gd`: beschreibt ein Gebäude inklusive seiner Fähigkeiten.
 - `unit_definition.gd`: beschreibt eine spawnbar Einheit und ihre Szene.
 - `ability_definition.gd`: gemeinsame Felder aller Fähigkeiten.
-- `spawn_unit_ability.gd`: erzeugt eine oder mehrere Einheiten.
+- `spawn_unit_ability.gd`: erzeugt eine oder mehrere Einheiten. Bei
+  `duration > 0` wird die Einheit erst nach dieser Zeit erzeugt.
+- `set_rally_point_ability.gd`: versetzt ein Gebäude in den Sammelpunkt-Modus.
+  `Game.gd` wartet danach auf einen Rechtsklick und speichert den Punkt über
+  `AbilitySystem`.
 - `upgrade_ability.gd`: fügt dem Team eine Upgrade-ID hinzu.
 - `unlock_tag_ability.gd`: schaltet einen abstrakten Tag frei.
 - `content_requirement.gd`: Voraussetzung vom Typ Gebäude, Tag oder Upgrade.
@@ -40,6 +44,18 @@ neues Skript nötig.
 Einmalige Fähigkeiten wie der Ausbau selbst erhalten zusätzlich eine
 Anforderung mit `negated = true`. Damit verschwindet die Fähigkeit, sobald die
 Upgrade-ID gesetzt ist.
+
+## Ausbildung und Sammelpunkt
+
+`duration` einer `SpawnUnitAbility` bestimmt die Ausbildungszeit in Sekunden.
+Die Kosten werden sofort abgezogen, die Einheit erscheint erst nach der Zeit.
+Solange sie wartet, zeigt die Auswahl des Gebäudes die Anzahl und die Restzeit.
+
+Die Fähigkeit `Sammelpunkt setzen` ist eine `SetRallyPointAbility`. Nach dem
+Klick darauf wartet das Spiel auf einen Rechtsklick auf der Karte. Dort erscheint
+ein grüner Marker, und alle späteren Einheiten dieses Gebäudes spawn dort.
+Ohne Sammelpunkt erscheinen sie neben dem Gebäude. Der Sammelpunkt kann jederzeit
+neu gesetzt werden; das wirkt auch auf Einheiten, die noch in Ausbildung sind.
 
 ## Wichtig
 
